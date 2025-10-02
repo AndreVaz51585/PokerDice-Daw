@@ -1,4 +1,4 @@
-package pt.isel.domain
+package pt.isel.domain.user
 
 import java.time.Duration
 

@@ -1,5 +1,7 @@
-package pt.isel.domain
+package pt.isel.domain.authentication
 
+import pt.isel.domain.token.TokenEncoder
+import pt.isel.domain.token.TokenValidationInfo
 import java.security.MessageDigest
 import java.util.Base64
 

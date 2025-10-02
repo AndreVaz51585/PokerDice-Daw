@@ -7,10 +7,10 @@ import org.springframework.context.annotation.ComponentScan
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig
-import pt.isel.domain.Sha256TokenEncoder
-import pt.isel.domain.TokenEncoder
-import pt.isel.domain.TokenValidationInfo
-import pt.isel.domain.UsersDomainConfig
+import pt.isel.domain.authentication.Sha256TokenEncoder
+import pt.isel.domain.token.TokenEncoder
+import pt.isel.domain.token.TokenValidationInfo
+import pt.isel.domain.user.UsersDomainConfig
 import pt.isel.repo.mem.RepositoryUserInMem
 import java.time.Clock
 import java.time.Duration

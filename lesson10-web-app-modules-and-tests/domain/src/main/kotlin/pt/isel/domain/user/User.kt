@@ -1,4 +1,6 @@
-package pt.isel.domain
+package pt.isel.domain.user
+
+import pt.isel.domain.authentication.PasswordValidationInfo
 
 data class User(
     val id: Int,

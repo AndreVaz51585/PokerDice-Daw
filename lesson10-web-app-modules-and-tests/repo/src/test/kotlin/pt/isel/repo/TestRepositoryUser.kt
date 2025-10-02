@@ -2,9 +2,9 @@ package pt.isel.repo
 
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import pt.isel.domain.PasswordValidationInfo
-import pt.isel.domain.Token
-import pt.isel.domain.TokenValidationInfo
+import pt.isel.domain.authentication.PasswordValidationInfo
+import pt.isel.domain.token.Token
+import pt.isel.domain.token.TokenValidationInfo
 import pt.isel.repo.mem.RepositoryUserInMem
 import java.time.Instant
 import kotlin.test.assertEquals

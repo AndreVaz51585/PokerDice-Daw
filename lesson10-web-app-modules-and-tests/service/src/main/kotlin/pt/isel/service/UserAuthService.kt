@@ -2,12 +2,12 @@ package pt.isel.service
 
 import jakarta.inject.Named
 import org.springframework.security.crypto.password.PasswordEncoder
-import pt.isel.domain.PasswordValidationInfo
-import pt.isel.domain.Token
-import pt.isel.domain.TokenEncoder
-import pt.isel.domain.TokenExternalInfo
-import pt.isel.domain.User
-import pt.isel.domain.UsersDomainConfig
+import pt.isel.domain.authentication.PasswordValidationInfo
+import pt.isel.domain.token.Token
+import pt.isel.domain.token.TokenEncoder
+import pt.isel.domain.token.TokenExternalInfo
+import pt.isel.domain.user.User
+import pt.isel.domain.user.UsersDomainConfig
 import pt.isel.repo.RepositoryUser
 import java.security.SecureRandom
 import java.time.Clock

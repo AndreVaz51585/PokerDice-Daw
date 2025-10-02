@@ -1,9 +1,9 @@
 package pt.isel.repo.mem
 
-import pt.isel.domain.PasswordValidationInfo
-import pt.isel.domain.Token
-import pt.isel.domain.TokenValidationInfo
-import pt.isel.domain.User
+import pt.isel.domain.authentication.PasswordValidationInfo
+import pt.isel.domain.token.Token
+import pt.isel.domain.token.TokenValidationInfo
+import pt.isel.domain.user.User
 import pt.isel.repo.RepositoryUser
 import java.time.Instant
 

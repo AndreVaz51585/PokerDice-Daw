@@ -1,4 +1,4 @@
-package pt.isel.domain
+package pt.isel.domain.token
 
 import java.time.Instant
 

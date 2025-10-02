@@ -1,4 +1,4 @@
-package pt.isel.domain
+package pt.isel.domain.user
 
 class AuthenticatedUser(
     val user: User,
