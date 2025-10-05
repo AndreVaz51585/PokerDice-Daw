@@ -20,3 +20,5 @@ include("lesson10-web-app-modules-and-tests:domain")
 include("lesson10-web-app-modules-and-tests:http")
 include("lesson10-web-app-modules-and-tests:service")
 include("lesson10-web-app-modules-and-tests:repo")
+include("lesson10-web-app-modules-and-tests:SQL")
+findProject(":lesson10-web-app-modules-and-tests:SQL")?.name = "SQL"

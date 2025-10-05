@@ -31,4 +31,5 @@ interface RepositoryUser : Repository<User> {
     )
 
     fun removeTokenByValidationInfo(tokenValidationInfo: TokenValidationInfo): Int
+
 }

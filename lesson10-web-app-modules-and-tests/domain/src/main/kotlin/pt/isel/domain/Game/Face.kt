@@ -1,10 +1,10 @@
 package pt.isel.domain.Game
 
-enum class Face(val symbol: String) {
-    ACE("A"),
-    KING("K"),
-    QUEEN("Q"),
-    JACK("J"),
-    TEN("10"),
-    NINE("9");
+enum class Face(val priority: Int) {
+    ACE(1),
+    KING(2),
+    QUEEN(3),
+    JACK(4),
+    TEN(5),
+    NINE(6);
 }
