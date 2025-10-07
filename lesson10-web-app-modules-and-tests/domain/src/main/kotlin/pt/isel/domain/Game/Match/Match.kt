@@ -1,11 +1,8 @@
-package pt.isel.domain.Game
+package pt.isel.domain.Game.Match
 
+import pt.isel.domain.Game.Round.Round
 import java.time.Instant
 import java.util.*
-
-enum class MatchState { RUNNING, FINISHED, ABORTED }
-
-enum class RoundState { OPEN, SCORING, CLOSED }
 
 /**
  * Representa a partida já iniciada (derivada de um Lobby).
@@ -31,10 +28,3 @@ data class Match(
         require(currentRoundNo in 1..totalRounds) { "currentRoundNo fora do intervalo [1, totalRounds]." }
     }
 }
-
-data class MatchPlayer(
-    val userId: UUID,
-    val seatNo: Int,                // ordem fixa na mesa
-    val balanceAtStart: Int,        // saldo no início do match (para auditoria)
-    val active: Boolean = true      // consegue pagar o ante da próxima ronda?
-)

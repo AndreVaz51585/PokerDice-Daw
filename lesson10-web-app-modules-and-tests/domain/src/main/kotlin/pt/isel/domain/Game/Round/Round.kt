@@ -1,4 +1,5 @@
-package pt.isel.domain.Game
+package pt.isel.domain.Game.Round
+
 
 data class Round(
     val number: Int,
