@@ -3,7 +3,7 @@ package pt.isel.domain.Game.Match
 import pt.isel.domain.Game.Round.Round
 import java.time.Instant
 import java.util.*
-
+//TODO: Inutil
 /**
  * Representa a partida já iniciada (derivada de um Lobby).
  * Responsabilidades: progresso do jogo (rondas/turnos), pote, resultados e encerramento.

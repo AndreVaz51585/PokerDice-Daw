@@ -6,7 +6,7 @@ data class Round(
     val state: RoundState = RoundState.OPEN,
     val pot: Int = 0,                           // soma dos antes pagos nesta ronda
     val turns: List<Int> = emptyList(),
-    val results: List<String> = emptyList()     // preenchido em SCORING/CLOSED
+    val results: List<String> = emptyList()     // preenchido em SCORING/CLOSED //TODO: Será que é um List<String> mesmo?
 ) {
     init { require(number >= 1) { "number de round tem de ser ≥ 1." } }
 }
