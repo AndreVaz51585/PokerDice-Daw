@@ -14,13 +14,24 @@ repositories {
 }
 
 dependencies {
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.6"))
+
+    //implementation(project(":lesson10-web-app-modules-and-tests:http"))
+
+    // Starters no :app (versões vêm do BOM)
+    //implementation("org.springframework.boot:spring-boot-starter-web")
+    // (opcional) actuator, validation, etc.
+    // implementation("org.springframework.boot:spring-boot-starter-actuator")
+    // implementation("org.springframework.boot:spring-boot-starter-validation")
+
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.test {
     useJUnitPlatform()
 }
+
 kotlin {
     jvmToolchain(21)
 }

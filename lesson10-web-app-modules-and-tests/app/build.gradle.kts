@@ -14,26 +14,28 @@ repositories {
 }
 
 dependencies {
-    api(project(":lesson10-web-app-modules-and-tests:http"))
+    implementation(project(":lesson10-web-app-modules-and-tests:http"))
+    api(project(":lesson10-web-app-modules-and-tests:service"))
 
+    // BOM do Spring Boot fixa todas as versões (Spring, Jackson, etc.)
+    implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.6"))
+
+    // Web + MVC + Jackson + Servlet API (tudo transitivo)
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
 
-    // To get password encode
-    api("org.springframework.security:spring-security-core:6.5.5")
+    // Security core (sem versão — vem do BOM)
+    api("org.springframework.security:spring-security-core")
 
-    // To use WebTestClient in integration tests with real HTTP server
-    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
-
+    // Testes (sem versão — vem do BOM)
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    testImplementation(kotlin("test"))
 }
 
 tasks.test {
     useJUnitPlatform()
 }
+
 kotlin {
     jvmToolchain(21)
 }

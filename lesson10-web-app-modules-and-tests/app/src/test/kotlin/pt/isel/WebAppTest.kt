@@ -1,5 +1,6 @@
 package pt.isel
 
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -18,7 +19,6 @@ import pt.isel.http.model.UserInput
 import pt.isel.repo.RepositoryUser
 import java.time.Clock
 import java.time.ZoneId
-import kotlin.test.assertTrue
 
 @TestConfiguration
 class WebAppTestConfig {
