@@ -1,3 +1,6 @@
+
+CREATE EXTENSION IF NOT EXISTS citext;
+
 -- ===========================
 -- Tipos de domínio (ENUMs)
 -- ===========================
@@ -68,7 +71,7 @@ CREATE TABLE lobby (
     --ante              INTEGER NOT NULL DEFAULT 1,  -- ante por ronda
                        state             lobby_state NOT NULL DEFAULT 'OPEN',
                        CONSTRAINT ck_players_bounds CHECK (min_players >= 2 AND max_players >= min_players),
-                       CONSTRAINT ck_rounds_positive CHECK (number_of_rounds > 0),
+                       CONSTRAINT ck_rounds_positive CHECK (rounds > 0),
                        CONSTRAINT ck_ante_positive CHECK (ante_coins > 0)
 );
 
