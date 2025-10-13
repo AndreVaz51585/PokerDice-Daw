@@ -10,6 +10,7 @@ package pt.isel.repo
 interface Transaction {
    // val repoEvents: RepositoryEvent
     val repoUsers: RepositoryUser
+    val repoLobbies : RepositoyLobby
    // val repoParticipants: RepositoryParticipant
    // val repoSlots: RepositoryTimeSlot
 

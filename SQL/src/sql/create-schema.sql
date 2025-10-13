@@ -23,9 +23,6 @@ create table dbo.Tokens
     last_used_at     bigint not null
 );
 
-
-CREATE EXTENSION IF NOT EXISTS citext;
-
 -- ===========================
 -- Tipos de domínio (ENUMs)
 -- ===========================
@@ -54,21 +51,21 @@ CREATE TYPE tx_type AS ENUM ('ANTE','WIN','ADJUSTMENT');
 -- ===========================
 -- Utilizadores, convites e sessões
 -- ===========================
-CREATE TABLE app_user (
-                          id                BIGSERIAL PRIMARY KEY,
-                          username          CITEXT NOT NULL UNIQUE,
-                          display_name      TEXT,
-                          password_hash     TEXT NOT NULL,
-                          balance_coins     INTEGER NOT NULL DEFAULT 0, -- saldo atual (inteiros)
-                          created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+    --CREATE TABLE app_user (
+      --            id                BIGSERIAL PRIMARY KEY,
+        --          username          CITEXT NOT NULL UNIQUE,
+          --        display_name      TEXT,
+            --      password_hash     TEXT NOT NULL,
+              --    balance_coins     INTEGER NOT NULL DEFAULT 0, -- saldo atual (inteiros)
+                --  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+    --);
 
 -- Registo por convite (one-time use)
 CREATE TABLE invitation (
                             code              TEXT PRIMARY KEY,  -- ex.: token curto/URL-safe
-                            created_by        BIGINT NOT NULL REFERENCES app_user(id) ON DELETE RESTRICT,
+                            created_by        BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE RESTRICT,
                             created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-                            used_by           BIGINT REFERENCES app_user(id) ON DELETE SET NULL,
+                            used_by           BIGINT REFERENCES dbo.users(id) ON DELETE SET NULL,
                             used_at           TIMESTAMPTZ,
                             CONSTRAINT one_time_use CHECK ((used_by IS NULL) = (used_at IS NULL))
 );
@@ -76,7 +73,7 @@ CREATE TABLE invitation (
 -- Autenticação por token (header ou cookie é detalhe da app)
 CREATE TABLE auth_token (
                             id                BIGSERIAL PRIMARY KEY,
-                            user_id           BIGINT NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
+                            user_id           BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
                             token             TEXT NOT NULL UNIQUE,      -- guarda hash do token se quiseres
                             issued_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
                             expires_at        TIMESTAMPTZ,
@@ -90,7 +87,7 @@ CREATE INDEX ix_auth_token_user ON auth_token(user_id);
 -- ===========================
 CREATE TABLE lobby (
                        id                BIGSERIAL PRIMARY KEY,
-                       lobby_Host         BIGINT NOT NULL REFERENCES app_user(id) ON DELETE RESTRICT,
+                       lobby_Host         BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE RESTRICT,
                        name              TEXT NOT NULL,
                        description       TEXT,
                        min_players       INTEGER NOT NULL,
@@ -107,6 +104,36 @@ CREATE TABLE lobby (
 CREATE INDEX ix_lobby_state ON lobby(state);
 --CREATE INDEX ix_lobby_player_user ON lobby_player(user_id);
 
+
+-- Lista de jogadores por lobby
+CREATE TABLE IF NOT EXISTS lobby_player (
+    lobby_id  BIGINT NOT NULL REFERENCES lobby(id)      ON DELETE CASCADE,
+    user_id   BIGINT NOT NULL REFERENCES dbo.users(id)   ON DELETE CASCADE,
+    joined_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (lobby_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS ix_lobby_player_lobby ON lobby_player(lobby_id);
+CREATE INDEX IF NOT EXISTS ix_lobby_player_user  ON lobby_player(user_id);
+
+-- Trigger: ao criar um lobby, inserir automaticamente o host como player
+CREATE OR REPLACE FUNCTION trg_lobby_add_host() RETURNS trigger AS $$
+BEGIN
+  INSERT INTO lobby_player (lobby_id, user_id)
+  VALUES (NEW.id, NEW.lobby_host)
+  ON CONFLICT DO NOTHING;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS lobby_add_host ON lobby;
+CREATE TRIGGER lobby_add_host
+AFTER INSERT ON lobby
+FOR EACH ROW
+EXECUTE FUNCTION trg_lobby_add_host();
+
+
+
 -- ===========================
 -- Partidas (Matches)
 -- ===========================
@@ -117,13 +144,13 @@ CREATE TABLE match (
                        state             match_state NOT NULL DEFAULT 'IN_PROGRESS',
                        started_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
                        ended_at          TIMESTAMPTZ,
-                       starting_player_user_id BIGINT REFERENCES app_user(id) ON DELETE SET NULL
+                       starting_player_user_id BIGINT REFERENCES dbo.users(id) ON DELETE SET NULL
 );
 
 -- Participantes na partida (com ordem/seat p/ rotação de turnos)
 CREATE TABLE match_player (
                               match_id          BIGINT NOT NULL REFERENCES match(id) ON DELETE CASCADE,
-                              user_id           BIGINT NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
+                              user_id           BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
                               seat_no           INTEGER NOT NULL,               -- define ordem dos turnos
                               balance_start     INTEGER NOT NULL,               -- snapshot à entrada
                               balance_end       INTEGER,                        -- snapshot à saída/fim
@@ -153,7 +180,7 @@ CREATE TABLE round (
 CREATE TABLE Dice (
                       id         BIGSERIAL PRIMARY KEY,
                       round_id   BIGINT  NOT NULL REFERENCES round(round_no) ON DELETE CASCADE,
-                      user_id    BIGINT  NOT NULL REFERENCES app_user(id)    ON DELETE CASCADE,
+                      user_id    BIGINT  NOT NULL REFERENCES dbo.users(id)    ON DELETE CASCADE,
                       roll_no    SMALLINT NOT NULL CHECK (roll_no BETWEEN 1 AND 3),
                       d1         dice_face NOT NULL,
                       d2         dice_face NOT NULL,
@@ -167,7 +194,7 @@ CREATE TABLE Dice (
 -- ===========================
 CREATE TABLE wallet_tx (
                            id                BIGSERIAL PRIMARY KEY,
-                           user_id           BIGINT NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
+                           user_id           BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
                            --match_id          BIGINT REFERENCES match(id) ON DELETE SET NULL,
                            round_id          BIGINT REFERENCES round(round_no) ON DELETE SET NULL,
                            type              tx_type NOT NULL,               -- ANTE (-), WIN (+), ADJUSTMENT (+/-)
