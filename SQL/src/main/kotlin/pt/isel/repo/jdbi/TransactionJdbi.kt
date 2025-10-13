@@ -1,7 +1,6 @@
 package pt.isel.repo.jdbi
 
 import org.jdbi.v3.core.Handle
-import pt.isel.repo.RepositoyLobby
 import pt.isel.repo.Transaction
 
 class TransactionJdbi(

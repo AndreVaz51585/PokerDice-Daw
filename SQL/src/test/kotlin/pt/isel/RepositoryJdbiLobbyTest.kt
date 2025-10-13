@@ -8,8 +8,6 @@ import pt.isel.domain.Game.Lobby.LobbyState
 import pt.isel.domain.authentication.PasswordValidationInfo
 import pt.isel.repo.jdbi.TransactionManagerJdbi
 import pt.isel.repo.jdbi.configureWithAppRequirements
-import kotlin.collections.remove
-import kotlin.run
 import kotlin.test.*
 
 class RepositoryJdbiLobbyTest {

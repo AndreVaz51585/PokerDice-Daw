@@ -4,7 +4,7 @@ import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.Game.Lobby.LobbyState
 import pt.isel.domain.user.User
 
-interface RepositoyLobby : Repository<Lobby> {
+interface RepositoryLobby : Repository<Lobby> {
 
     fun createLobby(
      lobbyHostId : Int,

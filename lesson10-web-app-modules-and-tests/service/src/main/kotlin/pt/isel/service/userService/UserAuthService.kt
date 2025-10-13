@@ -1,4 +1,4 @@
-package pt.isel.service
+package pt.isel.service.userService
 
 import jakarta.inject.Named
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -9,6 +9,9 @@ import pt.isel.domain.token.TokenExternalInfo
 import pt.isel.domain.user.User
 import pt.isel.domain.user.UsersDomainConfig
 import pt.isel.repo.RepositoryUser
+import pt.isel.service.Auxiliary.Either
+import pt.isel.service.Auxiliary.failure
+import pt.isel.service.Auxiliary.success
 import java.security.SecureRandom
 import java.time.Clock
 import java.time.Duration

@@ -12,6 +12,7 @@ import pt.isel.domain.token.TokenEncoder
 import pt.isel.domain.token.TokenValidationInfo
 import pt.isel.domain.user.UsersDomainConfig
 import pt.isel.repo.mem.RepositoryUserInMem
+import pt.isel.service.Auxiliary.Success
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -49,7 +50,7 @@ class WebAppTestConfig {
 @SpringJUnitConfig(WebAppTestConfig::class)
 class TestUserAuthService {
     @Autowired
-    private lateinit var service: UserAuthService
+    private lateinit var service: pt.isel.service.userService.UserAuthService
 
     private val config =
         UsersDomainConfig(

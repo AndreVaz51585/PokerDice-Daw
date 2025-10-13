@@ -2,15 +2,33 @@ package pt.isel.service.lobbyService
 
 import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.Game.Lobby.LobbyState
+import pt.isel.domain.user.AuthenticatedUser
+import pt.isel.domain.user.User
+import pt.isel.service.Auxiliary.Either
 
-class LobbyService {
+interface LobbyService  {
 
-    fun canJoinLobby(lobby: Lobby?, currentPlayers: List<Int>): Boolean {
+fun createLobby(
+    hostId: Int,
+    name: String,
+    description: String,
+    minPlayers: Int,
+    maxPlayers: Int,
+    rounds: Int,
+    ante: Int,
+    state: LobbyState = LobbyState.OPEN
+): Either<LobbyServiceError, Lobby>
 
-        if (lobby == null || lobby.state != LobbyState.OPEN) return false
+fun getLobby(id: Int): Either<LobbyServiceError, Lobby>
 
-        if (currentPlayers.size >= lobby.maxPlayers) return false
+fun listOpenLobbies(limit: Int, offset: Int): List<Lobby>
 
-        return true
-    }
+fun joinLobby(lobbyId: Int, userId: Int): Either<LobbyServiceError, Boolean>
+
+fun leaveLobby(lobbyId: Int, userId: Int): Int
+
+fun getLobbyHost(lobby: Lobby) : Either<LobbyServiceError, User>
+
+fun listPlayers(lobbyId: Int): List<User>
+
 }

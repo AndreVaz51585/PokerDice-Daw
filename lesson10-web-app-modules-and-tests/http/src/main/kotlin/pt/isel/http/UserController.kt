@@ -13,11 +13,11 @@ import pt.isel.http.model.UserCreateTokenInputModel
 import pt.isel.http.model.UserCreateTokenOutputModel
 import pt.isel.http.model.UserHomeOutputModel
 import pt.isel.http.model.UserInput
-import pt.isel.service.Either
-import pt.isel.service.Failure
-import pt.isel.service.Success
-import pt.isel.service.UserAuthService
-import pt.isel.service.UserError
+import pt.isel.service.Auxiliary.Either
+import pt.isel.service.Auxiliary.Failure
+import pt.isel.service.Auxiliary.Success
+import pt.isel.service.userService.UserAuthService
+import pt.isel.service.userService.UserError
 
 @RestController
 class UserController(

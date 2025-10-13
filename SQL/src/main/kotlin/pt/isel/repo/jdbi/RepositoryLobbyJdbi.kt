@@ -1,17 +1,16 @@
 package pt.isel.repo.jdbi
 
 import org.jdbi.v3.core.Handle
-import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.core.kotlin.mapTo
 import org.slf4j.LoggerFactory
 import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.Game.Lobby.LobbyState
 import pt.isel.domain.user.User
-import pt.isel.repo.RepositoyLobby
+import pt.isel.repo.RepositoryLobby
 
 class RepositoryLobbyJdbi(
     private val handle : Handle
-) : RepositoyLobby{
+) : RepositoryLobby{
 
     /**
      * Finds a Lobby by its ID.
@@ -214,7 +213,7 @@ class RepositoryLobbyJdbi(
 
     }
 
-    override fun remove(lobbyId: Int, userId: Int): Int =
+    override fun remove(lobbyId: Int, userId: Int) =
         handle.createUpdate(
         """
             DELETE FROM lobby_player
