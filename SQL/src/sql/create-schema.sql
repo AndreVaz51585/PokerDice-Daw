@@ -71,6 +71,9 @@ CREATE TABLE dbo.participants
 );
 
 
+
+CREATE EXTENSION IF NOT EXISTS citext;
+
 -- ===========================
 -- Tipos de domínio (ENUMs)
 -- ===========================
@@ -223,10 +226,3 @@ CREATE TABLE wallet_tx (
 
 CREATE INDEX ix_wallet_user ON wallet_tx(user_id);
 CREATE INDEX ix_wallet_round ON wallet_tx(round_id);
-
-
-SELECT table_schema, table_name
-FROM information_schema.tables
-WHERE table_type = 'BASE TABLE'
-  AND table_schema NOT IN ('pg_catalog','information_schema')
-ORDER BY table_schema, table_name;

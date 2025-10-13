@@ -1,6 +1,8 @@
 package pt.isel.domain.Game
 
-enum class Combination(priority : Int){
+import pt.isel.domain.Game.Hand.Companion.getCombination
+
+enum class Combination(val priority : Int){
     FIVE_OF_A_KIND(1),
     FOUR_OF_A_KIND(2),
     FULL_HOUSE(3),
@@ -12,14 +14,14 @@ enum class Combination(priority : Int){
 
 
     companion object {
-        fun calculate(hand: Hand): Combination {
+        fun calculate(hand: Hand): Pair<Combination,List<Face>> {
 
             val faceCount =
                 hand.faces.groupingBy { it }.eachCount()    // necessário para sabermos o numero de elemntos repetidos
             val sorted =
                 hand.faces.sortedByDescending { it.priority } // ordena as faces por prioridade de forma crescente
 
-            return when {
+            val combination =  when {
                 isFiveOfAKind(faceCount) -> FIVE_OF_A_KIND
                 isFourOfAKind(faceCount) -> FOUR_OF_A_KIND
                 isFullHouse(faceCount) -> FULL_HOUSE
@@ -29,6 +31,7 @@ enum class Combination(priority : Int){
                 isPair(faceCount) -> PAIR
                 else -> BUST
             }
+            return combination to sorted
         }
 
         private fun isFiveOfAKind(faceCounts: Map<Face, Int>): Boolean = faceCounts.size == 1
@@ -39,7 +42,7 @@ enum class Combination(priority : Int){
 
         private fun isStraight(sortedFaces: List<Face>): Boolean {
             val priorities = sortedFaces.map { it.priority }
-            return priorities.zipWithNext().all { (a, b) -> b == a + 1 }
+            return priorities.zipWithNext().all { (a, b) -> b == a - 1 }
         }
 
         private fun isThreeOfAKind(faceCounts: Map<Face, Int>): Boolean = faceCounts.any { it.value == 3 }
@@ -47,6 +50,34 @@ enum class Combination(priority : Int){
         private fun isTwoPair(faceCounts: Map<Face, Int>): Boolean = faceCounts.count { it.value == 2 } == 2
 
         private fun isPair(faceCounts: Map<Face, Int>): Boolean = faceCounts.any { it.value == 2 }
+
+
+        // revebe duas hands e retorna a de maior valor
+        fun compareHands(hand1 : Hand, hand2 : Hand) : Hand {
+            val (comb1, sorted1) = hand1.getCombination()  // retorna um pair de valores em que o primeiro é a combinação e o segundo é a lista de faces ordenadas
+            val (comb2, sorted2) = hand2.getCombination()
+
+            val combCompare = comb1.priority.compareTo(comb2.priority) // se for maior retorna >0 se menor <0 se forem iguais =0 , relembrando que aqui menor prioridade significa mais valiosa
+
+            val biggerHand =  when {
+                combCompare<0 -> hand1
+                combCompare>0 -> hand2
+
+                else -> {
+
+                 for( i in sorted1.indices){
+                    val faceCompare = sorted1[i].priority.compareTo(sorted2[i].priority)
+                    if (faceCompare < 0) return hand1 // sorted1 tem uma face mais valiosa
+                    if (faceCompare > 0) return hand2 // sorted2 tem uma face mais valiosa
+                 }
+                    return hand1  // AQUI TEMOS DE CRIAR OPÇÃO DE DRAW
+                }
+                }
+
+
+            return biggerHand
+            }
+
 
     }
 

@@ -7,15 +7,9 @@ data class Hand (
         require( faces.size == 5) {"One Hand must have exactly 5 faces!"}
     }
 
-    private fun Hand.getCombination() : Combination = Combination.calculate(this)
-
-
     companion object {
         fun generateHand() : Hand = Hand(faces = List(5){Dice.roll()})
+        fun Hand.getCombination() : Pair<Combination, List<Face>> = Combination.calculate(this)
     }
-
-
-
-
 }
 
