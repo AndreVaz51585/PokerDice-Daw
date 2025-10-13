@@ -3,6 +3,8 @@ CREATE SCHEMA IF NOT EXISTS dbo;
 -- Ativar extensão para texto case-insensitive
 CREATE EXTENSION IF NOT EXISTS citext;
 
+CREATE TYPE round_state AS ENUM ('IN_PROGRESS','COMPLETED');
+
 
 -- Create table for users in the dbo schema
 CREATE TABLE dbo.users
@@ -68,7 +70,7 @@ CREATE TABLE dbo.participants
     FOREIGN KEY (time_slot_multiple_id) REFERENCES dbo.time_slot_multiples (time_slot_id)
 );
 
-/*
+
 -- ===========================
 -- Tipos de domínio (ENUMs)
 -- ===========================
@@ -139,16 +141,16 @@ CREATE TABLE lobby (
                        min_players       INTEGER NOT NULL,
                        max_players       INTEGER NOT NULL,
                        rounds            INTEGER NOT NULL,
-    --ante              INTEGER NOT NULL DEFAULT 1,  -- ante por ronda
+                       ante              INTEGER NOT NULL DEFAULT 1,  -- ante por ronda
                        state             lobby_state NOT NULL DEFAULT 'OPEN',
                        CONSTRAINT ck_players_bounds CHECK (min_players >= 2 AND max_players >= min_players),
-                       CONSTRAINT ck_rounds_positive CHECK (number_of_rounds > 0),
-                       CONSTRAINT ck_ante_positive CHECK (ante_coins > 0)
+                       CONSTRAINT ck_rounds_positive CHECK (rounds > 0),
+                       CONSTRAINT ck_ante_positive CHECK (ante > 0)
 );
 
 
 CREATE INDEX ix_lobby_state ON lobby(state);
-CREATE INDEX ix_lobby_player_user ON lobby_player(user_id);
+--CREATE INDEX ix_lobby_player_user ON lobby_player(user_id);
 
 -- ===========================
 -- Partidas (Matches)
@@ -185,16 +187,24 @@ CREATE TABLE round (
                        round_no          BIGSERIAL PRIMARY KEY,               -- 1..number_of_rounds
                        state             round_state NOT NULL DEFAULT 'IN_PROGRESS',
                        pot               INTEGER NOT NULL,               -- copia do valor do lobby/match
-                       results           List<Text> NOT NULL,               -- TODO: List of text ?
+                       results           Text NOT NULL               -- TODO: List of text ?
 );
 
-CREATE INDEX ix_round_match ON round(match_id);
+--CREATE INDEX ix_round_match ON round(match_id);
 
 -- Cada jogador joga 1 turno por ronda; até 3 lançamentos
 
 -- Histórico dos lançamentos dentro de um turno (1..3)
 CREATE TABLE Dice (
-    -- TODO: completar
+                      id         BIGSERIAL PRIMARY KEY,
+                      round_id   BIGINT  NOT NULL REFERENCES round(round_no) ON DELETE CASCADE,
+                      user_id    BIGINT  NOT NULL REFERENCES app_user(id)    ON DELETE CASCADE,
+                      roll_no    SMALLINT NOT NULL CHECK (roll_no BETWEEN 1 AND 3),
+                      d1         dice_face NOT NULL,
+                      d2         dice_face NOT NULL,
+                      d3         dice_face NOT NULL,
+                      created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+                      UNIQUE (round_id, user_id, roll_no)
 );
 
 -- ===========================
@@ -203,8 +213,8 @@ CREATE TABLE Dice (
 CREATE TABLE wallet_tx (
                            id                BIGSERIAL PRIMARY KEY,
                            user_id           BIGINT NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
-                           match_id          BIGINT REFERENCES match(id) ON DELETE SET NULL,
-                           round_id          BIGINT REFERENCES round(id) ON DELETE SET NULL,
+                           --match_id          BIGINT REFERENCES match(id) ON DELETE SET NULL,
+                           round_id          BIGINT REFERENCES round(round_no) ON DELETE SET NULL,
                            type              tx_type NOT NULL,               -- ANTE (-), WIN (+), ADJUSTMENT (+/-)
                            amount_coins      INTEGER NOT NULL,               -- débito < 0, crédito > 0
                            created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -213,4 +223,10 @@ CREATE TABLE wallet_tx (
 
 CREATE INDEX ix_wallet_user ON wallet_tx(user_id);
 CREATE INDEX ix_wallet_round ON wallet_tx(round_id);
-*/
+
+
+SELECT table_schema, table_name
+FROM information_schema.tables
+WHERE table_type = 'BASE TABLE'
+  AND table_schema NOT IN ('pg_catalog','information_schema')
+ORDER BY table_schema, table_name;
