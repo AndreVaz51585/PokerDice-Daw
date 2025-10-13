@@ -32,10 +32,10 @@ class RepositoryJdbiUserTest {
     @BeforeEach
     fun setup() {
         trxManager.run {
-            repoSlots.clear()
-            repoEvents.clear()
+         //   repoSlots.clear()
+          //  repoEvents.clear()
             repoUsers.clear()
-            repoParticipants.clear()
+         //   repoParticipants.clear()
         }
     }
 

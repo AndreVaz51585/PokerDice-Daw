@@ -1,38 +1,12 @@
-/*
-BEGIN;
-
--- Insert into dbo.users and get the generated ID
-WITH inserted_user AS (
+-- Inserir um utilizador na tabela dbo.users
 INSERT INTO dbo.users (name, email, password_validation)
-VALUES ('Paul Atreides', 'paul@atreides.com', 'muadib')
-    RETURNING id
-    )
+VALUES ('Utilizador Demo', 'demo@example.com', 'hash_demo');
 
--- Use the returned user ID to insert into dbo.events
-INSERT INTO dbo.events (title, description, organizer_id, selection_type)
-SELECT
-    'Arrakis Sandstorm Meeting',
-    'Discuss plans for the Fremen alliance',
-    id,
-    'SINGLE'
-FROM inserted_user;
-docker compose ps
-COMMIT;
-*/
+-- Inserir um utilizador na tabela app_user
+INSERT INTO app_user (username, display_name, password_hash, balance_coins)
+VALUES ('demo_user', 'Demo User', 'hash_demo', 100)
+RETURNING id;
 
-BEGIN;
-
-WITH inserted_user AS (
-INSERT INTO dbo.users (name, email, password_validation)
-VALUES ('Paul Atreides', 'paul@atreides.com', 'muadib')
-    RETURNING id
-    )
-INSERT INTO dbo.events (title, description, organizer_id, selection_type)
-SELECT
-    'Arrakis Sandstorm Meeting',
-    'Discuss plans for the Fremen alliance',
-    id,
-    'SINGLE'
-FROM inserted_user;
-
-COMMIT;
+-- Inserir uma ronda (usa defaults nos ENUMs)
+INSERT INTO round (pot, results)
+VALUES (10, 'sem resultados ainda');

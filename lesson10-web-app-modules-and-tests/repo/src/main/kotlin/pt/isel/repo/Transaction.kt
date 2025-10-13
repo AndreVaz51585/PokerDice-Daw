@@ -8,10 +8,10 @@ package pt.isel.repo
  * necessary repository instances in its constructor.
  */
 interface Transaction {
-    val repoEvents: RepositoryEvent
+   // val repoEvents: RepositoryEvent
     val repoUsers: RepositoryUser
-    val repoParticipants: RepositoryParticipant
-    val repoSlots: RepositoryTimeSlot
+   // val repoParticipants: RepositoryParticipant
+   // val repoSlots: RepositoryTimeSlot
 
     fun rollback()
 }
