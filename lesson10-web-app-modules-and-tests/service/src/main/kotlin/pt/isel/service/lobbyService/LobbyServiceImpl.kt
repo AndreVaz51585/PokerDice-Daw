@@ -27,7 +27,7 @@ class LobbyServiceImpl(
         maxPlayers: Int,
         rounds: Int,
         ante: Int,
-        state: LobbyState
+       // state: LobbyState
     ): Either<LobbyServiceError, Lobby> =
 
         trxManager.run {
@@ -43,9 +43,10 @@ class LobbyServiceImpl(
                 minPlayers = minPlayers,
                 maxPlayers = maxPlayers,
                 rounds = rounds,
-                ante = ante,
-                state = state
+                ante = ante
+               // state = state
             )
+
             return@run success(lobby)
         }
 

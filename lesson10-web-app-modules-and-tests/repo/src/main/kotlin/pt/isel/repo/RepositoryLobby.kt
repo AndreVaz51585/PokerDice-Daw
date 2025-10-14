@@ -14,7 +14,6 @@ interface RepositoryLobby : Repository<Lobby> {
         maxPlayers: Int,
         rounds: Int,
         ante: Int,
-        state: LobbyState
     ): Lobby
 
 

@@ -15,7 +15,6 @@ interface LobbyService {
         maxPlayers: Int,
         rounds: Int,
         ante: Int,
-        state: LobbyState = LobbyState.OPEN
     ): Either<LobbyServiceError, Lobby>
 
     fun getLobby(id: Int): Either<LobbyServiceError, Lobby>

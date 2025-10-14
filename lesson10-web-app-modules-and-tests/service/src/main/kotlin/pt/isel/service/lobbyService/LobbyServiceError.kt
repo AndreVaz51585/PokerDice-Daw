@@ -12,4 +12,5 @@ sealed class LobbyServiceError {
     data object AlreadyInLobby : LobbyServiceError()
 
     data object ErrorJoiningLobby : LobbyServiceError()
+
 }
