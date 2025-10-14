@@ -1,7 +1,5 @@
 package pt.isel.domain.Game.Match
 
-import java.util.*
-
 data class MatchPlayer(
     val userId: Int,
     val seatNo: Int,                // ordem fixa na mesa

@@ -9,8 +9,8 @@ import java.util.*
  * Responsabilidades: progresso do jogo (rondas/turnos), pote, resultados e encerramento.
  */
 data class Match(
-    val id: UUID,
-    val lobbyId: UUID,                  // referência ao lobby que originou o match
+    val id: Int,
+    val lobbyId: Int,                  // referência ao lobby que originou o match
     val players: List<MatchPlayer>,     // “snapshot” dos participantes no arranque, com ordem/seat
     val totalRounds: Int,
     val ante: Int,

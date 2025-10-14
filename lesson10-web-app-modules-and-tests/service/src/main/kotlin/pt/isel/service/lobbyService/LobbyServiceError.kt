@@ -5,11 +5,11 @@ sealed class LobbyServiceError {
 
     data object LobbyNotFound : LobbyServiceError()
 
-    data object LobbyClosed: LobbyServiceError()
+    data object LobbyClosed : LobbyServiceError()
 
     data object LobbyFull : LobbyServiceError()
 
-    data object AlreadyInLobby: LobbyServiceError()
+    data object AlreadyInLobby : LobbyServiceError()
 
-    data object ErrorJoiningLobby: LobbyServiceError()
+    data object ErrorJoiningLobby : LobbyServiceError()
 }

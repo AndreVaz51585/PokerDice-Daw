@@ -7,22 +7,22 @@ import pt.isel.domain.user.User
 interface RepositoryLobby : Repository<Lobby> {
 
     fun createLobby(
-     lobbyHostId : Int,
-     name : String,
-     description : String,
-     minPlayers : Int,
-     maxPlayers : Int,
-     rounds : Int,
-     ante:Int,
-     state: LobbyState
+        lobbyHostId: Int,
+        name: String,
+        description: String,
+        minPlayers: Int,
+        maxPlayers: Int,
+        rounds: Int,
+        ante: Int,
+        state: LobbyState
     ): Lobby
 
 
     fun getLobbyHost(lobby: Lobby): User?
 
     fun listAllOpenLobbies(
-        limit : Int,
-        offset : Int
+        limit: Int,
+        offset: Int
     ): List<Lobby>
 
 
