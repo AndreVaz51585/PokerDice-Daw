@@ -2,6 +2,7 @@ package pt.isel.http.model
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import pt.isel.service.lobbyService.LobbyServiceError
 import java.net.URI
 import kotlin.collections.last
 import kotlin.text.split
@@ -26,4 +27,16 @@ sealed class Problem(
     data object EmailAlreadyInUse : Problem(URI("$PROBLEM_URI_PATH/email-already-in-use"))
 
     data object InsecurePassword : Problem(URI("$PROBLEM_URI_PATH/insecure-password"))
+
+    data object UserNotFound : Problem(URI( "$PROBLEM_URI_PATH/user-not-found"))
+
+    data object LobbyNotFound : Problem(URI("$PROBLEM_URI_PATH/lobby-not-found"))
+
+    data object LobbyClosed : Problem(URI("$PROBLEM_URI_PATH/lobby-closed"))
+
+    data object LobbyFull : Problem(URI("$PROBLEM_URI_PATH/lobby-full"))
+
+    data object AlreadyInLobby : Problem(URI("$PROBLEM_URI_PATH/already-in-lobby"))
+
+    data object ErrorJoiningLobby : Problem(URI("$PROBLEM_URI_PATH/error-joining-lobby"))
 }

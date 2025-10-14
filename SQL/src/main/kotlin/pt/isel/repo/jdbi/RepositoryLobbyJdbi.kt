@@ -113,8 +113,7 @@ class RepositoryLobbyJdbi(
         minPlayers: Int,
         maxPlayers: Int,
         rounds: Int,
-        ante: Int,
-        state : LobbyState
+        ante: Int
     ): Lobby {
         val id = handle
             .createUpdate(
@@ -131,7 +130,7 @@ class RepositoryLobbyJdbi(
             .bind("maxPlayers", maxPlayers)
             .bind("rounds", rounds)
             .bind("ante", ante)
-            .bind("state", state.name)
+            .bind("state", LobbyState.OPEN.name)
             .executeAndReturnGeneratedKeys()
             .mapTo(Int::class.java)
             .one()
@@ -155,7 +154,7 @@ class RepositoryLobbyJdbi(
             rounds = rounds,
             ante = ante,
             players = listOf(host),
-            state = state
+            state = LobbyState.OPEN
         )
     }
 
