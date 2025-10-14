@@ -1,4 +1,4 @@
-package pt.isel.service
+package pt.isel.service.gameTests
 
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
