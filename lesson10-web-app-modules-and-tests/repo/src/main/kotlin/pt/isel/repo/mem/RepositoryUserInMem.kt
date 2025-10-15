@@ -65,8 +65,8 @@ class RepositoryUserInMem : RepositoryUser {
         users.add(entity)
     }
 
-    override fun deleteById(id: Int) {
-        users.removeIf { it.id == id }
+    override fun deleteById(id: Int): Boolean {
+        return users.removeIf { it.id == id }
     }
 
     override fun clear() {

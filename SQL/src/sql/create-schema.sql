@@ -137,7 +137,7 @@ EXECUTE FUNCTION trg_lobby_add_host();
 -- ===========================
 -- Partidas (Matches)
 -- ===========================
-/*
+
 CREATE TABLE match (
                        id                BIGSERIAL PRIMARY KEY,
                        lobby_id          BIGINT REFERENCES lobby(id) ON DELETE SET NULL,
@@ -159,7 +159,7 @@ CREATE TABLE match_player (
 );
 
 CREATE INDEX ix_match_state ON match(state);
-*/
+
 -- ===========================
 -- Rondas e Turnos
 -- ===========================

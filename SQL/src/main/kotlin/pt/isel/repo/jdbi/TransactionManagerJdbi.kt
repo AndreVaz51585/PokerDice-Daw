@@ -1,6 +1,7 @@
 package pt.isel.repo.jdbi
 
 import org.jdbi.v3.core.Jdbi
+import pt.isel.repo.RepositoryMatch
 import pt.isel.repo.Transaction
 import pt.isel.repo.TransactionManager
 

@@ -11,6 +11,7 @@ interface Transaction {
    // val repoEvents: RepositoryEvent
     val repoUsers: RepositoryUser
     val repoLobbies : RepositoryLobby
+    val repoMatch : RepositoryMatch
    // val repoParticipants: RepositoryParticipant
    // val repoSlots: RepositoryTimeSlot
 

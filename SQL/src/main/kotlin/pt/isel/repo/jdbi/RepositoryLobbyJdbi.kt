@@ -72,14 +72,15 @@ class RepositoryLobbyJdbi(
      * @param id The ID of the Lobby to be deleted.
      *
      * */
-    override fun deleteById(id: Int) {
+    override fun deleteById(id: Int): Boolean {
         // relevante caso adicionemos a lista de players no lobby
        /* handle.createQuery("DELETE FROM dbo.LobbyPlayers WHERE lobbyId = :id")
             .bind("id", id)
             .execute()*/
-        handle.createUpdate("DELETE FROM lobby WHERE id = :id")
+        val ret = handle.createUpdate("DELETE FROM lobby WHERE id = :id")
             .bind("id", id)
-            .execute()
+            .execute() > 0
+        return ret
     }
 
      /**
