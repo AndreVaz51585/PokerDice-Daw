@@ -18,7 +18,8 @@ data class Match(
     val currentRoundNo: Int = 1,        // começa na 1ª ronda
     val startedAt: Instant = Instant.now(),
     val finishedAt: Instant? = null,
-    val rounds: List<Round> = emptyList()
+    val rounds: List<Round> = emptyList(),
+    val maxPlayers: Int = 10
 ) {
     init {
         require(players.isNotEmpty()) { "Um match precisa de pelo menos 1 jogador." }

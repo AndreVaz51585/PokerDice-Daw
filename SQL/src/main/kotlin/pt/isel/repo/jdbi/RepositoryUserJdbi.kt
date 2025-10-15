@@ -39,11 +39,11 @@ class RepositoryUserJdbi(
             .execute()
     }
 
-    override fun deleteById(id: Int) {
-        handle
+    override fun deleteById(id: Int): Boolean {
+        return handle
             .createUpdate("DELETE FROM dbo.users WHERE id = :id")
             .bind("id", id)
-            .execute()
+            .execute() > 0
     }
 
     override fun clear() {
