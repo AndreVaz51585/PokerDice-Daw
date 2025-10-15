@@ -1,5 +1,8 @@
 package pt.isel.domain.Game
 
+/**
+ * Nota: menor priority => face mais forte (ACE é 1).
+ */
 enum class Face(val priority: Int) {
     ACE(1),
     KING(2),

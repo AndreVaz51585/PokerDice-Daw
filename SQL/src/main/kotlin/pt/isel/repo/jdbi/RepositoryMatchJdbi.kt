@@ -6,6 +6,7 @@ import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
 import pt.isel.repo.RepositoryMatch
+import pt.isel.repo.jdbi.sql.MatchSql
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.*
@@ -21,105 +22,6 @@ class RepositoryMatchJdbi(
     private val handle: Handle
 ) : RepositoryMatch {
 
-    // ---------------------------
-    // SQL (ajusta ao teu DDL)
-    // ---------------------------
-    private object Sql {
-        const val INSERT_MATCH = """
-            INSERT INTO match (
-                id, lobby_id, total_rounds, ante, state, current_round_no, started_at, finished_at
-            ) VALUES (
-                :id, :lobbyId, :totalRounds, :ante, CAST(:state AS match_state), :currentRoundNo, :startedAt, :finishedAt
-            )
-        """
-
-        const val INSERT_PLAYER = """
-            INSERT INTO match_player (
-                match_id, user_id, seat_no, balance_at_start, active
-            ) VALUES (
-                :matchId, :userId, :seatNo, :balanceAtStart, :active
-            )
-            ON CONFLICT DO NOTHING
-        """
-
-        const val SELECT_MATCH = """
-            SELECT id, lobby_id, total_rounds, ante, state, current_round_no, started_at, finished_at
-            FROM match
-            WHERE id = :id
-        """
-
-        const val SELECT_MATCHES_PAGED = """
-            SELECT id
-            FROM match
-            ORDER BY started_at DESC, id
-            LIMIT :limit OFFSET :offset
-        """
-
-        const val SELECT_PLAYERS = """
-            SELECT user_id, seat_no, balance_at_start, active
-            FROM match_player
-            WHERE match_id = :matchId
-            ORDER BY seat_no
-        """
-
-        const val UPDATE_STATE = """
-            UPDATE match
-            SET state = CAST(:state AS match_state),
-                finished_at = :finishedAt
-            WHERE id = :id
-        """
-
-        const val UPDATE_CURRENT_ROUND = """
-            UPDATE match
-            SET current_round_no = :roundNo
-            WHERE id = :id
-        """
-
-        const val UPDATE_MATCH = """
-            UPDATE match
-            SET lobby_id = :lobbyId,
-                total_rounds = :totalRounds,
-                ante = :ante,
-                state = CAST(:state AS match_state),
-                current_round_no = :currentRoundNo,
-                started_at = :startedAt,
-                finished_at = :finishedAt
-            WHERE id = :id
-        """
-
-        const val DELETE_MATCH = """
-            DELETE FROM match
-            WHERE id = :id
-        """
-
-        const val DELETE_PLAYERS_BY_MATCH = """
-            DELETE FROM match_player
-            WHERE match_id = :matchId
-        """
-
-        const val DELETE_PLAYER = """
-            DELETE FROM match_player
-            WHERE match_id = :matchId AND user_id = :userId
-        """
-
-        const val UPDATE_PLAYER_ACTIVE = """
-            UPDATE match_player
-            SET active = :active
-            WHERE match_id = :matchId AND user_id = :userId
-        """
-
-        const val COUNT_EXISTS = """
-            SELECT COUNT(*) FROM match WHERE id = :id
-        """
-
-        const val CLEAR_MATCH_PLAYERS = "DELETE FROM match_player"
-        const val CLEAR_MATCHES = "DELETE FROM match"
-    }
-
-    // ---------------------------
-    // Criação
-    // ---------------------------
-
     override fun createMatch(
         id: Int,
         lobbyId: Int,
@@ -131,7 +33,7 @@ class RepositoryMatchJdbi(
         startedAt: Instant,
         finishedAt: Instant?
     ): Match {
-        handle.createUpdate(Sql.INSERT_MATCH)
+        handle.createUpdate(MatchSql.INSERT_MATCH)
             .bind("id", id)
             .bind("lobbyId", lobbyId)
             .bind("totalRounds", totalRounds)
@@ -143,7 +45,7 @@ class RepositoryMatchJdbi(
             .execute()
 
         if (players.isNotEmpty()) {
-            val batch = handle.prepareBatch(Sql.INSERT_PLAYER)
+            val batch = handle.prepareBatch(MatchSql.INSERT_PLAYER)
             players.forEach { p ->
                 batch
                     .bind("matchId", id)
@@ -175,7 +77,7 @@ class RepositoryMatchJdbi(
     // Leitura
     // ---------------------------
     override fun findById(id: Int): Match? {
-        val partial = handle.createQuery(Sql.SELECT_MATCH)
+        val partial = handle.createQuery(MatchSql.SELECT_MATCH)
             .bind("id", id)
             .map { rs, _ ->
                 PartialMatchRow(
@@ -210,7 +112,7 @@ class RepositoryMatchJdbi(
     }
 
     override fun findAll(): List<Match> {
-        val ids = handle.createQuery(Sql.SELECT_MATCHES_PAGED)
+        val ids = handle.createQuery(MatchSql.SELECT_MATCHES_PAGED)
             .mapTo<Int>()
             .list()
 
@@ -219,7 +121,7 @@ class RepositoryMatchJdbi(
     }
 
     override fun exists(id: Int): Boolean =
-        handle.createQuery(Sql.COUNT_EXISTS)
+        handle.createQuery(MatchSql.COUNT_EXISTS)
             .bind("id", id)
             .mapTo(Int::class.java)
             .one() > 0
@@ -230,21 +132,21 @@ class RepositoryMatchJdbi(
     // Atualizações
     // ---------------------------
     override fun updateState(id: Int, newState: MatchState, finishedAt: Instant?): Boolean =
-        handle.createUpdate(Sql.UPDATE_STATE)
+        handle.createUpdate(MatchSql.UPDATE_STATE)
             .bind("id", id)
             .bind("state", newState.name)
             .bind("finishedAt", finishedAt?.let { Timestamp.from(it) })
             .execute() > 0
 
     override fun updateCurrentRound(id: Int, roundNo: Int): Boolean =
-        handle.createUpdate(Sql.UPDATE_CURRENT_ROUND)
+        handle.createUpdate(MatchSql.UPDATE_CURRENT_ROUND)
             .bind("id", id)
             .bind("roundNo", roundNo)
             .execute() > 0
 
 
     override fun save(entity: Match) {
-        handle.createUpdate(Sql.UPDATE_MATCH)
+        handle.createUpdate(MatchSql.UPDATE_MATCH)
             .bind("id", entity.id)
             .bind("lobbyId", entity.lobbyId)
             .bind("totalRounds", entity.totalRounds)
@@ -262,15 +164,15 @@ class RepositoryMatchJdbi(
     // ---------------------------
     override fun deleteById(id: Int): Boolean =
         // Elimina jogadores primeiro se não tiveres ON DELETE CASCADE
-        handle.createUpdate(Sql.DELETE_PLAYERS_BY_MATCH)
+        handle.createUpdate(MatchSql.DELETE_PLAYERS_BY_MATCH)
             .bind("matchId", id)
             .execute() > 0
 
 
     override fun clear() {
         // Se houver FK, respeitar a ordem
-        handle.createUpdate(Sql.CLEAR_MATCH_PLAYERS).execute()
-        handle.createUpdate(Sql.CLEAR_MATCHES).execute()
+        handle.createUpdate(MatchSql.CLEAR_MATCH_PLAYERS).execute()
+        handle.createUpdate(MatchSql.CLEAR_MATCHES).execute()
     }
 
     // ---------------------------
@@ -278,7 +180,7 @@ class RepositoryMatchJdbi(
     // ---------------------------
 
     override fun listPlayers(matchId: Int): List<MatchPlayer> {
-        return handle.createQuery(Sql.SELECT_PLAYERS)
+        return handle.createQuery(MatchSql.SELECT_PLAYERS)
             .bind("matchId", matchId)
             .map { rs, _ ->
                 MatchPlayer(
@@ -293,7 +195,7 @@ class RepositoryMatchJdbi(
 
 
     override fun addPlayer(matchId: Int, player: MatchPlayer): Boolean {
-        val rows = handle.createUpdate(Sql.INSERT_PLAYER)
+        val rows = handle.createUpdate(MatchSql.INSERT_PLAYER)
             .bind("matchId", matchId)
             .bind("userId", player.userId)
             .bind("seatNo", player.seatNo)
@@ -304,13 +206,13 @@ class RepositoryMatchJdbi(
     }
 
     override fun removePlayer(matchId: Int, userId: Int): Boolean =
-        handle.createUpdate(Sql.DELETE_PLAYER)
+        handle.createUpdate(MatchSql.DELETE_PLAYER)
             .bind("matchId", matchId)
             .bind("userId", userId)
             .execute() > 0
 
     override fun setPlayerActive(matchId: Int, userId: Int, active: Boolean): Int =
-        handle.createUpdate(Sql.UPDATE_PLAYER_ACTIVE)
+        handle.createUpdate(MatchSql.UPDATE_PLAYER_ACTIVE)
             .bind("matchId", matchId)
             .bind("userId", userId)
             .bind("active", active)
