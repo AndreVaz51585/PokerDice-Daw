@@ -1,4 +1,4 @@
-/*package pt.isel.domain.Game.pokerDice
+package pt.isel.domain.Game.pokerDice
 
 import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.Round.Round
@@ -29,7 +29,7 @@ object GameEngine {
                 require(cmd.byUserId == state.hostId) { "Only host can start." }
                 require(state.playerOrder.size >= 2) { "Need >= 2 players." }
                 val initialPot = state.playerOrder.size * state.ante
-                val firstRound = Round(number = 1, potCoins = initialPot, state = RoundState.OPEN)
+                val firstRound = Round(number = 1, pot = initialPot, state = RoundState.OPEN)
                 state.copy(
                     phase = GamePhase.ROLLING,
                     rounds = listOf(firstRound),
@@ -95,7 +95,7 @@ object GameEngine {
                 // Showdown
                 val diceMap = state.players.mapValues { it.value.dice }
                 val showdown = Showdown.resolve(diceMap)
-                val pot = currentRound.potCoins
+                val pot = currentRound.pot
                 val winners = showdown.winners
                 val share = if (winners.isEmpty()) 0 else pot / winners.size // remainder stays lost
                 val newBalances = state.balances.toMutableMap().apply {
@@ -150,4 +150,3 @@ object GameEngine {
     private fun <T> List<T>.updateLast(transform: (T) -> T): List<T> =
         if (isEmpty()) this else dropLast(1) + transform(last())
 }
-*/
