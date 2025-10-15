@@ -6,7 +6,7 @@ import pt.isel.domain.Game.Combination
 import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.Hand
 
-class CombinationTests {
+class TestCombinations {
 
     @Test
     fun `testa calculo de Five of a Kind`() {

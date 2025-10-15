@@ -6,6 +6,7 @@ import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.money.BankedMatch
 import pt.isel.domain.Game.money.BankedMatchEngine
 import pt.isel.domain.Game.pokerDice.Command
+import pt.isel.repo.BankedMatchRepository
 import pt.isel.repo.TransactionManager
 
 @Named

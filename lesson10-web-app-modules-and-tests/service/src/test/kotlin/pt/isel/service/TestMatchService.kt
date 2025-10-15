@@ -1,3 +1,4 @@
+/*
 package pt.isel.service
 
 import org.junit.jupiter.api.Assertions.*
@@ -10,9 +11,9 @@ import pt.isel.repo.RepositoryMatch
 import pt.isel.repo.TransactionManager
 import pt.isel.service.Auxiliary.success
 import pt.isel.service.Auxiliary.failure
-import pt.isel.service.lobbyService.MatchServiceError
+import pt.isel.service.matchService.MatchServiceError
 import pt.isel.service.matchService.MatchServiceImpl
-/*
+
 class TestMatchService {
 
     private lateinit var matchService: MatchServiceImpl
