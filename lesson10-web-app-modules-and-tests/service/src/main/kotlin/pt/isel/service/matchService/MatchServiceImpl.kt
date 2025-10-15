@@ -9,8 +9,6 @@ import pt.isel.repo.TransactionManager
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
-import pt.isel.service.lobbyService.MatchService
-import pt.isel.service.lobbyService.MatchServiceError
 
 @Named
 class MatchServiceImpl(

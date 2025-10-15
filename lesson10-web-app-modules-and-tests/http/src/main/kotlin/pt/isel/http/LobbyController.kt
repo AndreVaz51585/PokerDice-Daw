@@ -1,6 +1,5 @@
 package pt.isel.http
 
-import com.sun.net.httpserver.Authenticator
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -12,7 +11,6 @@ import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.user.AuthenticatedUser
 import pt.isel.http.model.LobbyInput
 import pt.isel.http.model.Problem
-import pt.isel.http.model.UserHomeOutputModel
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.Failure
 import pt.isel.service.Auxiliary.Success

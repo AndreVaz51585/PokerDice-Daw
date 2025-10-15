@@ -1,7 +1,6 @@
 package pt.isel.service.lobbyService
 
 import pt.isel.domain.Game.Lobby.Lobby
-import pt.isel.domain.Game.Lobby.LobbyState
 import pt.isel.domain.user.User
 import pt.isel.service.Auxiliary.Either
 

@@ -1,23 +1,28 @@
 package pt.isel.repo
 
-import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
-import pt.isel.domain.Game.Round.Round
 import java.time.Instant
 
 /**
- * Porta do domínio para persistência de Matches via repositório.
- * Mantém o domínio independente da infra (JDBI, JDBC, etc.).
- *
- * Ajusta os tipos (Int vs Int) conforme o teu DDL real.
+ * Domain port for Match persistence.
+ * Keeps domain independent from infrastructure (JDBI, JDBC, etc.).
  */
 interface RepositoryMatch : Repository<Match> {
+
+    /**
+     * Returns the Match by id or null if not found.
+     */
+    override fun findById(id: Int): Match?
+
+    /**
+     * Checks if a Match exists.
+     */
     fun exists(id: Int): Boolean
 
     /**
-     * Cria um Match e os respetivos jogadores (transacional via unidade de trabalho externa).
+     * Creates a Match and its initial players (transaction handled externally).
      */
     fun createMatch(
         id: Int,
@@ -28,23 +33,22 @@ interface RepositoryMatch : Repository<Match> {
     ): Match
 
     /**
-     * Atualiza o estado e, opcionalmente, a finishedAt.
+     * Updates the state and optionally the finishedAt timestamp.
      */
-    fun updateState(id: Int, newState: MatchState, finishedAt: Instant? = null): Boolean
-
-//TODO: Lobby informação estatica
-//TODO: Match jogo geral que vai possuir varias rondas e que é uma instancia do Lobby
-//TODO: Rondas vai ser um numero especifico defenido por match
+    fun updateState(
+        id: Int,
+        newState: MatchState,
+        finishedAt: Instant? = null
+    ): Boolean
 
     /**
-     * Atualiza o número da ronda corrente.
+     * Updates the current round number.
      */
     fun updateCurrentRound(id: Int, roundNo: Int): Boolean
-    
-    // Operações sobre jogadores
+
+    // Player operations
     fun listPlayers(matchId: Int): List<MatchPlayer>
     fun setPlayerActive(matchId: Int, userId: Int, active: Boolean): Int
     fun addPlayer(matchId: Int, player: MatchPlayer): Boolean
     fun removePlayer(matchId: Int, userId: Int): Boolean
-
 }

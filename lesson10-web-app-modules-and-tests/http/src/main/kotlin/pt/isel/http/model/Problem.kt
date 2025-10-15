@@ -2,7 +2,6 @@ package pt.isel.http.model
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import pt.isel.service.lobbyService.LobbyServiceError
 import java.net.URI
 import kotlin.collections.last
 import kotlin.text.split

@@ -1,7 +1,5 @@
 package pt.isel.service.Auxiliary
 
-import pt.isel.domain.Game.Lobby.Lobby
-
 /**
 ---
 config:

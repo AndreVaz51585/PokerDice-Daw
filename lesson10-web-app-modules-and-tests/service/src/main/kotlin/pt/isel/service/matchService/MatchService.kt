@@ -1,4 +1,4 @@
-package pt.isel.service.lobbyService
+package pt.isel.service.matchService
 
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
