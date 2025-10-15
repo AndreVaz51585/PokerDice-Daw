@@ -163,8 +163,8 @@ class RepositoryJdbiLobbyTest {
         trxManager.run {
             val h1 = repoUsers.createUser("H1", "h1@isel.pt", PasswordValidationInfo("x"))
             val h2 = repoUsers.createUser("H2", "h2@isel.pt", PasswordValidationInfo("x"))
-            repoLobbies.createLobby(h1.id, "L1", "d", 2, 4, 3, 1, )
-            repoLobbies.createLobby(h2.id, "L2", "d", 2, 4, 3, 1, )
+            repoLobbies.createLobby(h1.id, "L1", "d", 2, 4, 3, 1)
+            repoLobbies.createLobby(h2.id, "L2", "d", 2, 4, 3, 1)
             assertTrue(repoLobbies.findAll().isNotEmpty())
             repoLobbies.clear()
             assertTrue(repoLobbies.findAll().isEmpty())

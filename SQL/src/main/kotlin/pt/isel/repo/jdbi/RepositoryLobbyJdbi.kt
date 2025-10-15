@@ -89,7 +89,7 @@ class RepositoryLobbyJdbi(
       *
       * */
     override fun clear() {
-       // handle.createUpdate("DELETE FROM dbo.LobbyMembers").execute()
+        handle.createUpdate("DELETE FROM lobby_player").execute()
         handle.createUpdate("DELETE FROM lobby").execute()
     }
 

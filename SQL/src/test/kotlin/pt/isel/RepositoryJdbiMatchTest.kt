@@ -326,11 +326,16 @@ fun seedUsersLobbyAndMatch(trxManager: TransactionManagerJdbi) {
         )
 
         repoMatch.createMatch(
-            id = 1,                 // ajuste o id se já existir
+            id = 1,
             lobbyId = lobbyId,
             players = players,
             totalRounds = 5,
-            ante = 20
+            ante = 20,
+            state = MatchState.RUNNING,       // Adiciona estado
+            currentRoundNo = 1,               // Adiciona número da rodada atual
+            startedAt = Instant.now(),        // Adiciona timestamp de início
+            finishedAt = null                 // Adiciona timestamp de finalização como null
         )
+
     }
 }

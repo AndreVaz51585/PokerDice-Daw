@@ -38,4 +38,14 @@ sealed class Problem(
     data object AlreadyInLobby : Problem(URI("$PROBLEM_URI_PATH/already-in-lobby"))
 
     data object ErrorJoiningLobby : Problem(URI("$PROBLEM_URI_PATH/error-joining-lobby"))
+
+    data object MatchNotFound : Problem(URI("$PROBLEM_URI_PATH/match-not-found"))
+
+    data object AlreadyInMatch : Problem(URI("$PROBLEM_URI_PATH/already-in-match"))
+
+    data object MatchFull : Problem(URI("$PROBLEM_URI_PATH/match-full"))
+
+    data object InvalidRequest : Problem(URI("$PROBLEM_URI_PATH/invalid-request"))
+
+    data class Unknown(val detail: String) : Problem(URI("$PROBLEM_URI_PATH/custom-problem"))
 }

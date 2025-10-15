@@ -29,8 +29,13 @@ interface RepositoryMatch : Repository<Match> {
         lobbyId: Int,
         players: List<MatchPlayer>,
         totalRounds: Int,
-        ante: Int
+        ante: Int,
+        state: MatchState = MatchState.RUNNING,
+        currentRoundNo: Int = 1,
+        startedAt: Instant = Instant.now(),
+        finishedAt: Instant? = null
     ): Match
+
 
     /**
      * Updates the state and optionally the finishedAt timestamp.

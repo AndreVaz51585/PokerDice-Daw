@@ -45,7 +45,7 @@ CREATE TYPE hand_rank AS ENUM (
 -- TODO: Fazer testes para domain
 CREATE TYPE lobby_state AS ENUM ('OPEN','FULL','STARTED','CLOSED');
 CREATE TYPE lobby_player_status AS ENUM ('WAITING','LEFT','KICKED');
-CREATE TYPE match_state AS ENUM ('IN_PROGRESS','COMPLETED','CANCELLED');
+CREATE TYPE match_state AS ENUM ('RUNNING','COMPLETED','CANCELLED');
 CREATE TYPE tx_type AS ENUM ('ANTE','WIN','ADJUSTMENT');
 
 -- ===========================
@@ -59,7 +59,6 @@ CREATE TYPE tx_type AS ENUM ('ANTE','WIN','ADJUSTMENT');
               --    balance_coins     INTEGER NOT NULL DEFAULT 0, -- saldo atual (inteiros)
                 --  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
     --);
-
 -- Registo por convite (one-time use)
 CREATE TABLE invitation (
                             code              TEXT PRIMARY KEY,  -- ex.: token curto/URL-safe
@@ -141,9 +140,12 @@ EXECUTE FUNCTION trg_lobby_add_host();
 CREATE TABLE match (
                        id                BIGSERIAL PRIMARY KEY,
                        lobby_id          BIGINT REFERENCES lobby(id) ON DELETE SET NULL,
+                       total_rounds      INTEGER NOT NULL,
+                       ante              INTEGER NOT NULL,
                        state             match_state NOT NULL DEFAULT 'IN_PROGRESS',
+                       current_round_no  INTEGER NOT NULL DEFAULT 1,
                        started_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-                       ended_at          TIMESTAMPTZ,
+                       finished_at       TIMESTAMPTZ, -- Renomeado de ended_at para manter consistência com o código
                        starting_player_user_id BIGINT REFERENCES dbo.users(id) ON DELETE SET NULL
 );
 
