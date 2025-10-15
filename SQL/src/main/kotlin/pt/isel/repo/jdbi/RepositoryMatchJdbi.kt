@@ -119,12 +119,27 @@ class RepositoryMatchJdbi(
     // ---------------------------
     // Criação
     // ---------------------------
-    override fun createMatch(id: Int, lobbyId: Int, players: List<MatchPlayer>, totalRounds: Int, ante: Int): Match {
+
+    override fun createMatch(
+        id: Int,
+        lobbyId: Int,
+        players: List<MatchPlayer>,
+        totalRounds: Int,
+        ante: Int,
+        state: MatchState,
+        currentRoundNo: Int,
+        startedAt: Instant,
+        finishedAt: Instant?
+    ): Match {
         handle.createUpdate(Sql.INSERT_MATCH)
             .bind("id", id)
             .bind("lobbyId", lobbyId)
             .bind("totalRounds", totalRounds)
             .bind("ante", ante)
+            .bind("state", state.name) // Importante: converter o enum para string
+            .bind("currentRoundNo", currentRoundNo)
+            .bind("startedAt", startedAt)
+            .bind("finishedAt", finishedAt)
             .execute()
 
         if (players.isNotEmpty()) {
@@ -147,14 +162,14 @@ class RepositoryMatchJdbi(
             players = players,
             totalRounds = totalRounds,
             ante = ante,
-            state = MatchState.RUNNING, // ou o estado inicial correto
-            currentRoundNo = 1,
-            startedAt = Instant.now(),
-            finishedAt = null,
-            rounds = emptyList()
+            state = state, // ou o estado inicial correto
+            currentRoundNo = currentRoundNo,
+            startedAt = startedAt,
+            finishedAt = finishedAt,
+            rounds = emptyList() // TODO: carregar rounds quando houver esquema
         )
-
     }
+
 
     // ---------------------------
     // Leitura
@@ -208,6 +223,8 @@ class RepositoryMatchJdbi(
             .bind("id", id)
             .mapTo(Int::class.java)
             .one() > 0
+
+
 
     // ---------------------------
     // Atualizações

@@ -1,18 +1,12 @@
 package pt.isel.http
 
-import com.sun.net.httpserver.Authenticator
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.user.AuthenticatedUser
 import pt.isel.http.model.LobbyInput
 import pt.isel.http.model.Problem
-import pt.isel.http.model.UserHomeOutputModel
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.Failure
 import pt.isel.service.Auxiliary.Success
@@ -27,27 +21,27 @@ class LobbyController(
     @PostMapping("/api/lobbies")
     fun createLobby(
         @RequestBody input: LobbyInput
-    ) : ResponseEntity<*> {
+    ): ResponseEntity<*> {
 
-        val result : Either<LobbyServiceError, Lobby> =
-            lobbyService
-                .createLobby(input.lobbyHostId, input.name, input.description, input.minPlayers, input.maxPlayers, input.rounds, input.ante)
-
-
-        return when(result){
-
-         is Success ->
-                ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .header(
-                        "Location",
-                        "/api/lobbies/${result.value.id}",
-                    ).build<Unit>()
-
-         is Failure ->
-             Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
+        val result: Either<LobbyServiceError, Lobby> = lobbyService.createLobby(
+            input.lobbyHostId,
+            input.name,
+            input.description,
+            input.minPlayers,
+            input.maxPlayers,
+            input.rounds,
+            input.ante
+        )
 
 
+        return when (result) {
+
+            is Success -> ResponseEntity.status(HttpStatus.CREATED).header(
+                "Location",
+                "/api/lobbies/${result.value.id}",
+            ).build<Unit>()
+
+            is Failure -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
 
 
         }
@@ -57,10 +51,8 @@ class LobbyController(
 
     @GetMapping("/api/lobbies")
     fun getAllLobbies(): ResponseEntity<*> {
-        val lobbies: List<Lobby> = lobbyService.listOpenLobbies(100,0)
-        return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(lobbies)
+        val lobbies: List<Lobby> = lobbyService.listOpenLobbies(100, 0)
+        return ResponseEntity.status(HttpStatus.OK).body(lobbies)
     }
 
 
@@ -69,32 +61,24 @@ class LobbyController(
         @PathVariable id: Int
     ): ResponseEntity<*> {
 
-    val result : Either<LobbyServiceError, Lobby> =
-        lobbyService
-            .getLobby(id)
+        val result: Either<LobbyServiceError, Lobby> = lobbyService.getLobby(id)
 
-    return when(result){
+        return when (result) {
 
-       is Success ->
-            ResponseEntity
-                .status(HttpStatus.OK)
-                .body(result.value)
+            is Success -> ResponseEntity.status(HttpStatus.OK).body(result.value)
 
 
-      is Failure ->
-          Problem.LobbyNotFound.response(HttpStatus.NOT_FOUND)
+            is Failure -> Problem.LobbyNotFound.response(HttpStatus.NOT_FOUND)
 
-      }
+        }
     }
 
     @PostMapping("/api/lobbies/{id}/join")
     fun joinLobby(
-        @PathVariable id: Int,
-        @RequestBody user: AuthenticatedUser
+        @PathVariable id: Int, @RequestBody user: AuthenticatedUser
     ): ResponseEntity<*> {
         val userId = user.user.id
-        val result : Either<LobbyServiceError, Boolean> = lobbyService
-            .joinLobby(id, userId)
+        val result: Either<LobbyServiceError, Boolean> = lobbyService.joinLobby(id, userId)
         return when (result) {
             is Success -> ResponseEntity.status(HttpStatus.OK).body(true)
 
@@ -109,11 +93,10 @@ class LobbyController(
         }
     }
 
-// Remover jogador do lobby FALTA ACABAR , SE O UTILIZADOR NÂO ESTIVER NO LOBBY DEVE DAR ERRO INDICANDO QUE JÀ NÂO ESTÁ NO LOBBY
+    // Remover jogador do lobby FALTA ACABAR , SE O UTILIZADOR NÂO ESTIVER NO LOBBY DEVE DAR ERRO INDICANDO QUE JÀ NÂO ESTÁ NO LOBBY
     @PostMapping("/api/lobbies/{id}/leave")
     fun leaveLobby(
-        @PathVariable id: Int,
-        @RequestBody input: AuthenticatedUser
+        @PathVariable id: Int, @RequestBody input: AuthenticatedUser
     ): ResponseEntity<*> {
         val userId = input.user.id
         lobbyService.leaveLobby(id, userId)
@@ -134,8 +117,7 @@ class LobbyController(
     fun getLobbyHost(
         @PathVariable id: Int
     ): ResponseEntity<*> {
-        val lobbyResult : Either<LobbyServiceError, Lobby> = lobbyService
-            .getLobby(id)
+        val lobbyResult: Either<LobbyServiceError, Lobby> = lobbyService.getLobby(id)
 
         return when (lobbyResult) {
             is Success -> {
@@ -144,11 +126,10 @@ class LobbyController(
                     is Failure -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
                 }
             }
+
             is Failure -> Problem.LobbyNotFound.response(HttpStatus.NOT_FOUND)
         }
     }
-
-
 
 }
 

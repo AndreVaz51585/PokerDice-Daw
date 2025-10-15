@@ -1,4 +1,4 @@
-package pt.isel.service.lobbyService
+package pt.isel.service.matchService
 
 sealed class MatchServiceError {
     data object MatchNotFound : MatchServiceError()
