@@ -1,5 +1,6 @@
 package pt.isel.app
 
+import org.jdbi.v3.core.Jdbi
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
@@ -12,6 +13,11 @@ import pt.isel.domain.authentication.Sha256TokenEncoder
 import pt.isel.domain.user.UsersDomainConfig
 import pt.isel.http.AuthenticatedUserArgumentResolver
 import pt.isel.http.AuthenticationInterceptor
+import pt.isel.repo.RepositoryLobby
+import pt.isel.repo.RepositoryMatch
+import pt.isel.repo.jdbi.RepositoryLobbyJdbi
+import pt.isel.repo.jdbi.RepositoryMatchJdbi
+import pt.isel.repo.jdbi.TransactionManagerJdbi
 import pt.isel.repo.mem.RepositoryUserInMem
 import java.time.Clock
 import java.time.Duration
@@ -43,6 +49,22 @@ class WebApp {
 
     @Bean
     fun repositoryUser() = RepositoryUserInMem()
+
+    @Bean
+    fun jdbi() : Jdbi = Jdbi.create("jdbc:postgresql://localhost:5432/db", "dbuser", "changeit")
+
+    @Bean
+    fun repositoryLobby(jdbi : Jdbi) : RepositoryLobby = RepositoryLobbyJdbi(jdbi.open())
+
+
+    @Bean
+    fun transactionManager(jdbi: Jdbi): pt.isel.repo.TransactionManager =
+        TransactionManagerJdbi(jdbi)
+
+    // kotlin
+    @Bean
+    fun repositoryMatch(jdbi: Jdbi): RepositoryMatch = RepositoryMatchJdbi(jdbi.open())
+
 
     @Bean
     fun usersDomainConfig() =

@@ -2,6 +2,7 @@ package pt.isel.http.model
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import pt.isel.service.lobbyService.LobbyServiceError
 import java.net.URI
 import kotlin.collections.last
 import kotlin.text.split
@@ -39,13 +40,18 @@ sealed class Problem(
 
     data object ErrorJoiningLobby : Problem(URI("$PROBLEM_URI_PATH/error-joining-lobby"))
 
-    data object MatchNotFound : Problem(URI("$PROBLEM_URI_PATH/match-not-found"))
+    data object ErrorLeavingLobby : Problem(URI("$PROBLEM_URI_PATH/error-leaving-lobby"))
 
-    data object AlreadyInMatch : Problem(URI("$PROBLEM_URI_PATH/already-in-match"))
-
-    data object MatchFull : Problem(URI("$PROBLEM_URI_PATH/match-full"))
+    data object UserIsNotInLobby : Problem(URI("$PROBLEM_URI_PATH/user-is-not-in-lobby"))
 
     data object InvalidRequest : Problem(URI("$PROBLEM_URI_PATH/invalid-request"))
 
-    data class Unknown(val detail: String) : Problem(URI("$PROBLEM_URI_PATH/custom-problem"))
+    data object AlreadyInMatch : Problem(URI("$PROBLEM_URI_PATH/already-in-match"))
+
+    data object MatchNotFound : Problem(URI("$PROBLEM_URI_PATH/match-not-found"))
+
+    data object Unknown : Problem(URI("$PROBLEM_URI_PATH/Unknown"))
+
+    data object MatchFull : Problem(URI("$PROBLEM_URI_PATH/match-full"))
+
 }

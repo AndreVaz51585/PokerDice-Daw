@@ -27,7 +27,7 @@ interface RepositoryLobby : Repository<Lobby> {
 
     fun addPlayerToLobby(lobbyId: Int, playerId: Int): Boolean
 
-    fun remove(lobbyId: Int, userId: Int): Int
+    fun remove(lobbyId: Int, userId: Int): Boolean
 
     fun listPlayers(lobbyId: Int): List<User>
 

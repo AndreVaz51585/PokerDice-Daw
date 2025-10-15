@@ -1,0 +1,71 @@
+@token = bwpEG_RpQ4QFoqmO9sdDlD_OumUNxVAEgJRHTeAMTqk=
+
+### Registar um novo utilizador
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "name": "teste2",
+  "email": "test2@gmail.com",
+  "password": "minhaSenhaSegura"
+}
+
+### Obter token de autenticação
+POST http://localhost:8080/api/users/token
+Content-Type: application/json
+
+{
+  "email": "test2@gmail.com",
+  "password": "minhaSenhaSegura"
+}
+
+
+
+### Criar um lobby
+POST http://localhost:8080/api/lobbies
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "lobbyHostId": 0,
+  "name": "Lobby Teste",
+  "description": "Descrição do lobby",
+  "minPlayers": 2,
+  "maxPlayers": 6,
+  "rounds": 5,
+  "ante": 100
+}
+
+### Listar todos os lobbies
+GET http://localhost:8080/api/lobbies
+
+### Obter lobby por ID
+GET http://localhost:8080/api/lobbies/1
+
+### Juntar-se a um lobby
+POST http://localhost:8080/api/lobbies/1/join
+Content-Type: application/json
+
+{
+  "user": {
+    "id": 2,
+    "username": "jogador2"
+  }
+}
+
+### Sair de um lobby
+POST http://localhost:8080/api/lobbies/1/leave
+Content-Type: application/json
+
+{
+  "user": {
+    "id": 2,
+    "username": "jogador2"
+  }
+}
+
+### Listar jogadores de um lobby
+GET http://localhost:8080/api/lobbies/1/players
+
+### Obter host do lobby
+GET http://localhost:8080/api/lobbies/1/host

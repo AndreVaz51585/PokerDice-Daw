@@ -15,7 +15,6 @@ dependencies {
     implementation(project(":lesson10-web-app-modules-and-tests:domain"))
     implementation(project(":lesson10-web-app-modules-and-tests:repo")) // se as interfaces Repository*/Transaction* estiverem aqui
     implementation(project(":lesson10-web-app-modules-and-tests:http"))
-    implementation(project(":lesson10-web-app-modules-and-tests:app"))
     implementation(project(":lesson10-web-app-modules-and-tests:service"))
 
     // for JDBI

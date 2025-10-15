@@ -49,8 +49,8 @@ class MatchController(
                 MatchServiceError.InvalidState -> Problem.InvalidRequest.response(HttpStatus.BAD_REQUEST)
                 MatchServiceError.PlayerAlreadyInMatch -> Problem.AlreadyInMatch.response(HttpStatus.BAD_REQUEST)
                 MatchServiceError.MatchFull -> Problem.MatchFull.response(HttpStatus.BAD_REQUEST)
-                is MatchServiceError.Unknown -> Problem.Unknown((result.value as MatchServiceError.Unknown).reason).response(HttpStatus.INTERNAL_SERVER_ERROR)
-                else -> Problem.Unknown("Erro ao criar partida").response(HttpStatus.INTERNAL_SERVER_ERROR)
+                MatchServiceError.Unknown -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
+                else -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
             }
         }
     }
@@ -113,8 +113,8 @@ class MatchController(
             is Success -> ResponseEntity.status(HttpStatus.OK).build<Unit>()
             is Failure -> when (result.value) {
                 MatchServiceError.InvalidState -> Problem.InvalidRequest.response(HttpStatus.BAD_REQUEST)
-                is MatchServiceError.Unknown -> Problem.Unknown((result.value as MatchServiceError.Unknown).reason).response(HttpStatus.INTERNAL_SERVER_ERROR)
-                else -> Problem.Unknown("Erro ao iniciar partida").response(HttpStatus.INTERNAL_SERVER_ERROR)
+                is MatchServiceError.Unknown -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
+                else -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
             }
         }
     }
@@ -136,8 +136,8 @@ class MatchController(
             is Success -> ResponseEntity.status(HttpStatus.OK).build<Unit>()
             is Failure -> when (result.value) {
                 MatchServiceError.InvalidState -> Problem.InvalidRequest.response(HttpStatus.BAD_REQUEST)
-                is MatchServiceError.Unknown -> Problem.Unknown((result.value as MatchServiceError.Unknown).reason).response(HttpStatus.INTERNAL_SERVER_ERROR)
-                else -> Problem.Unknown("Erro ao finalizar partida").response(HttpStatus.INTERNAL_SERVER_ERROR)
+                is MatchServiceError.Unknown -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
+                else -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
             }
         }
     }

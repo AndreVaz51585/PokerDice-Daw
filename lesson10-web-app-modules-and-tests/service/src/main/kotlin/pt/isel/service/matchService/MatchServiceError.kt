@@ -12,5 +12,5 @@ sealed class MatchServiceError {
 
     data object MatchFull : MatchServiceError()
 
-    data class Unknown(val reason: String) : MatchServiceError()
+    data object Unknown: MatchServiceError()
 }

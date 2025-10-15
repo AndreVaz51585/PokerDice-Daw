@@ -129,7 +129,7 @@ CREATE TABLE match (
                        lobby_id          BIGINT REFERENCES lobby(id) ON DELETE SET NULL,
                        total_rounds      INTEGER NOT NULL,
                        ante              INTEGER NOT NULL,
-                       state             match_state NOT NULL DEFAULT 'IN_PROGRESS',
+                       state             match_state NOT NULL DEFAULT 'RUNNING',
                        current_round_no  INTEGER NOT NULL DEFAULT 1,
                        started_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
                        finished_at       TIMESTAMPTZ, -- Renomeado de ended_at para manter consistência com o código
@@ -170,6 +170,7 @@ CREATE TABLE IF NOT EXISTS round (
 -- Cada jogador joga 1 turno por ronda; até 3 lançamentos
 
 -- Histórico dos lançamentos dentro de um turno (1..3)
+CREATE TYPE dice_face AS ENUM ('ACE','KING','QUEEN','JACK','TEN','NINE');
 CREATE TABLE Dice (
                       id         BIGSERIAL PRIMARY KEY,
                       round_id   BIGINT  NOT NULL REFERENCES round(id) ON DELETE CASCADE,
@@ -182,7 +183,6 @@ CREATE TABLE Dice (
                       UNIQUE (round_id, user_id, roll_no)
 );
 
-CREATE TYPE dice_face AS ENUM ('ACE','KING','QUEEN','JACK','TEN','NINE');
 
 
 CREATE TYPE hand_rank AS ENUM (

@@ -22,7 +22,7 @@ interface LobbyService {
 
     fun joinLobby(lobbyId: Int, userId: Int): Either<LobbyServiceError, Boolean>
 
-    fun leaveLobby(lobbyId: Int, userId: Int): Int
+    fun leaveLobby(lobbyId: Int, userId: Int): Either<LobbyServiceError, Boolean>
 
     fun getLobbyHost(lobby: Lobby): Either<LobbyServiceError, User>
 

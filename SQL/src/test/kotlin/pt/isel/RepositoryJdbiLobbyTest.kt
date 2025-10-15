@@ -130,7 +130,7 @@ class RepositoryJdbiLobbyTest {
             assertEquals(listOf(host.id, u1.id, u2.id), players.map { it.id })
 
             val removed = repoLobbies.remove(lobby.id, u1.id)
-            assertEquals(1, removed)
+            assertTrue( removed)
             assertEquals(2, repoLobbies.countPlayers(lobby.id))
         }
     }

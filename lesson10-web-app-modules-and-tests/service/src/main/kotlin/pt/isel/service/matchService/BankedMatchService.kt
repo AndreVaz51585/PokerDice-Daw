@@ -1,4 +1,4 @@
-package pt.isel.service.matchService
+/*package pt.isel.service.matchService
 
 
 import jakarta.inject.Named
@@ -23,4 +23,4 @@ class BankedMatchService(
     }
 }
 
-
+*/

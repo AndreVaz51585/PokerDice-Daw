@@ -16,6 +16,9 @@ repositories {
 dependencies {
     implementation(project(":lesson10-web-app-modules-and-tests:http"))
     api(project(":lesson10-web-app-modules-and-tests:service"))
+    implementation(project(":SQL"))
+    implementation("org.jdbi:jdbi3-core:3.43.0")
+
 
     // BOM do Spring Boot fixa todas as versões (Spring, Jackson, etc.)
     implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.6"))
@@ -30,6 +33,7 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(kotlin("test"))
+    testImplementation("org.springframework.boot:spring-boot-starter-webflux")
 }
 
 tasks.test {

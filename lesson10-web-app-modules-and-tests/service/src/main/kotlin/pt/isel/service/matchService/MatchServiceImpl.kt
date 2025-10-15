@@ -1,6 +1,7 @@
 package pt.isel.service.matchService
 
 import jakarta.inject.Named
+import org.springframework.stereotype.Service
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
@@ -9,8 +10,9 @@ import pt.isel.repo.TransactionManager
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
+import java.io.Serial
 
-@Named
+@Service
 class MatchServiceImpl(
     private val repoMatch: RepositoryMatch,
     private val trxManager: TransactionManager,
@@ -56,7 +58,7 @@ class MatchServiceImpl(
             if (currentPlayers.size >= max) return@run failure(MatchServiceError.MatchFull)
         }
         val ok = repoMatch.addPlayer(matchId, player)
-        if (!ok) return@run failure(MatchServiceError.Unknown("Não foi possível adicionar jogador"))
+        if (!ok) return@run failure(MatchServiceError.Unknown)
         success(true)
     }
 
@@ -68,7 +70,7 @@ class MatchServiceImpl(
             return@run failure(MatchServiceError.PlayerNotFound)
         }
         val ok = repoMatch.removePlayer(matchId, userId)
-        if (!ok) return@run failure(MatchServiceError.Unknown("Falha ao remover jogador"))
+        if (!ok) return@run failure(MatchServiceError.Unknown)
         success(true)
     }
 
@@ -80,7 +82,7 @@ class MatchServiceImpl(
             return@run failure(MatchServiceError.InvalidState)
         }
         val ok = repoMatch.updateState(matchId, newState)
-        if (!ok) return@run failure(MatchServiceError.Unknown("Falha ao atualizar estado"))
+        if (!ok) return@run failure(MatchServiceError.Unknown)
         success(true)
     }
 
