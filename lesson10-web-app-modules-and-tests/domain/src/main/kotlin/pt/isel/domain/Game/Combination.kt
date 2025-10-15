@@ -54,29 +54,9 @@ enum class Combination(val priority: Int) {
 
         private fun isPair(faceCounts: Map<Face, Int>) = faceCounts.any { it.value == 2 }
 
-        /**
-         * Compares two hands and returns the winning hand.
-         * In case of a draw, returns the first hand.
-         */
-        fun compareHands(hand1: Hand, hand2: Hand): Hand {
-            val (comb1, sorted1) = hand1.getCombination()
-            val (comb2, sorted2) = hand2.getCombination()
-            val combCompare = comb1.priority.compareTo(comb2.priority)
-            return when {
-                combCompare < 0 -> hand1
-                combCompare > 0 -> hand2
-                else -> {
-                    for (i in sorted1.indices) {
-                        val faceCompare = sorted1[i].priority.compareTo(sorted2[i].priority)
-                        if (faceCompare < 0) return hand1
-                        if (faceCompare > 0) return hand2
-                    }
-                    hand1 // draw fallback
-                }
-            }
-        }
 
         enum class HandOutcome { HAND1, HAND2, DRAW }
+
 
         fun compareHandsOutcome(hand1: Hand, hand2: Hand): HandOutcome {
             val (comb1, sorted1) = hand1.getCombination()
@@ -97,6 +77,14 @@ enum class Combination(val priority: Int) {
 
             return HandOutcome.DRAW
         }
+
+
+        fun compareHands(hand1: Hand, hand2: Hand): Hand =
+            when (compareHandsOutcome(hand1, hand2)) {
+                HandOutcome.HAND1 -> hand1
+                HandOutcome.HAND2 -> hand2
+                HandOutcome.DRAW -> hand1 // do not use for payouts
+            }
 
     }
 }
