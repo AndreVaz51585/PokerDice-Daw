@@ -26,19 +26,6 @@ create table dbo.Tokens
 -- ===========================
 -- Tipos de domínio (ENUMs)
 -- ===========================
-CREATE TYPE dice_face AS ENUM ('ACE','KING','QUEEN','JACK','TEN','NINE');
-
--- Força das mãos (ordem decrescente) conforme enunciado.
-CREATE TYPE hand_rank AS ENUM (
-  'FIVE_OF_A_KIND',
-  'FOUR_OF_A_KIND',
-  'FULL_HOUSE',
-  'STRAIGHT',
-  'THREE_OF_A_KIND',
-  'TWO_PAIR',
-  'ONE_PAIR',
-  'BUST'
-);
 -- TODO: Ver aula 13 para erceber como se faz o sql
 -- TODO: Acho que tenho de pôr numa pasta fora à parte como está na aula 13 em que vou ter lá o SQL o Docker e tudo
 -- TODO: Não preciso de memoria posso fazer tudo em SQL
@@ -165,13 +152,17 @@ CREATE INDEX ix_match_state ON match(state);
 -- ===========================
 -- Rondas e Turnos
 -- ===========================
-CREATE TABLE round (
-    --id                BIGSERIAL PRIMARY KEY,
-    --match_id          BIGINT NOT NULL REFERENCES match(id) ON DELETE CASCADE,
-                       round_no          BIGSERIAL PRIMARY KEY,               -- 1..number_of_rounds
-                       state             round_state NOT NULL DEFAULT 'IN_PROGRESS',
-                       pot               INTEGER NOT NULL,               -- copia do valor do lobby/match
-                       results           Text NOT NULL               -- TODO: List of text ?
+CREATE TABLE IF NOT EXISTS round (
+                                      id               BIGSERIAL PRIMARY KEY,
+                                      match_id         BIGINT NOT NULL REFERENCES match(id) ON DELETE CASCADE,
+                                      number           INTEGER NOT NULL CHECK (number >= 1),
+                                      ante_coins       INTEGER NOT NULL CHECK (ante_coins > 0),   -- snapshot do ante para este round
+                                      status           round_state NOT NULL DEFAULT 'IN_PROGRESS',
+                                      pot_coins        INTEGER NOT NULL DEFAULT 0,                -- materializado por trigger (soma dos ANTE)
+                                      winner_user_id   BIGINT REFERENCES dbo.users(id),
+                                      started_at       TIMESTAMPTZ,
+                                      ended_at         TIMESTAMPTZ,
+                                      UNIQUE (match_id, number)
 );
 
 --CREATE INDEX ix_round_match ON round(match_id);
@@ -181,7 +172,7 @@ CREATE TABLE round (
 -- Histórico dos lançamentos dentro de um turno (1..3)
 CREATE TABLE Dice (
                       id         BIGSERIAL PRIMARY KEY,
-                      round_id   BIGINT  NOT NULL REFERENCES round(round_no) ON DELETE CASCADE,
+                      round_id   BIGINT  NOT NULL REFERENCES round(id) ON DELETE CASCADE,
                       user_id    BIGINT  NOT NULL REFERENCES dbo.users(id)    ON DELETE CASCADE,
                       roll_no    SMALLINT NOT NULL CHECK (roll_no BETWEEN 1 AND 3),
                       d1         dice_face NOT NULL,
@@ -191,6 +182,33 @@ CREATE TABLE Dice (
                       UNIQUE (round_id, user_id, roll_no)
 );
 
+CREATE TYPE dice_face AS ENUM ('ACE','KING','QUEEN','JACK','TEN','NINE');
+
+
+CREATE TYPE hand_rank AS ENUM (
+    'FIVE_OF_A_KIND',
+    'FOUR_OF_A_KIND',
+    'FULL_HOUSE',
+    'STRAIGHT',
+    'THREE_OF_A_KIND',
+    'TWO_PAIR',
+    'ONE_PAIR',
+    'BUST'
+    );
+
+
+CREATE TABLE Hand (
+                      id BIGSERIAL PRIMARY KEY,
+                      round_id BIGINT NOT NULL REFERENCES round(id),
+                      user_id BIGINT NOT NULL REFERENCES dbo.users(id),
+                      dice_roll_id BIGINT NOT NULL REFERENCES Dice(id),
+                      combination hand_rank NOT NULL,
+                      combination_strength INTEGER NOT NULL, -- Para desempates
+                      UNIQUE (round_id, user_id)
+);
+
+
+
 -- ===========================
 -- Movimentos/Transações (saldo)
 -- ===========================
@@ -198,8 +216,7 @@ CREATE TABLE wallet_tx (
                            id                BIGSERIAL PRIMARY KEY,
                            user_id           BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
                            --match_id          BIGINT REFERENCES match(id) ON DELETE SET NULL,
-                           round_id          BIGINT REFERENCES round(round_no) ON DELETE SET NULL,
-                           type              tx_type NOT NULL,               -- ANTE (-), WIN (+), ADJUSTMENT (+/-)
+                           round_id          BIGINT REFERENCES round(id) ON DELETE SET NULL,
                            amount_coins      INTEGER NOT NULL,               -- débito < 0, crédito > 0
                            created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
                            CHECK (amount_coins <> 0)

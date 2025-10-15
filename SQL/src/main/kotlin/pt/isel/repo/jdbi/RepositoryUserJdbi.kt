@@ -8,6 +8,7 @@ import pt.isel.domain.token.Token
 import pt.isel.domain.token.TokenValidationInfo
 import pt.isel.domain.user.User
 import pt.isel.repo.RepositoryUser
+import pt.isel.repo.jdbi.sql.UserSql
 import java.time.Instant
 
 class RepositoryUserJdbi(
@@ -15,7 +16,7 @@ class RepositoryUserJdbi(
 ) : RepositoryUser {
     override fun findById(id: Int): User? =
         handle
-            .createQuery("SELECT * FROM dbo.users WHERE id = :id")
+            .createQuery(UserSql.FIND_BY_ID)
             .bind("id", id)
             .mapTo<User>()
             .findOne()
@@ -23,32 +24,27 @@ class RepositoryUserJdbi(
 
     override fun findAll(): List<User> =
         handle
-            .createQuery("SELECT * FROM dbo.users")
+            .createQuery(UserSql.FIND_ALL)
             .mapTo<User>()
             .list()
 
     override fun save(entity: User) {
         handle
-            .createUpdate(
-                """
-            UPDATE dbo.users 
-            SET name = :name, email = :email 
-            WHERE id = :id
-            """,
-            ).bindBean(entity)
+            .createUpdate(UserSql.UPDATE_USER)
+            .bindBean(entity)
             .execute()
     }
 
     override fun deleteById(id: Int): Boolean {
         return handle
-            .createUpdate("DELETE FROM dbo.users WHERE id = :id")
+            .createUpdate(UserSql.DELETE_BY_ID)
             .bind("id", id)
             .execute() > 0
     }
 
     override fun clear() {
-        handle.createUpdate("DELETE FROM dbo.Tokens").execute()
-        handle.createUpdate("DELETE FROM dbo.users").execute()
+        handle.createUpdate(UserSql.CLEAR_TOKENS).execute()
+        handle.createUpdate(UserSql.CLEAR_USERS).execute()
     }
 
     override fun createUser(
@@ -58,13 +54,8 @@ class RepositoryUserJdbi(
     ): User {
         val id =
             handle
-                .createUpdate(
-                    """
-            INSERT INTO dbo.users (name, email, password_validation) 
-            VALUES (:name, :email, :password_validation)
-            RETURNING id
-            """,
-                ).bind("name", name)
+                .createUpdate(UserSql.CREATE_USER)
+                .bind("name", name)
                 .bind("email", email)
                 .bind("password_validation", passwordValidation.validationInfo)
                 .executeAndReturnGeneratedKeys()
@@ -76,7 +67,7 @@ class RepositoryUserJdbi(
 
     override fun findByEmail(email: String): User? =
         handle
-            .createQuery("SELECT * FROM dbo.users WHERE email = :email")
+            .createQuery(UserSql.FIND_BY_EMAIL)
             .bind("email", email)
             .mapTo<User>()
             .findOne()
@@ -84,15 +75,8 @@ class RepositoryUserJdbi(
 
     override fun getTokenByTokenValidationInfo(tokenValidationInfo: TokenValidationInfo): Pair<User, Token>? =
         handle
-            .createQuery(
-                """
-                select id, name, email, password_validation, token_validation, created_at, last_used_at
-                from dbo.Users as users 
-                inner join dbo.Tokens as tokens 
-                on users.id = tokens.user_id
-                where token_validation = :validation_information
-            """,
-            ).bind("validation_information", tokenValidationInfo.validationInfo)
+            .createQuery(UserSql.GET_TOKEN_BY_VALIDATION)
+            .bind("validation_information", tokenValidationInfo.validationInfo)
             .mapTo<UserAndTokenModel>()
             .singleOrNull()
             ?.userAndToken
@@ -104,28 +88,16 @@ class RepositoryUserJdbi(
         // Delete the oldest token when achieved the maximum number of tokens
         val deletions =
             handle
-                .createUpdate(
-                    """
-                    delete from dbo.Tokens 
-                    where user_id = :user_id 
-                        and token_validation in (
-                            select token_validation from dbo.Tokens where user_id = :user_id 
-                                order by last_used_at desc offset :offset
-                        )
-                    """.trimIndent(),
-                ).bind("user_id", token.userId)
+                .createUpdate(UserSql.DELETE_OLDEST_TOKENS)
+                .bind("user_id", token.userId)
                 .bind("offset", maxTokens - 1)
                 .execute()
 
         logger.info("{} tokens deleted when creating new token", deletions)
 
         handle
-            .createUpdate(
-                """
-                insert into dbo.Tokens(user_id, token_validation, created_at, last_used_at) 
-                values (:user_id, :token_validation, :created_at, :last_used_at)
-                """.trimIndent(),
-            ).bind("user_id", token.userId)
+            .createUpdate(UserSql.CREATE_TOKEN)
+            .bind("user_id", token.userId)
             .bind("token_validation", token.tokenValidationInfo.validationInfo)
             .bind("created_at", token.createdAt.epochSecond)
             .bind("last_used_at", token.lastUsedAt.epochSecond)
@@ -137,25 +109,16 @@ class RepositoryUserJdbi(
         now: Instant,
     ) {
         handle
-            .createUpdate(
-                """
-                update dbo.Tokens
-                set last_used_at = :last_used_at
-                where token_validation = :validation_information
-                """.trimIndent(),
-            ).bind("last_used_at", now.epochSecond)
+            .createUpdate(UserSql.UPDATE_TOKEN_LAST_USED)
+            .bind("last_used_at", now.epochSecond)
             .bind("validation_information", token.tokenValidationInfo.validationInfo)
             .execute()
     }
 
     override fun removeTokenByValidationInfo(tokenValidationInfo: TokenValidationInfo): Int =
         handle
-            .createUpdate(
-                """
-                delete from dbo.Tokens
-                where token_validation = :validation_information
-            """,
-            ).bind("validation_information", tokenValidationInfo.validationInfo)
+            .createUpdate(UserSql.REMOVE_TOKEN_BY_VALIDATION)
+            .bind("validation_information", tokenValidationInfo.validationInfo)
             .execute()
 
     private data class UserAndTokenModel(

@@ -1,9 +1,8 @@
 package pt.isel.domain.Game
 
-object Dice{
+import kotlin.random.Random
 
-    // Funcão responsavél por calulcar o lançamento do dado
-    fun roll() : Face = Face.entries.random()
-
-
+object Dice {
+    // Permite injetar um RNG (testes determinísticos)
+    fun roll(rng: Random = Random.Default): Face = Face.entries.random(rng)
 }
