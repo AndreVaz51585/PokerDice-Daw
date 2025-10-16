@@ -2,7 +2,6 @@ package pt.isel.domain.Game.Round
 
 import pt.isel.domain.Game.Combination
 import pt.isel.domain.Game.Face
-import pt.isel.domain.Game.Hand
 
 /**
  * Round snapshot.
@@ -12,15 +11,13 @@ import pt.isel.domain.Game.Hand
  * - hands: playerId -> (Combination, ordered faces) after showdown.
  * - state progression: OPEN -> SCORING -> (copied as CLOSED when moving to next round).
  */
+
 data class Round(
-    val id: Long,
-    val matchId: Long,
     val number: Int,
     val state: RoundState = RoundState.OPEN,
-    val anteCoins: Int,
-    val potCoins: Int = 0,
-    val winnerUserId: Int? = null,
-    val hands: Map<Int, Hand> = emptyMap()
-){
-    init { require(number >= 1) { "Round number must be >= 1." } }
+    val pot: Int = 0,
+    val winners: List<Int> = emptyList(),
+    val hands: Map<Int, Pair<Combination, List<Face>>> = emptyMap()
+) {
+    init { require(number >= 1) { "number de round tem de ser ≥ 1." } }
 }
