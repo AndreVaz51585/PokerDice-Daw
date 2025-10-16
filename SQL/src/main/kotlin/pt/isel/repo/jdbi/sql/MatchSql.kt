@@ -3,9 +3,9 @@ package pt.isel.repo.jdbi.sql
 object MatchSql {
     const val INSERT_MATCH = """
             INSERT INTO match (
-                id, lobby_id, total_rounds, ante, state, current_round_no, started_at, finished_at
+                lobby_id, total_rounds, ante, state, current_round_no, started_at, finished_at
             ) VALUES (
-                :id, :lobbyId, :totalRounds, :ante, CAST(:state AS match_state), :currentRoundNo, :startedAt, :finishedAt
+                :lobbyId, :totalRounds, :ante, CAST(:state AS match_state), :currentRoundNo, :startedAt, :finishedAt
             )
         """
 

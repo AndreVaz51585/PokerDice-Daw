@@ -3,6 +3,7 @@ package pt.isel.repo
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
+import pt.isel.domain.user.User
 import java.time.Instant
 
 /**
@@ -25,9 +26,8 @@ interface RepositoryMatch : Repository<Match> {
      * Creates a Match and its initial players (transaction handled externally).
      */
     fun createMatch(
-        id: Int,
         lobbyId: Int,
-        players: List<MatchPlayer>,
+        players: List<User>,
         totalRounds: Int,
         ante: Int,
         state: MatchState = MatchState.RUNNING,

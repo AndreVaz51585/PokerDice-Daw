@@ -5,6 +5,7 @@ import org.jdbi.v3.core.kotlin.mapTo
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
+import pt.isel.domain.user.User
 import pt.isel.repo.RepositoryMatch
 import pt.isel.repo.jdbi.sql.MatchSql
 import java.sql.Timestamp
@@ -23,9 +24,8 @@ class RepositoryMatchJdbi(
 ) : RepositoryMatch {
 
     override fun createMatch(
-        id: Int,
         lobbyId: Int,
-        players: List<MatchPlayer>,
+        players: List<User>,
         totalRounds: Int,
         ante: Int,
         state: MatchState,
@@ -33,8 +33,8 @@ class RepositoryMatchJdbi(
         startedAt: Instant,
         finishedAt: Instant?
     ): Match {
-        handle.createUpdate(MatchSql.INSERT_MATCH)
-            .bind("id", id)
+
+      val id =  handle.createUpdate(MatchSql.INSERT_MATCH)
             .bind("lobbyId", lobbyId)
             .bind("totalRounds", totalRounds)
             .bind("ante", ante)
@@ -42,17 +42,19 @@ class RepositoryMatchJdbi(
             .bind("currentRoundNo", currentRoundNo)
             .bind("startedAt", startedAt)
             .bind("finishedAt", finishedAt)
-            .execute()
+            .executeAndReturnGeneratedKeys()
+            .mapTo(Int::class.java)
+            .one()
 
         if (players.isNotEmpty()) {
             val batch = handle.prepareBatch(MatchSql.INSERT_PLAYER)
             players.forEach { p ->
                 batch
                     .bind("matchId", id)
-                    .bind("userId", p.userId)
-                    .bind("seatNo", p.seatNo)
-                    .bind("balanceAtStart", p.balanceAtStart)
-                    .bind("active", p.active)
+                    .bind("userId", p.id)
+                    .bind("seatNo", p.seatNo) // deveria ser serial não algo definido por nós?
+                    .bind("balanceAtStart", p.balanceAtStart) // valor?
+                    .bind("active", p.active) // não se sabe logo deve ser inativo para todos inicialmente
                     .add()
             }
             batch.execute()

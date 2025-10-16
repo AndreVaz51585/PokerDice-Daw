@@ -3,13 +3,13 @@ package pt.isel.service.matchService
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
+import pt.isel.domain.user.User
 import pt.isel.service.Auxiliary.Either
 
 interface MatchService {
     fun createMatch(
-        id: Int,
         lobbyId: Int,
-        players: List<MatchPlayer>,
+        players: List<User>,
         totalRounds: Int,
         ante: Int
     ): Either<MatchServiceError, Match>

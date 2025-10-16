@@ -20,12 +20,14 @@ interface LobbyService {
 
     fun listOpenLobbies(limit: Int, offset: Int): List<Lobby>
 
-    fun joinLobby(lobbyId: Int, userId: Int): Either<LobbyServiceError, Boolean>
+    fun joinLobby(lobbyId: Int, userId: Int): Either<LobbyServiceError, Int>
 
     fun leaveLobby(lobbyId: Int, userId: Int): Either<LobbyServiceError, Boolean>
 
     fun getLobbyHost(lobby: Lobby): Either<LobbyServiceError, User>
 
     fun listPlayers(lobbyId: Int): List<User>
+
+    fun startMatch(lobbyId: Int): Either<LobbyServiceError, Int?>
 
 }

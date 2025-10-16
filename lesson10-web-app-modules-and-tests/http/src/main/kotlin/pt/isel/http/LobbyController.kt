@@ -90,11 +90,16 @@ class LobbyController(
         authenticateUser: AuthenticatedUser
     ): ResponseEntity<*> {
         val userId = authenticateUser.user.id
-        val result : Either<LobbyServiceError, Boolean> = lobbyService
+        val result : Either<LobbyServiceError, Int> = lobbyService
             .joinLobby(id, userId)
         return when (result) {
-            is Success -> ResponseEntity.status(HttpStatus.OK).body(true)
-
+            is Success -> when(result.value) {
+                0 -> ResponseEntity.status(HttpStatus.OK).body("Player Add to Lobby") // entrou no lobby mas o lobby não começou}
+                else -> {
+                    val matchId = result.value
+                    ResponseEntity.status(HttpStatus.CREATED).header("Location", "/api/matches/$matchId") // redireciona para a partida atravês do header location
+                        .body(mapOf("matchId" to matchId))} // entrou no lobby e o lobby começou
+            }
             is Failure -> when (result.value) {
                 LobbyServiceError.UserNotFound -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
                 LobbyServiceError.LobbyNotFound -> Problem.LobbyNotFound.response(HttpStatus.NOT_FOUND)
