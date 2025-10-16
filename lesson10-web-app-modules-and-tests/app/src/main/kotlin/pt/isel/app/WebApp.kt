@@ -83,7 +83,7 @@ class WebApp {
     @Bean
     fun repositoryMatch(jdbi: Jdbi): RepositoryMatch = RepositoryMatchJdbi(
         jdbi.open(),
-        repoLobby = repositoryLobby(jdbi)
+        repoLobby = RepositoryLobbyJdbi(jdbi.open())
     )
 
 

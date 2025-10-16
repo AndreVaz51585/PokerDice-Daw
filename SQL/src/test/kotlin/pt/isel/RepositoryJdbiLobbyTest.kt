@@ -66,7 +66,7 @@ class RepositoryJdbiLobbyTest {
                 maxPlayers = 5,
                 rounds = 4,
                 ante = 2,
-                state = LobbyState.CLOSED
+                state = LobbyState.FULL
             )
             repoLobbies.save(updated)
             val found = repoLobbies.findById(lobby.id)
@@ -77,7 +77,7 @@ class RepositoryJdbiLobbyTest {
             assertEquals(5, found.maxPlayers)
             assertEquals(4, found.rounds)
             assertEquals(2, found.ante)
-            assertEquals(LobbyState.CLOSED, found.state)
+            assertEquals(LobbyState.FULL, found.state)
         }
     }
 
@@ -94,8 +94,8 @@ class RepositoryJdbiLobbyTest {
             repoLobbies.createLobby(h3.id, "O2", "d", 2, 4, 3, 1)
             repoLobbies.createLobby(h4.id, "O3", "d", 2, 4, 3, 1)
 
-            repoLobbies.save(Lobby(2, "C1", "d", h2.id, 2, 4, 3, 1, LobbyState.CLOSED))
-            repoLobbies.save(Lobby(4, "O3", "d", h4.id, 2, 4, 3, ante = 1, LobbyState.CLOSED))
+            repoLobbies.save(Lobby(2, "C1", "d", h2.id, 2, 4, 3, 1, LobbyState.FULL))
+            repoLobbies.save(Lobby(4, "O3", "d", h4.id, 2, 4, 3, ante = 1, LobbyState.FULL))
 
             val p1 = repoLobbies.listAllOpenLobbies(limit = 2, offset = 0)
             val p2 = repoLobbies.listAllOpenLobbies(limit = 2, offset = 2)

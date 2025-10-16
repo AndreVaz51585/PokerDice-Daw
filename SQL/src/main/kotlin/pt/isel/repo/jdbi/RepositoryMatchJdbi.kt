@@ -33,7 +33,7 @@ class RepositoryMatchJdbi(
         startedAt: Instant,
         finishedAt: Instant?,
     ): Match {
-        var matchId = handle.createUpdate(MatchSql.INSERT_MATCH)
+        val matchId = handle.createUpdate(MatchSql.INSERT_MATCH)
             .bind("lobbyId", lobbyId)
             .bind("totalRounds", totalRounds)
             .bind("ante", ante)
@@ -45,8 +45,8 @@ class RepositoryMatchJdbi(
             .mapTo<Int>()
             .one()
 
-        var lobby  = repoLobby.findById(lobbyId)
-        var host = repoLobby.getLobbyHost(lobby!!)
+        val lobby  = repoLobby.findById(lobbyId)
+        val host = repoLobby.getLobbyHost(lobby!!)
 
         if (host != null) {
             addPlayer(

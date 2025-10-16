@@ -1,12 +1,14 @@
-@token = pYavEW0ldeTyivMD-xXypkrZ10vi3GMrWUFs4SLFRxk=
-
+@token = J5CToXdKZUoOjS7Hpex6yg1U9QqnJrAhRiaItrJ90vo=
+@token1 =  MU6vI_mr5hlaKeNtnf5K6s1gvQxZE0IcTxDwvkWU7QY=
+@tokenteste1 = 8ho0YTfCvhQQSuv5dPACSM8azMyURV7FpTK2AX34R94=
+@tokenteste2 = Is92aKAJjU2KhqE2qS0_vutx6ZJ0VW6oGR5wBjHcH8Q=
 ### Registar um novo utilizador
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste4",
-  "email": "test4@gmail.com",
+  "name": "teste2",
+  "email": "test2@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -15,7 +17,7 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test4@gmail.com",
+  "email": "test2@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -38,10 +40,10 @@ content-type: application/json
 ### Criar um lobby
 POST http://localhost:8080/api/lobbies
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{token1}}
 
 {
-  "name": "Lobby Teste2",
+  "name": "Lobby Teste 2",
   "description": "Descrição do lobby",
   "minPlayers": 2,
   "maxPlayers": 6,
@@ -58,11 +60,11 @@ GET http://localhost:8080/api/lobbies/4
 ### Juntar-se a um lobby
 POST http://localhost:8080/api/lobbies/4/join
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer {{tokenteste2}}
 
 
 ### Sair de um lobby
-POST http://localhost:8080/api/lobbies/4/leave
+POST http://localhost:8080/api/lobbies/1/leave
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -71,3 +73,9 @@ GET http://localhost:8080/api/lobbies/4/players
 
 ### Obter host do lobby
 GET http://localhost:8080/api/lobbies/4/host
+
+### Obter players de uma partida
+GET http://localhost:8080/api/matches/3/players
+
+### Obter detalhes de uma partida
+GET http://localhost:8080/api/matches/3

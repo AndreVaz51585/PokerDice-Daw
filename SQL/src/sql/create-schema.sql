@@ -227,37 +227,37 @@ CREATE INDEX ix_wallet_user ON wallet_tx(user_id);
 CREATE INDEX ix_wallet_round ON wallet_tx(round_id);
 
 
--- Remover tabelas (na ordem reversa devido às dependências)
-DROP TABLE IF EXISTS wallet_tx CASCADE;
-DROP TABLE IF EXISTS Hand CASCADE;
-DROP TABLE IF EXISTS Dice CASCADE;
-DROP TABLE IF EXISTS round CASCADE;
-DROP TABLE IF EXISTS match_player CASCADE;
-DROP TABLE IF EXISTS match CASCADE;
-DROP TABLE IF EXISTS lobby_player CASCADE;
-DROP TABLE IF EXISTS lobby CASCADE;
-DROP TABLE IF EXISTS auth_token CASCADE;
-DROP TABLE IF EXISTS invitation CASCADE;
-DROP TABLE IF EXISTS dbo.Tokens CASCADE;
-DROP TABLE IF EXISTS dbo.users CASCADE;
-
--- Remover triggers
-DROP TRIGGER IF EXISTS lobby_add_host ON lobby;
-
--- Remover funções
-DROP FUNCTION IF EXISTS trg_lobby_add_host();
-
--- Remover tipos
-DROP TYPE IF EXISTS dice_face CASCADE;
-DROP TYPE IF EXISTS hand_rank CASCADE;
-DROP TYPE IF EXISTS tx_type CASCADE;
-DROP TYPE IF EXISTS match_state CASCADE;
-DROP TYPE IF EXISTS lobby_player_status CASCADE;
-DROP TYPE IF EXISTS lobby_state CASCADE;
-DROP TYPE IF EXISTS round_state CASCADE;
-
--- Remover extensão
-DROP EXTENSION IF EXISTS citext;
-
--- Remover schema
-DROP SCHEMA IF EXISTS dbo CASCADE;
+---- Remover tabelas (na ordem reversa devido às dependências)
+--DROP TABLE IF EXISTS wallet_tx CASCADE;
+--DROP TABLE IF EXISTS Hand CASCADE;
+--DROP TABLE IF EXISTS Dice CASCADE;
+--DROP TABLE IF EXISTS round CASCADE;
+--DROP TABLE IF EXISTS match_player CASCADE;
+--DROP TABLE IF EXISTS match CASCADE;
+--DROP TABLE IF EXISTS lobby_player CASCADE;
+--DROP TABLE IF EXISTS lobby CASCADE;
+--DROP TABLE IF EXISTS auth_token CASCADE;
+--DROP TABLE IF EXISTS invitation CASCADE;
+--DROP TABLE IF EXISTS dbo.Tokens CASCADE;
+--DROP TABLE IF EXISTS dbo.users CASCADE;
+--
+---- Remover triggers
+--DROP TRIGGER IF EXISTS lobby_add_host ON lobby;
+--
+---- Remover funções
+--DROP FUNCTION IF EXISTS trg_lobby_add_host();
+--
+---- Remover tipos
+--DROP TYPE IF EXISTS dice_face CASCADE;
+--DROP TYPE IF EXISTS hand_rank CASCADE;
+--DROP TYPE IF EXISTS tx_type CASCADE;
+--DROP TYPE IF EXISTS match_state CASCADE;
+--DROP TYPE IF EXISTS lobby_player_status CASCADE;
+--DROP TYPE IF EXISTS lobby_state CASCADE;
+--DROP TYPE IF EXISTS round_state CASCADE;
+--
+---- Remover extensão
+--DROP EXTENSION IF EXISTS citext;
+--
+---- Remover schema
+--DROP SCHEMA IF EXISTS dbo CASCADE;
