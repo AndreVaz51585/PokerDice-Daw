@@ -7,9 +7,7 @@ import pt.isel.service.Auxiliary.Either
 
 interface MatchService {
     fun createMatch(
-        id: Int,
         lobbyId: Int,
-        players: List<MatchPlayer>,
         totalRounds: Int,
         ante: Int
     ): Either<MatchServiceError, Match>

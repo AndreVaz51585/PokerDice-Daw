@@ -32,7 +32,7 @@ create table dbo.Tokens
 -- TODO: Fazer testes para domain
 CREATE TYPE lobby_state AS ENUM ('OPEN','FULL','STARTED','CLOSED');
 CREATE TYPE lobby_player_status AS ENUM ('WAITING','LEFT','KICKED');
-CREATE TYPE match_state AS ENUM ('RUNNING','COMPLETED','CANCELLED');
+CREATE TYPE match_state AS ENUM ('RUNNING','FINISHED','CANCELLED');
 CREATE TYPE tx_type AS ENUM ('ANTE','WIN','ADJUSTMENT');
 
 -- ===========================
@@ -132,8 +132,7 @@ CREATE TABLE match (
                        state             match_state NOT NULL DEFAULT 'RUNNING',
                        current_round_no  INTEGER NOT NULL DEFAULT 1,
                        started_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-                       finished_at       TIMESTAMPTZ, -- Renomeado de ended_at para manter consistência com o código
-                       starting_player_user_id BIGINT REFERENCES dbo.users(id) ON DELETE SET NULL
+                       finished_at       TIMESTAMPTZ -- Renomeado de ended_at para manter consistência com o código
 );
 
 -- Participantes na partida (com ordem/seat p/ rotação de turnos)
@@ -142,7 +141,9 @@ CREATE TABLE match_player (
                               user_id           BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
                               seat_no           INTEGER NOT NULL,               -- define ordem dos turnos
                               balance_start     INTEGER NOT NULL,               -- snapshot à entrada
-                              balance_end       INTEGER,                        -- snapshot à saída/fim
+                              balance_end       INTEGER,
+                              active            BOOLEAN NOT NULL DEFAULT FALSE,  -- Está a jogar ou não
+                              turn              BOOLEAN NOT NULL DEFAULT FALSE, -- Indica se é o turno do jogador
                               PRIMARY KEY (match_id, user_id),
                               UNIQUE (match_id, seat_no)
 );
@@ -224,3 +225,39 @@ CREATE TABLE wallet_tx (
 
 CREATE INDEX ix_wallet_user ON wallet_tx(user_id);
 CREATE INDEX ix_wallet_round ON wallet_tx(round_id);
+
+
+-- Remover tabelas (na ordem reversa devido às dependências)
+DROP TABLE IF EXISTS wallet_tx CASCADE;
+DROP TABLE IF EXISTS Hand CASCADE;
+DROP TABLE IF EXISTS Dice CASCADE;
+DROP TABLE IF EXISTS round CASCADE;
+DROP TABLE IF EXISTS match_player CASCADE;
+DROP TABLE IF EXISTS match CASCADE;
+DROP TABLE IF EXISTS lobby_player CASCADE;
+DROP TABLE IF EXISTS lobby CASCADE;
+DROP TABLE IF EXISTS auth_token CASCADE;
+DROP TABLE IF EXISTS invitation CASCADE;
+DROP TABLE IF EXISTS dbo.Tokens CASCADE;
+DROP TABLE IF EXISTS dbo.users CASCADE;
+
+-- Remover triggers
+DROP TRIGGER IF EXISTS lobby_add_host ON lobby;
+
+-- Remover funções
+DROP FUNCTION IF EXISTS trg_lobby_add_host();
+
+-- Remover tipos
+DROP TYPE IF EXISTS dice_face CASCADE;
+DROP TYPE IF EXISTS hand_rank CASCADE;
+DROP TYPE IF EXISTS tx_type CASCADE;
+DROP TYPE IF EXISTS match_state CASCADE;
+DROP TYPE IF EXISTS lobby_player_status CASCADE;
+DROP TYPE IF EXISTS lobby_state CASCADE;
+DROP TYPE IF EXISTS round_state CASCADE;
+
+-- Remover extensão
+DROP EXTENSION IF EXISTS citext;
+
+-- Remover schema
+DROP SCHEMA IF EXISTS dbo CASCADE;

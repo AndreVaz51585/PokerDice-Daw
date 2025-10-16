@@ -11,6 +11,7 @@ import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
 import java.io.Serial
+import java.time.Instant
 
 @Service
 class MatchServiceImpl(
@@ -19,25 +20,18 @@ class MatchServiceImpl(
 ) : MatchService {
 
     override fun createMatch(
-        id: Int,
         lobbyId: Int,
-        players: List<MatchPlayer>,
         totalRounds: Int,
         ante: Int
     ): Either<MatchServiceError, Match> = trxManager.run {
-        if (players.isEmpty() || totalRounds <= 0 || ante < 0) {
+        if (totalRounds <= 0 || ante < 0) {
             return@run failure(MatchServiceError.InvalidState)
         }
         // Evitar duplicados iniciais
-        if (players.map { it.userId }.distinct().size != players.size) {
-            return@run failure(MatchServiceError.PlayerAlreadyInMatch)
-        }
         val match = repoMatch.createMatch(
             lobbyId = lobbyId,
-            players = players,
             totalRounds = totalRounds,
             ante = ante,
-            id = id
         )
         return@run success(match)
     }

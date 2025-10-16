@@ -3,17 +3,18 @@ package pt.isel.repo.jdbi.sql
 object MatchSql {
     const val INSERT_MATCH = """
             INSERT INTO match (
-                id, lobby_id, total_rounds, ante, state, current_round_no, started_at, finished_at
+                lobby_id, total_rounds, ante, state, current_round_no, started_at, finished_at
             ) VALUES (
-                :id, :lobbyId, :totalRounds, :ante, CAST(:state AS match_state), :currentRoundNo, :startedAt, :finishedAt
+                :lobbyId, :totalRounds, :ante, CAST(:state AS match_state), :currentRoundNo, :startedAt, :finishedAt
             )
         """
 
+
     const val INSERT_PLAYER = """
             INSERT INTO match_player (
-                match_id, user_id, seat_no, balance_at_start, active
+                match_id, user_id, seat_no, balance_start, active, turn
             ) VALUES (
-                :matchId, :userId, :seatNo, :balanceAtStart, :active
+                :matchId, :userId, :seatNo, :balanceStart, :active, :turn
             )
             ON CONFLICT DO NOTHING
         """
@@ -32,10 +33,16 @@ object MatchSql {
         """
 
     const val SELECT_PLAYERS = """
-            SELECT user_id, seat_no, balance_at_start, active
+            SELECT match_id, user_id, seat_no, balance_start
             FROM match_player
             WHERE match_id = :matchId
             ORDER BY seat_no
+        """
+
+    const val SELECT_WHO_TURN = """
+            SELECT user_id
+            FROM match_player
+            WHERE match_id = :matchId AND turn = true
         """
 
     const val UPDATE_STATE = """
@@ -84,10 +91,16 @@ object MatchSql {
             WHERE match_id = :matchId AND user_id = :userId
         """
 
+    const val UPDATE_TURN = """
+            UPDATE match_player
+            SET turn = :turn
+            WHERE match_id = :matchId AND user_id = :userId
+        """
+
     const val COUNT_EXISTS = """
             SELECT COUNT(*) FROM match WHERE id = :id
         """
 
-    const val CLEAR_MATCH_PLAYERS = "DELETE FROM match_player"
-    const val CLEAR_MATCHES = "DELETE FROM match"
+    const val CLEAR_MATCH_PLAYERS = "TRUNCATE TABLE match_player RESTART IDENTITY CASCADE;  "
+    const val CLEAR_MATCHES = "TRUNCATE TABLE match RESTART IDENTITY CASCADE;"
 }

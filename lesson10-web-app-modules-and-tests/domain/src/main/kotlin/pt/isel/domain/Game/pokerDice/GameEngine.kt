@@ -29,7 +29,14 @@ object GameEngine {
                 require(cmd.byUserId == state.hostId) { "Only host can start." }
                 require(state.playerOrder.size >= 2) { "Need >= 2 players." }
                 val initialPot = state.playerOrder.size * state.ante
-                val firstRound = Round(number = 1, pot = initialPot, state = RoundState.OPEN)
+                val firstRound = Round(
+                    number = 1, pot = initialPot, state = RoundState.OPEN,
+                    id = TODO(),
+                    matchId = TODO(),
+                    anteCoins = TODO(),
+                    winners = TODO(),
+                    hands = TODO()
+                )
                 state.copy(
                     phase = GamePhase.ROLLING,
                     rounds = listOf(firstRound),
@@ -105,7 +112,7 @@ object GameEngine {
                 val closedRound = currentRound.copy(
                     state = RoundState.CLOSED,
                     winners = winners,
-                    hands = showdown.hands
+                    hands = TODO() // showdown.hands 
                 )
 
                 val isLast = currentRound.number >= state.totalRounds
@@ -120,7 +127,14 @@ object GameEngine {
                     // Prepare next round
                     val nextNumber = currentRound.number + 1
                     val nextPot = state.playerOrder.size * state.ante
-                    val nextRound = Round(number = nextNumber, pot = nextPot, state = RoundState.OPEN)
+                    val nextRound = Round(
+                        number = nextNumber, pot = nextPot, state = RoundState.OPEN,
+                        id = TODO(),
+                        matchId = TODO(),
+                        anteCoins = TODO(),
+                        winners = TODO(),
+                        hands = TODO()
+                    )
                     val resetPlayers = state.players.mapValues { (_, ps) ->
                         ps.copy(dice = emptyList(), held = emptySet(), rerollsLeft = 2, done = false)
                     }

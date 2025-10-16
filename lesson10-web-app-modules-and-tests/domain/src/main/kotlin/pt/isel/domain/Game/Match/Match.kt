@@ -11,7 +11,6 @@ import java.util.*
 data class Match(
     val id: Int,
     val lobbyId: Int,                  // referência ao lobby que originou o match
-    val players: List<MatchPlayer>,     // “snapshot” dos participantes no arranque, com ordem/seat
     val totalRounds: Int,
     val ante: Int,
     val state: MatchState = MatchState.RUNNING,
@@ -22,8 +21,6 @@ data class Match(
     val maxPlayers: Int = 10
 ) {
     init {
-        require(players.isNotEmpty()) { "Um match precisa de pelo menos 1 jogador." }
-        require(players.map { it.seatNo }.distinct().size == players.size) { "Seats duplicados." }
         require(totalRounds >= 1) { "totalRounds tem de ser ≥ 1." }
         require(ante >= 0) { "ante não pode ser negativo." }
         require(currentRoundNo in 1..totalRounds) { "currentRoundNo fora do intervalo [1, totalRounds]." }

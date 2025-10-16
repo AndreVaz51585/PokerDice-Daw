@@ -25,9 +25,7 @@ interface RepositoryMatch : Repository<Match> {
      * Creates a Match and its initial players (transaction handled externally).
      */
     fun createMatch(
-        id: Int,
         lobbyId: Int,
-        players: List<MatchPlayer>,
         totalRounds: Int,
         ante: Int,
         state: MatchState = MatchState.RUNNING,
@@ -56,4 +54,6 @@ interface RepositoryMatch : Repository<Match> {
     fun setPlayerActive(matchId: Int, userId: Int, active: Boolean): Int
     fun addPlayer(matchId: Int, player: MatchPlayer): Boolean
     fun removePlayer(matchId: Int, userId: Int): Boolean
+    fun whoTurn(matchId: Int): Int?
+    fun setTurn(matchId: Int, userId: Int, turn: Boolean): Boolean
 }

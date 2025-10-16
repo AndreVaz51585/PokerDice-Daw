@@ -23,16 +23,11 @@ class MatchController(
         @RequestBody input: MatchInput
     ): ResponseEntity<*> {
         // Converte a lista de IDs de jogadores para objetos MatchPlayer
-        val players = input.players.map {
-            MatchPlayer(userId = it, seatNo = 0, balanceAtStart = 1000, active = true)
-        }
 
         val result: Either<MatchServiceError, Match> = matchService.createMatch(
-            id = 0, // O ID será gerado pelo repositório
             lobbyId = input.lobbyId,
-            players = players,
             totalRounds = input.totalRounds,
-            ante = input.ante
+            ante = input.ante,
         )
 
         return when (result) {

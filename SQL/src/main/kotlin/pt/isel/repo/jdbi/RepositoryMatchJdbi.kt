@@ -1,6 +1,7 @@
 package pt.isel.repo.jdbi
 
 import org.jdbi.v3.core.Handle
+import org.jdbi.v3.core.kotlin.bindKotlin
 import org.jdbi.v3.core.kotlin.mapTo
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
@@ -23,18 +24,15 @@ class RepositoryMatchJdbi(
 ) : RepositoryMatch {
 
     override fun createMatch(
-        id: Int,
         lobbyId: Int,
-        players: List<MatchPlayer>,
         totalRounds: Int,
         ante: Int,
         state: MatchState,
         currentRoundNo: Int,
         startedAt: Instant,
-        finishedAt: Instant?
+        finishedAt: Instant?,
     ): Match {
-        handle.createUpdate(MatchSql.INSERT_MATCH)
-            .bind("id", id)
+        var matchId = handle.createUpdate(MatchSql.INSERT_MATCH)
             .bind("lobbyId", lobbyId)
             .bind("totalRounds", totalRounds)
             .bind("ante", ante)
@@ -42,26 +40,13 @@ class RepositoryMatchJdbi(
             .bind("currentRoundNo", currentRoundNo)
             .bind("startedAt", startedAt)
             .bind("finishedAt", finishedAt)
-            .execute()
-
-        if (players.isNotEmpty()) {
-            val batch = handle.prepareBatch(MatchSql.INSERT_PLAYER)
-            players.forEach { p ->
-                batch
-                    .bind("matchId", id)
-                    .bind("userId", p.userId)
-                    .bind("seatNo", p.seatNo)
-                    .bind("balanceAtStart", p.balanceAtStart)
-                    .bind("active", p.active)
-                    .add()
-            }
-            batch.execute()
-        }
+            .executeAndReturnGeneratedKeys("id")
+            .mapTo<Int>()
+            .one()
 
         return Match(
-            id = id,
+            id = matchId,
             lobbyId = lobbyId,
-            players = players,
             totalRounds = totalRounds,
             ante = ante,
             state = state, // ou o estado inicial correto
@@ -95,12 +80,9 @@ class RepositoryMatchJdbi(
             .orElse(null)
             ?: return null
 
-        val players = listPlayers(id)
-
         return Match(
             id = partial.id,
             lobbyId = partial.lobbyId,
-            players = players,
             totalRounds = partial.totalRounds,
             ante = partial.ante,
             state = partial.state,
@@ -184,13 +166,22 @@ class RepositoryMatchJdbi(
             .bind("matchId", matchId)
             .map { rs, _ ->
                 MatchPlayer(
+                    matchId = rs.getInt("match_id"),
                     userId = rs.getInt("user_id"),
                     seatNo = rs.getInt("seat_no"),
-                    balanceAtStart = rs.getInt("balance_at_start"),
-                    active = rs.getBoolean("active")
+                    balanceAtStart = rs.getInt("balance_start"),
+                    active = rs.getBoolean("active"),
                 )
             }
             .list()
+    }
+
+    override fun setPlayerActive(matchId: Int, userId: Int, active: Boolean): Int {
+        return handle.createUpdate(MatchSql.UPDATE_PLAYER_ACTIVE)
+            .bind("matchId", matchId)
+            .bind("userId", userId)
+            .bind("active", active)
+            .execute()
     }
 
 
@@ -199,8 +190,9 @@ class RepositoryMatchJdbi(
             .bind("matchId", matchId)
             .bind("userId", player.userId)
             .bind("seatNo", player.seatNo)
-            .bind("balanceAtStart", player.balanceAtStart)
+            .bind("balanceStart", player.balanceAtStart)
             .bind("active", player.active)
+            .bind("turn", player.turn)
             .execute() > 0
         return rows
     }
@@ -211,12 +203,22 @@ class RepositoryMatchJdbi(
             .bind("userId", userId)
             .execute() > 0
 
-    override fun setPlayerActive(matchId: Int, userId: Int, active: Boolean): Int =
-        handle.createUpdate(MatchSql.UPDATE_PLAYER_ACTIVE)
+    override fun whoTurn(matchId: Int): Int? {
+        return handle.createQuery(MatchSql.SELECT_WHO_TURN)
+            .bind("matchId", matchId)
+            .mapTo<Int>()
+            .findOne()
+            .orElse(null)
+    }
+
+    override fun setTurn(matchId: Int, userId: Int, turn: Boolean): Boolean {
+        return handle.createUpdate(MatchSql.UPDATE_TURN)
             .bind("matchId", matchId)
             .bind("userId", userId)
-            .bind("active", active)
-            .execute()
+            .bind("turn", turn)
+            .execute() > 0
+    }
+
 
     // ---------------------------
     // Helpers

@@ -17,17 +17,19 @@ class RepositoryRoundJdbi(private val jdbi: Jdbi) : RepositoryRound {
     private class RoundMapper : (ResultSet, StatementContext) -> Round {
         override fun invoke(rs: ResultSet, ctx: StatementContext): Round {
             return Round(
-                id = rs.getLong("id"),
-                matchId = rs.getLong("match_id"),
                 number = rs.getInt("number"),
+                matchId = rs.getLong("match_id"),
                 state = when (rs.getString("status")) {
                     "IN_PROGRESS" -> RoundState.OPEN
                     "COMPLETED" -> RoundState.CLOSED
                     else -> RoundState.OPEN
                 },
                 anteCoins = rs.getInt("ante_coins"),
-                potCoins = rs.getInt("pot_coins"),
-                winnerUserId = rs.getObject("winner_user_id")?.let { it as Int },
+                pot = rs.getInt("pot_coins"),
+                winners = rs.getString("winner_user_id")
+                    ?.split(",")
+                    ?.filter { it.isNotBlank() }
+                    ?.map { it.trim().toInt() },
                 hands = emptyMap() // Mãos serão carregadas separadamente quando necessário
             )
         }
@@ -56,22 +58,26 @@ class RepositoryRoundJdbi(private val jdbi: Jdbi) : RepositoryRound {
             if (findById(entity.id.toInt()) != null) {
                 handle.createUpdate(RoundSql.UPDATE_ROUND)
                     .bind("id", entity.id)
+                    .bind("number", entity.number)
+                    .bind("match_id", entity.matchId)
+                    .bind("ante_coins", entity.anteCoins)
                     .bind("status", when (entity.state) {
                         RoundState.OPEN -> "IN_PROGRESS"
                         RoundState.SCORING -> "IN_PROGRESS"
                         RoundState.CLOSED -> "COMPLETED"
                     })
-                    .bind("pot_coins", entity.potCoins)
-                    .bind("winner_user_id", entity.winnerUserId)
+                    .bind("pot_coins", entity.pot)
+                    .bind("winner_user_id", entity.winners)
                     .bind("ended_at", if (entity.state == RoundState.CLOSED) Date() else null)
                     .execute()
             } else {
                 handle.createUpdate(RoundSql.INSERT_ROUND)
+                    .bind("id", entity.id)
                     .bind("match_id", entity.matchId)
                     .bind("number", entity.number)
                     .bind("ante_coins", entity.anteCoins)
-                    .bind("pot_coins", entity.potCoins)
-                    .bind("winner_user_id", entity.winnerUserId)
+                    .bind("pot_coins", entity.pot)
+                    .bind("winner_user_id", entity.winners)
                     .bind("started_at", Date())
                     .execute()
             }

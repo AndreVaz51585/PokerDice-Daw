@@ -7,7 +7,6 @@ import org.postgresql.ds.PGSimpleDataSource
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
-import pt.isel.domain.Game.Lobby.LobbyState
 import pt.isel.domain.authentication.PasswordValidationInfo
 import pt.isel.repo.jdbi.TransactionManagerJdbi
 import pt.isel.repo.jdbi.configureWithAppRequirements
@@ -15,17 +14,14 @@ import java.time.Instant
 import kotlin.test.*
 
 
-
 class RepositoryJdbiMatchTest {
     companion object {
-        private val jdbi =
-            Jdbi
-                .create(
-                    PGSimpleDataSource().apply {
-                        val url = Environment.getDbUrl()
-                        setURL(url)
-                    },
-                ).configureWithAppRequirements()
+        private val jdbi = Jdbi.create(
+            PGSimpleDataSource().apply {
+                val url = Environment.getDbUrl()
+                setURL(url)
+            },
+        ).configureWithAppRequirements()
         val trxManager = TransactionManagerJdbi(jdbi)
     }
 
@@ -55,27 +51,30 @@ class RepositoryJdbiMatchTest {
                 rounds = 3,
                 ante = 10
             )
+            val match = repoMatch.createMatch(
+                lobbyId = lobby.id, totalRounds = 5, ante = 20
+            )
             val players = listOf(
-                MatchPlayer(userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true),
-                MatchPlayer(userId = player.id, seatNo = 2, balanceAtStart = 1000, active = true)
+                MatchPlayer(
+                    userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
+                ), MatchPlayer(
+                    userId = player.id,
+                    seatNo = 2,
+                    balanceAtStart = 1000,
+                    active = true,
+                    matchId = match.id,
+                    turn = false
+                )
             )
 
-            val match = repoMatch.createMatch(
-                id = 1,
-                lobbyId = lobby.id,
-                players = players,
-                totalRounds = 5,
-                ante = 20
-            )
 
             val found = repoMatch.findById(match.id)
             assertNotNull(found)
-            assertEquals(1, found.id)
+            assertEquals(2, found.id)
             assertEquals(lobby.id, found.lobbyId)
             assertEquals(5, found.totalRounds)
             assertEquals(20, found.ante)
             assertEquals(MatchState.RUNNING, found.state)
-            assertEquals(2, found.players.size)
         }
     }
 
@@ -84,11 +83,7 @@ class RepositoryJdbiMatchTest {
         trxManager.run {
             val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
-            val players = listOf(
-                MatchPlayer(userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true)
-            )
-
-            val match = repoMatch.createMatch(1, lobby.id, players, 5, 20)
+            val match = repoMatch.createMatch(lobby.id, 5, 20)
 
             val now = Instant.now()
             assertTrue(repoMatch.updateState(match.id, MatchState.FINISHED, now))
@@ -105,11 +100,8 @@ class RepositoryJdbiMatchTest {
         trxManager.run {
             val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
-            val players = listOf(
-                MatchPlayer(userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true)
-            )
 
-            val match = repoMatch.createMatch(1, lobby.id, players, 5, 20)
+            val match = repoMatch.createMatch(lobby.id, 5, 20)
 
             assertTrue(repoMatch.updateCurrentRound(match.id, 3))
 
@@ -127,13 +119,19 @@ class RepositoryJdbiMatchTest {
             val player2 = repoUsers.createUser("Player2", "p2@isel.pt", PasswordValidationInfo("hash"))
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
 
-            val players = listOf(
-                MatchPlayer(userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true),
-                MatchPlayer(userId = player1.id, seatNo = 2, balanceAtStart = 1000, active = true),
-                MatchPlayer(userId = player2.id, seatNo = 3, balanceAtStart = 1000, active = true)
-            )
+            val match = repoMatch.createMatch(lobby.id, 5, 20)
 
-            val match = repoMatch.createMatch(1, lobby.id, players, 5, 20)
+            repoMatch.addPlayer(matchId = match.id, MatchPlayer(
+                userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
+            ))
+            repoMatch.addPlayer(matchId = match.id, MatchPlayer(
+                userId = player1.id, seatNo = 2, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
+            ))
+            repoMatch.addPlayer(matchId = match.id, MatchPlayer(
+                userId = player2.id, seatNo = 3, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
+            ))
+
+
 
             val matchPlayers = repoMatch.listPlayers(match.id)
             assertEquals(3, matchPlayers.size)
@@ -149,14 +147,18 @@ class RepositoryJdbiMatchTest {
             val player2 = repoUsers.createUser("Player2", "p2@isel.pt", PasswordValidationInfo("hash"))
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
 
-            val initialPlayers = listOf(
-                MatchPlayer(userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true)
+            val match = repoMatch.createMatch(lobby.id, 5, 20)
+
+
+            MatchPlayer(
+                userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
             )
 
-            val match = repoMatch.createMatch(1, lobby.id, initialPlayers, 5, 20)
 
             // Adicionar jogador
-            val newPlayer = MatchPlayer(userId = player1.id, seatNo = 2, balanceAtStart = 1000, active = true)
+            val newPlayer = MatchPlayer(
+                userId = player1.id, seatNo = 2, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
+            )
             assertTrue(repoMatch.addPlayer(match.id, newPlayer))
 
             var players = repoMatch.listPlayers(match.id)
@@ -176,26 +178,21 @@ class RepositoryJdbiMatchTest {
         trxManager.run {
             val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
-            val players = listOf(
-                MatchPlayer(userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true)
+            val match = repoMatch.createMatch(lobby.id, 5, 20)
+
+            MatchPlayer(
+                userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
             )
 
-            val match = repoMatch.createMatch(1, lobby.id, players, 5, 20)
 
             val now = Instant.now()
             val updated = Match(
-                id = match.id,
-                lobbyId = match.lobbyId,
-                players = match.players,
-                totalRounds = 10, // alterado
+                id = match.id, lobbyId = match.lobbyId, totalRounds = 10, // alterado
                 ante = 50, // alterado
                 state = MatchState.FINISHED, // alterado
                 currentRoundNo = 3, // alterado
-                startedAt = match.startedAt,
-                finishedAt = now,
-                rounds = emptyList()
+                startedAt = match.startedAt, finishedAt = now, rounds = emptyList()
             )
-
             repoMatch.save(updated)
 
             val found = repoMatch.findById(match.id)
@@ -213,12 +210,11 @@ class RepositoryJdbiMatchTest {
         trxManager.run {
             val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
-            val players = listOf(
-                MatchPlayer(userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true)
+            val match = repoMatch.createMatch(lobby.id, 5, 20)
+
+            MatchPlayer(
+                userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
             )
-
-            val match = repoMatch.createMatch(1, lobby.id, players, 5, 20)
-
             assertTrue(repoMatch.deleteById(match.id))
             assertNull(repoMatch.findById(match.id))
         }
@@ -231,12 +227,17 @@ class RepositoryJdbiMatchTest {
             val player = repoUsers.createUser("Player", "player@isel.pt", PasswordValidationInfo("hash"))
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
 
-            val players = listOf(
-                MatchPlayer(userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true),
-                MatchPlayer(userId = player.id, seatNo = 2, balanceAtStart = 1000, active = true)
-            )
+            val match = repoMatch.createMatch(lobby.id, 5, 20)
 
-            val match = repoMatch.createMatch(1, lobby.id, players, 5, 20)
+            repoMatch.addPlayer(matchId = match.id, MatchPlayer(
+                userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
+            ))
+            repoMatch.addPlayer(matchId = match.id, MatchPlayer(
+                userId = player.id, seatNo = 2, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
+            ))
+
+
+
 
             assertEquals(1, repoMatch.setPlayerActive(match.id, player.id, false))
 
@@ -253,20 +254,22 @@ class RepositoryJdbiMatchTest {
             val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
 
-            val players = listOf(
-                MatchPlayer(userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true)
+            var match1 = repoMatch.createMatch(lobby.id, 5, 20)
+
+            MatchPlayer(
+                userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match1.id, turn = false
             )
 
-            repoMatch.createMatch(1, lobby.id, players, 5, 20)
-            repoMatch.createMatch(2, lobby.id, players, 6, 30)
 
-            assertNotNull(repoMatch.findById(1))
-            assertNotNull(repoMatch.findById(2))
+            var match2 = repoMatch.createMatch(lobby.id, 6, 30)
+
+            assertNotNull(repoMatch.findById(match1.id))
+            assertNotNull(repoMatch.findById(match2.id))
 
             repoMatch.clear()
 
-            assertNull(repoMatch.findById(1))
-            assertNull(repoMatch.findById(2))
+            assertNull(repoMatch.findById(match1.id))
+            assertNull(repoMatch.findById(match2.id))
         }
     }
 
@@ -275,11 +278,13 @@ class RepositoryJdbiMatchTest {
         trxManager.run {
             val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
-            val players = listOf(
-                MatchPlayer(userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true)
+            val match = repoMatch.createMatch(lobby.id, 5, 20)
+
+            MatchPlayer(
+                userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
             )
 
-            val match = repoMatch.createMatch(1, lobby.id, players, 5, 20)
+
 
             assertTrue(repoMatch.exists(match.id))
             assertFalse(repoMatch.exists(999))
@@ -318,20 +323,8 @@ fun seedUsersLobbyAndMatch(trxManager: TransactionManagerJdbi) {
             ante = 10
         ).id
 
-        // 3) Criar match e respetivos players com os ids válidos
-        val players = listOf(
-            MatchPlayer(userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true),
-            MatchPlayer(userId = player1.id, seatNo = 2, balanceAtStart = 1000, active = true),
-            MatchPlayer(userId = player2.id, seatNo = 3, balanceAtStart = 1000, active = true),
-        )
-
         repoMatch.createMatch(
-            id = 1,
-            lobbyId = lobbyId,
-            players = players,
-            totalRounds = 5,
-            ante = 20,
-            state = MatchState.RUNNING,       // Adiciona estado
+            lobbyId = lobbyId, totalRounds = 5, ante = 20, state = MatchState.RUNNING,       // Adiciona estado
             currentRoundNo = 1,               // Adiciona número da rodada atual
             startedAt = Instant.now(),        // Adiciona timestamp de início
             finishedAt = null                 // Adiciona timestamp de finalização como null
