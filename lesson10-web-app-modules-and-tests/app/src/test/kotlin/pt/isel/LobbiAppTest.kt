@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Primary
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import pt.isel.app.WebApp
-import pt.isel.domain.authentication.PasswordValidationInfo
 import pt.isel.http.model.LobbyInput
 import pt.isel.http.model.UserCreateTokenOutputModel
 import pt.isel.http.model.UserInput
