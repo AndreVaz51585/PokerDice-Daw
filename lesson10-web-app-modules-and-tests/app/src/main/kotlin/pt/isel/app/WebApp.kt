@@ -24,6 +24,7 @@ import pt.isel.mapper.TokenValidationInfoMapper
 import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryMatch
 import pt.isel.repo.RepositoryUser
+import pt.isel.repo.TransactionManager
 import pt.isel.repo.jdbi.RepositoryLobbyJdbi
 import pt.isel.repo.jdbi.RepositoryMatchJdbi
 import pt.isel.repo.jdbi.RepositoryUserJdbi
@@ -75,12 +76,15 @@ class WebApp {
 
 
     @Bean
-    fun transactionManager(jdbi: Jdbi): pt.isel.repo.TransactionManager =
+    fun transactionManager(jdbi: Jdbi): TransactionManager =
         TransactionManagerJdbi(jdbi)
 
     // kotlin
     @Bean
-    fun repositoryMatch(jdbi: Jdbi): RepositoryMatch = RepositoryMatchJdbi(jdbi.open())
+    fun repositoryMatch(jdbi: Jdbi): RepositoryMatch = RepositoryMatchJdbi(
+        jdbi.open(),
+        repoLobby = repositoryLobby(jdbi)
+    )
 
 
     @Bean

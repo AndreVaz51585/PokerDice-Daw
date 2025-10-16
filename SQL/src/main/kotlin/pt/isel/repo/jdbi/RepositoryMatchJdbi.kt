@@ -1,11 +1,11 @@
 package pt.isel.repo.jdbi
 
 import org.jdbi.v3.core.Handle
-import org.jdbi.v3.core.kotlin.bindKotlin
 import org.jdbi.v3.core.kotlin.mapTo
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
+import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryMatch
 import pt.isel.repo.jdbi.sql.MatchSql
 import java.sql.Timestamp
@@ -20,7 +20,8 @@ import java.util.*
  * - Se user_id/lobby_id na BD forem INT em vez de Int, altera os tipos e binds.
  */
 class RepositoryMatchJdbi(
-    private val handle: Handle
+    private val handle: Handle,
+    private val repoLobby: RepositoryLobby
 ) : RepositoryMatch {
 
     override fun createMatch(
@@ -43,6 +44,18 @@ class RepositoryMatchJdbi(
             .executeAndReturnGeneratedKeys("id")
             .mapTo<Int>()
             .one()
+
+        var lobby  = repoLobby.findById(lobbyId)
+        var host = repoLobby.getLobbyHost(lobby!!)
+
+        if (host != null) {
+            addPlayer(
+                matchId = matchId,
+                userId = host.id,
+                balanceAtStart = 1000, //TODO: Não sei quanto se deve pôr aqui
+                seatNo = getMaxSeatNo(matchId)+1
+            )
+        }
 
         return Match(
             id = matchId,
@@ -109,7 +122,6 @@ class RepositoryMatchJdbi(
             .one() > 0
 
 
-
     // ---------------------------
     // Atualizações
     // ---------------------------
@@ -146,8 +158,8 @@ class RepositoryMatchJdbi(
     // ---------------------------
     override fun deleteById(id: Int): Boolean =
         // Elimina jogadores primeiro se não tiveres ON DELETE CASCADE
-        handle.createUpdate(MatchSql.DELETE_PLAYERS_BY_MATCH)
-            .bind("matchId", id)
+        handle.createUpdate(MatchSql.DELETE_MATCH)
+            .bind("id", id)
             .execute() > 0
 
 
@@ -185,14 +197,17 @@ class RepositoryMatchJdbi(
     }
 
 
-    override fun addPlayer(matchId: Int, player: MatchPlayer): Boolean {
+    override fun addPlayer(
+        matchId: Int,
+        userId: Int,
+        seatNo: Int,
+        balanceAtStart: Int,
+    ): Boolean {
         val rows = handle.createUpdate(MatchSql.INSERT_PLAYER)
             .bind("matchId", matchId)
-            .bind("userId", player.userId)
-            .bind("seatNo", player.seatNo)
-            .bind("balanceStart", player.balanceAtStart)
-            .bind("active", player.active)
-            .bind("turn", player.turn)
+            .bind("userId", userId)
+            .bind("seatNo", UUID.randomUUID().hashCode()) // Geração simples de seatNo
+            .bind("balanceStart", balanceAtStart)
             .execute() > 0
         return rows
     }
@@ -217,6 +232,13 @@ class RepositoryMatchJdbi(
             .bind("userId", userId)
             .bind("turn", turn)
             .execute() > 0
+    }
+
+    override fun getMaxSeatNo(matchId: Int): Int {
+        return handle.createQuery(MatchSql.SELECT_MAX_SEAT)
+            .bind("matchId", matchId)
+            .mapTo<Int>()
+            .one()
     }
 
 

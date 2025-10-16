@@ -121,16 +121,21 @@ class RepositoryJdbiMatchTest {
 
             val match = repoMatch.createMatch(lobby.id, 5, 20)
 
-            repoMatch.addPlayer(matchId = match.id, MatchPlayer(
-                userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
-            ))
-            repoMatch.addPlayer(matchId = match.id, MatchPlayer(
-                userId = player1.id, seatNo = 2, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
-            ))
-            repoMatch.addPlayer(matchId = match.id, MatchPlayer(
-                userId = player2.id, seatNo = 3, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
-            ))
-
+            repoMatch.addPlayer(
+                matchId = match.id,
+                userId = host.id, balanceAtStart = 1000,
+                seatNo = repoMatch.getMaxSeatNo(match.id)+1
+            )
+            repoMatch.addPlayer(
+                matchId = match.id,
+                userId = player1.id, balanceAtStart = 1000,
+                seatNo = repoMatch.getMaxSeatNo(match.id)+1
+            )
+            repoMatch.addPlayer(
+                matchId = match.id,
+                userId = player2.id, balanceAtStart = 1000,
+                seatNo = repoMatch.getMaxSeatNo(match.id)+1
+            )
 
 
             val matchPlayers = repoMatch.listPlayers(match.id)
@@ -144,22 +149,18 @@ class RepositoryJdbiMatchTest {
         trxManager.run {
             val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
             val player1 = repoUsers.createUser("Player1", "p1@isel.pt", PasswordValidationInfo("hash"))
-            val player2 = repoUsers.createUser("Player2", "p2@isel.pt", PasswordValidationInfo("hash"))
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
 
             val match = repoMatch.createMatch(lobby.id, 5, 20)
 
 
-            MatchPlayer(
-                userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
+            assertTrue(
+                repoMatch.addPlayer(
+                    match.id,
+                    userId = player1.id, balanceAtStart = 1000,
+                    seatNo = repoMatch.getMaxSeatNo(match.id)+1
+                )
             )
-
-
-            // Adicionar jogador
-            val newPlayer = MatchPlayer(
-                userId = player1.id, seatNo = 2, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
-            )
-            assertTrue(repoMatch.addPlayer(match.id, newPlayer))
 
             var players = repoMatch.listPlayers(match.id)
             assertEquals(2, players.size)
@@ -212,9 +213,6 @@ class RepositoryJdbiMatchTest {
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
             val match = repoMatch.createMatch(lobby.id, 5, 20)
 
-            MatchPlayer(
-                userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
-            )
             assertTrue(repoMatch.deleteById(match.id))
             assertNull(repoMatch.findById(match.id))
         }
@@ -229,12 +227,17 @@ class RepositoryJdbiMatchTest {
 
             val match = repoMatch.createMatch(lobby.id, 5, 20)
 
-            repoMatch.addPlayer(matchId = match.id, MatchPlayer(
-                userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
-            ))
-            repoMatch.addPlayer(matchId = match.id, MatchPlayer(
-                userId = player.id, seatNo = 2, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
-            ))
+            repoMatch.addPlayer(
+                matchId = match.id,
+                userId = host.id, balanceAtStart = 1000,
+                seatNo = repoMatch.getMaxSeatNo(match.id)+1
+            )
+            repoMatch.addPlayer(
+                matchId = match.id,
+                userId = player.id,
+                balanceAtStart = 1000,
+                seatNo = repoMatch.getMaxSeatNo(match.id)+1
+                )
 
 
 

@@ -12,9 +12,9 @@ object MatchSql {
 
     const val INSERT_PLAYER = """
             INSERT INTO match_player (
-                match_id, user_id, seat_no, balance_start, active, turn
+                match_id, user_id, balance_start, seat_no
             ) VALUES (
-                :matchId, :userId, :seatNo, :balanceStart, :active, :turn
+                :matchId, :userId, :balanceStart, :seatNo
             )
             ON CONFLICT DO NOTHING
         """
@@ -33,7 +33,7 @@ object MatchSql {
         """
 
     const val SELECT_PLAYERS = """
-            SELECT match_id, user_id, seat_no, balance_start
+            SELECT match_id, user_id, seat_no, balance_start, balance_end, active, turn
             FROM match_player
             WHERE match_id = :matchId
             ORDER BY seat_no
@@ -70,10 +70,12 @@ object MatchSql {
             WHERE id = :id
         """
 
+
     const val DELETE_MATCH = """
             DELETE FROM match
             WHERE id = :id
         """
+
 
     const val DELETE_PLAYERS_BY_MATCH = """
             DELETE FROM match_player
@@ -103,4 +105,6 @@ object MatchSql {
 
     const val CLEAR_MATCH_PLAYERS = "TRUNCATE TABLE match_player RESTART IDENTITY CASCADE;  "
     const val CLEAR_MATCHES = "TRUNCATE TABLE match RESTART IDENTITY CASCADE;"
+
+    const val SELECT_MAX_SEAT = "SELECT COALESCE(MAX(seat_no), 0) FROM match_player WHERE match_id = :matchId"
 }

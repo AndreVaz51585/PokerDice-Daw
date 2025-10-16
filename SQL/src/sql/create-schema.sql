@@ -139,7 +139,7 @@ CREATE TABLE match (
 CREATE TABLE match_player (
                               match_id          BIGINT NOT NULL REFERENCES match(id) ON DELETE CASCADE,
                               user_id           BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
-                              seat_no           INTEGER NOT NULL,               -- define ordem dos turnos
+                              seat_no           INTEGER NOT NULL DEFAULT 0,               -- define ordem dos turnos
                               balance_start     INTEGER NOT NULL,               -- snapshot à entrada
                               balance_end       INTEGER,
                               active            BOOLEAN NOT NULL DEFAULT FALSE,  -- Está a jogar ou não

@@ -48,10 +48,15 @@ class MatchServiceImpl(
         if (currentPlayers.any { it.userId == player.userId }) {
             return@run failure(MatchServiceError.PlayerAlreadyInMatch)
         }
-        match.maxPlayers?.let { max ->
+        match.maxPlayers.let { max ->
             if (currentPlayers.size >= max) return@run failure(MatchServiceError.MatchFull)
         }
-        val ok = repoMatch.addPlayer(matchId, player)
+        val ok = repoMatch.addPlayer(
+            matchId,
+            userId = player.userId,
+            balanceAtStart = player.balanceAtStart,
+            seatNo = repoMatch.getMaxSeatNo(match.id)+1
+        )
         if (!ok) return@run failure(MatchServiceError.Unknown)
         success(true)
     }
