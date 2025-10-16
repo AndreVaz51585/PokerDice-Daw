@@ -3,7 +3,6 @@ package pt.isel.repo
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
-import pt.isel.domain.user.User
 import java.time.Instant
 
 /**
@@ -27,7 +26,6 @@ interface RepositoryMatch : Repository<Match> {
      */
     fun createMatch(
         lobbyId: Int,
-        players: List<User>,
         totalRounds: Int,
         ante: Int,
         state: MatchState = MatchState.RUNNING,
@@ -41,9 +39,7 @@ interface RepositoryMatch : Repository<Match> {
      * Updates the state and optionally the finishedAt timestamp.
      */
     fun updateState(
-        id: Int,
-        newState: MatchState,
-        finishedAt: Instant? = null
+        id: Int, newState: MatchState, finishedAt: Instant? = null
     ): Boolean
 
     /**
@@ -54,6 +50,14 @@ interface RepositoryMatch : Repository<Match> {
     // Player operations
     fun listPlayers(matchId: Int): List<MatchPlayer>
     fun setPlayerActive(matchId: Int, userId: Int, active: Boolean): Int
-    fun addPlayer(matchId: Int, player: MatchPlayer): Boolean
+    fun addPlayer(
+        matchId: Int,
+        userId: Int,
+        seatNo: Int,
+        balanceAtStart: Int,
+    ): Boolean
     fun removePlayer(matchId: Int, userId: Int): Boolean
+    fun whoTurn(matchId: Int): Int?
+    fun setTurn(matchId: Int, userId: Int, turn: Boolean): Boolean
+    fun getMaxSeatNo(matchId: Int) : Int
 }

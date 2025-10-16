@@ -1,7 +1,6 @@
 package pt.isel.domain.Game.Round
 
-import pt.isel.domain.Game.Combination
-import pt.isel.domain.Game.Face
+import pt.isel.domain.Game.Hand
 
 /**
  * Round snapshot.
@@ -13,11 +12,14 @@ import pt.isel.domain.Game.Face
  */
 
 data class Round(
+    val id: Long = 0,
     val number: Int,
+    val matchId: Long,
     val state: RoundState = RoundState.OPEN,
+    val anteCoins: Int,
     val pot: Int = 0,
-    val winners: List<Int> = emptyList(),
-    val hands: Map<Int, Pair<Combination, List<Face>>> = emptyMap()
+    val winners: List<Int>? = emptyList(),
+    val hands: Map<Int, Hand> = emptyMap()
 ) {
     init { require(number >= 1) { "number de round tem de ser ≥ 1." } }
 }

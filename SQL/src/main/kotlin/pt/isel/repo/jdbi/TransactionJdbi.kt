@@ -9,7 +9,7 @@ class TransactionJdbi(
 ) : Transaction {
     override val repoUsers = RepositoryUserJdbi(handle)
     override val repoLobbies = RepositoryLobbyJdbi(handle)
-    override val repoMatch = RepositoryMatchJdbi(handle)
+    override val repoMatch = RepositoryMatchJdbi(handle, repoLobbies)
 
 
     override fun rollback() {

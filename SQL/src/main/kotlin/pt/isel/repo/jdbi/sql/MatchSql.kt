@@ -9,11 +9,12 @@ object MatchSql {
             )
         """
 
+
     const val INSERT_PLAYER = """
             INSERT INTO match_player (
-                match_id, user_id, seat_no, balance_at_start, active
+                match_id, user_id, balance_start, seat_no
             ) VALUES (
-                :matchId, :userId, :seatNo, :balanceAtStart, :active
+                :matchId, :userId, :balanceStart, :seatNo
             )
             ON CONFLICT DO NOTHING
         """
@@ -32,10 +33,16 @@ object MatchSql {
         """
 
     const val SELECT_PLAYERS = """
-            SELECT user_id, seat_no, balance_at_start, active
+            SELECT match_id, user_id, seat_no, balance_start, balance_end, active, turn
             FROM match_player
             WHERE match_id = :matchId
             ORDER BY seat_no
+        """
+
+    const val SELECT_WHO_TURN = """
+            SELECT user_id
+            FROM match_player
+            WHERE match_id = :matchId AND turn = true
         """
 
     const val UPDATE_STATE = """
@@ -63,10 +70,12 @@ object MatchSql {
             WHERE id = :id
         """
 
+
     const val DELETE_MATCH = """
             DELETE FROM match
             WHERE id = :id
         """
+
 
     const val DELETE_PLAYERS_BY_MATCH = """
             DELETE FROM match_player
@@ -84,10 +93,18 @@ object MatchSql {
             WHERE match_id = :matchId AND user_id = :userId
         """
 
+    const val UPDATE_TURN = """
+            UPDATE match_player
+            SET turn = :turn
+            WHERE match_id = :matchId AND user_id = :userId
+        """
+
     const val COUNT_EXISTS = """
             SELECT COUNT(*) FROM match WHERE id = :id
         """
 
-    const val CLEAR_MATCH_PLAYERS = "DELETE FROM match_player"
-    const val CLEAR_MATCHES = "DELETE FROM match"
+    const val CLEAR_MATCH_PLAYERS = "TRUNCATE TABLE match_player RESTART IDENTITY CASCADE;  "
+    const val CLEAR_MATCHES = "TRUNCATE TABLE match RESTART IDENTITY CASCADE;"
+
+    const val SELECT_MAX_SEAT = "SELECT COALESCE(MAX(seat_no), 0) FROM match_player WHERE match_id = :matchId"
 }

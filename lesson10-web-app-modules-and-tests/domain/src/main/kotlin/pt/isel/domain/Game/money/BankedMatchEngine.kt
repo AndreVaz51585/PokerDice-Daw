@@ -62,7 +62,7 @@ object BankedMatchEngine {
 
                 // 2) Settle and pay wallets using winners and the current open pot.
                 val currentPot = state.openPot ?: error("No open pot to settle.")
-                val winnersLong = closedRound.winners.map { it.toLong() }.toSet()
+                val winnersLong = closedRound.winners?.map { it.toLong() }?.toSet() ?: emptySet()
                 val payout = RoundBanker.settleAndPay(
                     pot = currentPot,
                     winnerUserIds = winnersLong,

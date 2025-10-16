@@ -5,7 +5,7 @@ import org.jdbi.v3.core.kotlin.mapTo
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
-import pt.isel.domain.user.User
+import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryMatch
 import pt.isel.repo.jdbi.sql.MatchSql
 import java.sql.Timestamp
@@ -20,21 +20,20 @@ import java.util.*
  * - Se user_id/lobby_id na BD forem INT em vez de Int, altera os tipos e binds.
  */
 class RepositoryMatchJdbi(
-    private val handle: Handle
+    private val handle: Handle,
+    private val repoLobby: RepositoryLobby
 ) : RepositoryMatch {
 
     override fun createMatch(
         lobbyId: Int,
-        players: List<User>,
         totalRounds: Int,
         ante: Int,
         state: MatchState,
         currentRoundNo: Int,
         startedAt: Instant,
-        finishedAt: Instant?
+        finishedAt: Instant?,
     ): Match {
-
-      val id =  handle.createUpdate(MatchSql.INSERT_MATCH)
+        var matchId = handle.createUpdate(MatchSql.INSERT_MATCH)
             .bind("lobbyId", lobbyId)
             .bind("totalRounds", totalRounds)
             .bind("ante", ante)
@@ -42,28 +41,25 @@ class RepositoryMatchJdbi(
             .bind("currentRoundNo", currentRoundNo)
             .bind("startedAt", startedAt)
             .bind("finishedAt", finishedAt)
-            .executeAndReturnGeneratedKeys()
-            .mapTo(Int::class.java)
+            .executeAndReturnGeneratedKeys("id")
+            .mapTo<Int>()
             .one()
 
-        if (players.isNotEmpty()) {
-            val batch = handle.prepareBatch(MatchSql.INSERT_PLAYER)
-            players.forEach { p ->
-                batch
-                    .bind("matchId", id)
-                    .bind("userId", p.id)
-                    .bind("seatNo", p.seatNo) // deveria ser serial não algo definido por nós?
-                    .bind("balanceAtStart", p.balanceAtStart) // valor?
-                    .bind("active", p.active) // não se sabe logo deve ser inativo para todos inicialmente
-                    .add()
-            }
-            batch.execute()
+        var lobby  = repoLobby.findById(lobbyId)
+        var host = repoLobby.getLobbyHost(lobby!!)
+
+        if (host != null) {
+            addPlayer(
+                matchId = matchId,
+                userId = host.id,
+                balanceAtStart = 1000, //TODO: Não sei quanto se deve pôr aqui
+                seatNo = getMaxSeatNo(matchId)+1
+            )
         }
 
         return Match(
-            id = id,
+            id = matchId,
             lobbyId = lobbyId,
-            players = players,
             totalRounds = totalRounds,
             ante = ante,
             state = state, // ou o estado inicial correto
@@ -97,12 +93,9 @@ class RepositoryMatchJdbi(
             .orElse(null)
             ?: return null
 
-        val players = listPlayers(id)
-
         return Match(
             id = partial.id,
             lobbyId = partial.lobbyId,
-            players = players,
             totalRounds = partial.totalRounds,
             ante = partial.ante,
             state = partial.state,
@@ -127,7 +120,6 @@ class RepositoryMatchJdbi(
             .bind("id", id)
             .mapTo(Int::class.java)
             .one() > 0
-
 
 
     // ---------------------------
@@ -166,8 +158,8 @@ class RepositoryMatchJdbi(
     // ---------------------------
     override fun deleteById(id: Int): Boolean =
         // Elimina jogadores primeiro se não tiveres ON DELETE CASCADE
-        handle.createUpdate(MatchSql.DELETE_PLAYERS_BY_MATCH)
-            .bind("matchId", id)
+        handle.createUpdate(MatchSql.DELETE_MATCH)
+            .bind("id", id)
             .execute() > 0
 
 
@@ -186,23 +178,36 @@ class RepositoryMatchJdbi(
             .bind("matchId", matchId)
             .map { rs, _ ->
                 MatchPlayer(
+                    matchId = rs.getInt("match_id"),
                     userId = rs.getInt("user_id"),
                     seatNo = rs.getInt("seat_no"),
-                    balanceAtStart = rs.getInt("balance_at_start"),
-                    active = rs.getBoolean("active")
+                    balanceAtStart = rs.getInt("balance_start"),
+                    active = rs.getBoolean("active"),
                 )
             }
             .list()
     }
 
+    override fun setPlayerActive(matchId: Int, userId: Int, active: Boolean): Int {
+        return handle.createUpdate(MatchSql.UPDATE_PLAYER_ACTIVE)
+            .bind("matchId", matchId)
+            .bind("userId", userId)
+            .bind("active", active)
+            .execute()
+    }
 
-    override fun addPlayer(matchId: Int, player: MatchPlayer): Boolean {
+
+    override fun addPlayer(
+        matchId: Int,
+        userId: Int,
+        seatNo: Int,
+        balanceAtStart: Int,
+    ): Boolean {
         val rows = handle.createUpdate(MatchSql.INSERT_PLAYER)
             .bind("matchId", matchId)
-            .bind("userId", player.userId)
-            .bind("seatNo", player.seatNo)
-            .bind("balanceAtStart", player.balanceAtStart)
-            .bind("active", player.active)
+            .bind("userId", userId)
+            .bind("seatNo", UUID.randomUUID().hashCode()) // Geração simples de seatNo
+            .bind("balanceStart", balanceAtStart)
             .execute() > 0
         return rows
     }
@@ -213,12 +218,29 @@ class RepositoryMatchJdbi(
             .bind("userId", userId)
             .execute() > 0
 
-    override fun setPlayerActive(matchId: Int, userId: Int, active: Boolean): Int =
-        handle.createUpdate(MatchSql.UPDATE_PLAYER_ACTIVE)
+    override fun whoTurn(matchId: Int): Int? {
+        return handle.createQuery(MatchSql.SELECT_WHO_TURN)
+            .bind("matchId", matchId)
+            .mapTo<Int>()
+            .findOne()
+            .orElse(null)
+    }
+
+    override fun setTurn(matchId: Int, userId: Int, turn: Boolean): Boolean {
+        return handle.createUpdate(MatchSql.UPDATE_TURN)
             .bind("matchId", matchId)
             .bind("userId", userId)
-            .bind("active", active)
-            .execute()
+            .bind("turn", turn)
+            .execute() > 0
+    }
+
+    override fun getMaxSeatNo(matchId: Int): Int {
+        return handle.createQuery(MatchSql.SELECT_MAX_SEAT)
+            .bind("matchId", matchId)
+            .mapTo<Int>()
+            .one()
+    }
+
 
     // ---------------------------
     // Helpers

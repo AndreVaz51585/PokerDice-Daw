@@ -5,14 +5,13 @@ import org.springframework.stereotype.Service
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
-import pt.isel.domain.user.User
-import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryMatch
 import pt.isel.repo.TransactionManager
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
 import java.io.Serial
+import java.time.Instant
 
 @Service
 class MatchServiceImpl(
@@ -21,25 +20,16 @@ class MatchServiceImpl(
 ) : MatchService {
 
     override fun createMatch(
-      //  id: Int, // não se passa o id a este pelo que é serial
-        lobbyId: Int, // id do lobby ao qual este match pertence
-        players: List<User>,
+        lobbyId: Int,
         totalRounds: Int,
         ante: Int
     ): Either<MatchServiceError, Match> = trxManager.run {
-
-        // devemos realizar o mapeamento de cada user para match player antes de começar a criar o match ou faze-lo diretamente no JDBI ---- POR DEFINIR
-
-        if (players.isEmpty() || totalRounds <= 0 || ante < 0) {
+        if (totalRounds <= 0 || ante < 0) {
             return@run failure(MatchServiceError.InvalidState)
         }
         // Evitar duplicados iniciais
-        if (players.map { it.id }.distinct().size != players.size) {
-            return@run failure(MatchServiceError.PlayerAlreadyInMatch)
-        }
         val match = repoMatch.createMatch(
             lobbyId = lobbyId,
-            players = players,
             totalRounds = totalRounds,
             ante = ante,
         )
@@ -48,7 +38,7 @@ class MatchServiceImpl(
 
     override fun getMatch(id: Int): Either<MatchServiceError, Match> = trxManager.run {
         val match = repoMatch.findById(id) ?: return@run failure(MatchServiceError.MatchNotFound)
-       return@run success(match)
+        success(match)
     }
 
     override fun addPlayer(matchId: Int, player: MatchPlayer): Either<MatchServiceError, Boolean> = trxManager.run {
@@ -58,12 +48,17 @@ class MatchServiceImpl(
         if (currentPlayers.any { it.userId == player.userId }) {
             return@run failure(MatchServiceError.PlayerAlreadyInMatch)
         }
-        match.maxPlayers?.let { max ->
+        match.maxPlayers.let { max ->
             if (currentPlayers.size >= max) return@run failure(MatchServiceError.MatchFull)
         }
-        val ok = repoMatch.addPlayer(matchId, player)
+        val ok = repoMatch.addPlayer(
+            matchId,
+            userId = player.userId,
+            balanceAtStart = player.balanceAtStart,
+            seatNo = repoMatch.getMaxSeatNo(match.id)+1
+        )
         if (!ok) return@run failure(MatchServiceError.Unknown)
-       return@run success(true)
+        success(true)
     }
 
     override fun removePlayer(matchId: Int, userId: Int): Either<MatchServiceError, Boolean> = trxManager.run {
@@ -75,7 +70,7 @@ class MatchServiceImpl(
         }
         val ok = repoMatch.removePlayer(matchId, userId)
         if (!ok) return@run failure(MatchServiceError.Unknown)
-       return@run success(true)
+        success(true)
     }
 
     override fun updateState(matchId: Int, newState: MatchState): Either<MatchServiceError, Boolean> = trxManager.run {
@@ -87,11 +82,11 @@ class MatchServiceImpl(
         }
         val ok = repoMatch.updateState(matchId, newState)
         if (!ok) return@run failure(MatchServiceError.Unknown)
-        return@run  success(true)
+        success(true)
     }
 
     override fun listPlayers(matchId: Int): List<MatchPlayer> = trxManager.run {
         // Opcional: validar existência do match
-       return@run repoMatch.listPlayers(matchId)
+        repoMatch.listPlayers(matchId)
     }
 }
