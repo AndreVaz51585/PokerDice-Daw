@@ -1,6 +1,5 @@
 package pt.isel.http
 
-import com.sun.net.httpserver.Authenticator
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -12,7 +11,6 @@ import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.user.AuthenticatedUser
 import pt.isel.http.model.LobbyInput
 import pt.isel.http.model.Problem
-import pt.isel.http.model.UserHomeOutputModel
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.Failure
 import pt.isel.service.Auxiliary.Success
@@ -26,12 +24,13 @@ class LobbyController(
 
     @PostMapping("/api/lobbies")
     fun createLobby(
-        @RequestBody input: LobbyInput
+        @RequestBody input: LobbyInput,
+        authenticatedUser : AuthenticatedUser,
     ) : ResponseEntity<*> {
 
         val result : Either<LobbyServiceError, Lobby> =
             lobbyService
-                .createLobby(input.lobbyHostId, input.name, input.description, input.minPlayers, input.maxPlayers, input.rounds, input.ante)
+                .createLobby(authenticatedUser.user.id, input.name, input.description, input.minPlayers, input.maxPlayers, input.rounds, input.ante)
 
 
         return when(result){
@@ -88,9 +87,9 @@ class LobbyController(
     @PostMapping("/api/lobbies/{id}/join")
     fun joinLobby(
         @PathVariable id: Int,
-        @RequestBody user: AuthenticatedUser
+        authenticateUser: AuthenticatedUser
     ): ResponseEntity<*> {
-        val userId = user.user.id
+        val userId = authenticateUser.user.id
         val result : Either<LobbyServiceError, Boolean> = lobbyService
             .joinLobby(id, userId)
         return when (result) {
@@ -111,9 +110,9 @@ class LobbyController(
     @PostMapping("/api/lobbies/{id}/leave")
     fun leaveLobby(
         @PathVariable id: Int,
-        @RequestBody input: AuthenticatedUser
+        authenticateUser: AuthenticatedUser
     ): ResponseEntity<*> {
-        val userId = input.user.id
+        val userId = authenticateUser.user.id
         val left : Either<LobbyServiceError, Boolean>  =  lobbyService.leaveLobby(id, userId)
 
         return when(left) {

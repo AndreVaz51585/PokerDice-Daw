@@ -18,6 +18,7 @@ dependencies {
     api(project(":lesson10-web-app-modules-and-tests:service"))
     implementation(project(":SQL"))
     implementation("org.jdbi:jdbi3-core:3.43.0")
+    implementation("org.jdbi:jdbi3-kotlin:3.43.0")
 
 
     // BOM do Spring Boot fixa todas as versões (Spring, Jackson, etc.)

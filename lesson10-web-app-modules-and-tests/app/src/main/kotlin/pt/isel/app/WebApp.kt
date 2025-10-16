@@ -1,6 +1,8 @@
 package pt.isel.app
 
 import org.jdbi.v3.core.Jdbi
+import org.jdbi.v3.core.kotlin.KotlinPlugin
+import org.jdbi.v3.core.mapper.reflect.ConstructorMapper
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Bean
@@ -9,18 +11,27 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.web.method.support.HandlerMethodArgumentResolver
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+import pt.isel.domain.Game.Lobby.Lobby
+import pt.isel.domain.authentication.PasswordValidationInfo
 import pt.isel.domain.authentication.Sha256TokenEncoder
+import pt.isel.domain.token.TokenValidationInfo
+import pt.isel.domain.user.User
 import pt.isel.domain.user.UsersDomainConfig
 import pt.isel.http.AuthenticatedUserArgumentResolver
 import pt.isel.http.AuthenticationInterceptor
+import pt.isel.mapper.PasswordValidationInfoMapper
+import pt.isel.mapper.TokenValidationInfoMapper
 import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryMatch
+import pt.isel.repo.RepositoryUser
 import pt.isel.repo.jdbi.RepositoryLobbyJdbi
 import pt.isel.repo.jdbi.RepositoryMatchJdbi
+import pt.isel.repo.jdbi.RepositoryUserJdbi
 import pt.isel.repo.jdbi.TransactionManagerJdbi
 import pt.isel.repo.mem.RepositoryUserInMem
 import java.time.Clock
 import java.time.Duration
+
 
 @Configuration
 class PipelineConfigurer(
@@ -48,10 +59,16 @@ class WebApp {
     fun clock(): Clock = Clock.systemUTC()
 
     @Bean
-    fun repositoryUser() = RepositoryUserInMem()
+    fun repositoryUser(jdbi : Jdbi) : RepositoryUser = RepositoryUserJdbi(jdbi.open())
 
     @Bean
-    fun jdbi() : Jdbi = Jdbi.create("jdbc:postgresql://localhost:5432/db", "dbuser", "changeit")
+    fun jdbi(): Jdbi {
+        val jdbi = Jdbi.create("jdbc:postgresql://localhost:5432/db", "dbuser", "changeit")
+        jdbi.installPlugin(KotlinPlugin()) // necessário para realizar o mapeamento automático para data class
+        jdbi.registerColumnMapper(PasswordValidationInfo::class.java, PasswordValidationInfoMapper())
+        jdbi.registerColumnMapper(TokenValidationInfo::class.java, TokenValidationInfoMapper())
+        return jdbi
+    }
 
     @Bean
     fun repositoryLobby(jdbi : Jdbi) : RepositoryLobby = RepositoryLobbyJdbi(jdbi.open())

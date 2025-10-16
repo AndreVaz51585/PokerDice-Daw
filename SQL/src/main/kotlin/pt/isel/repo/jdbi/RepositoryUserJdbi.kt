@@ -65,6 +65,8 @@ class RepositoryUserJdbi(
         return User(id, name, email, passwordValidation)
     }
 
+
+
     override fun findByEmail(email: String): User? =
         handle
             .createQuery(UserSql.FIND_BY_EMAIL)

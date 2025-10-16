@@ -16,6 +16,7 @@ interface RepositoryUser : Repository<User> {
         passwordValidation: PasswordValidationInfo,
     ): User
 
+
     fun findByEmail(email: String): User?
 
     fun getTokenByTokenValidationInfo(tokenValidationInfo: TokenValidationInfo): Pair<User, Token>?

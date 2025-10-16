@@ -54,4 +54,8 @@ sealed class Problem(
 
     data object MatchFull : Problem(URI("$PROBLEM_URI_PATH/match-full"))
 
+    data object ErrorCreatingUser : Problem(URI("$PROBLEM_URI_PATH/error-creating-user"))
+
+    data object ErrorDeletingUser : Problem(URI("$PROBLEM_URI_PATH/error-deleting-user"))
+
 }

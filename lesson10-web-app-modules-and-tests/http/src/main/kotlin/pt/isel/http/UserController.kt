@@ -2,7 +2,9 @@ package pt.isel.http
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
@@ -61,6 +63,8 @@ class UserController(
                         Problem.InsecurePassword.response(
                             HttpStatus.BAD_REQUEST,
                         )
+
+                    else -> Problem.ErrorCreatingUser.response(HttpStatus.INTERNAL_SERVER_ERROR)
                 }
         }
     }
@@ -97,6 +101,27 @@ class UserController(
     @PostMapping("api/logout")
     fun logout(user: AuthenticatedUser) {
         userService.revokeToken(user.token)
+    }
+
+    @DeleteMapping("/api/users/{id}")
+    fun deleteUser(@PathVariable id: Int): ResponseEntity<*> {
+        val result: Either<UserError, Boolean> = userService.deleteUser(id)
+        return when(result) {
+            is Success -> ResponseEntity.status(HttpStatus.OK).build<Unit>()
+            is Failure -> when(result.value) {
+                UserError.UserNotFound -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
+                UserError.ErrorDeletingUser -> Problem.ErrorDeletingUser.response(HttpStatus.INTERNAL_SERVER_ERROR)
+                else -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
+            }
+        }
+    }
+
+    @GetMapping("/api/users")
+    fun getAllUsers(): ResponseEntity<*> {
+        val users: List<User> = userService.getAllUsers()
+        return ResponseEntity
+            .status(HttpStatus.OK)
+            .body(users)
     }
 
     /**

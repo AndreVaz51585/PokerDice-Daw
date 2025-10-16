@@ -1,12 +1,12 @@
-@token = bwpEG_RpQ4QFoqmO9sdDlD_OumUNxVAEgJRHTeAMTqk=
+@token = pYavEW0ldeTyivMD-xXypkrZ10vi3GMrWUFs4SLFRxk=
 
 ### Registar um novo utilizador
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste2",
-  "email": "test2@gmail.com",
+  "name": "teste4",
+  "email": "test4@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -15,9 +15,23 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test2@gmail.com",
+  "email": "test4@gmail.com",
   "password": "minhaSenhaSegura"
 }
+
+
+### Obter User
+GET http://localhost:8080/api/me
+content-type: application/json
+Authorization: bearer {{token}}
+
+### Apagar User
+DELETE http://localhost:8080/api/users/4
+content-type: application/json
+
+### Listar todos os users
+GET http://localhost:8080/api/users
+content-type: application/json
 
 
 
@@ -27,8 +41,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "lobbyHostId": 0,
-  "name": "Lobby Teste",
+  "name": "Lobby Teste2",
   "description": "Descrição do lobby",
   "minPlayers": 2,
   "maxPlayers": 6,
@@ -40,32 +53,21 @@ Authorization: Bearer {{token}}
 GET http://localhost:8080/api/lobbies
 
 ### Obter lobby por ID
-GET http://localhost:8080/api/lobbies/1
+GET http://localhost:8080/api/lobbies/4
 
 ### Juntar-se a um lobby
-POST http://localhost:8080/api/lobbies/1/join
+POST http://localhost:8080/api/lobbies/4/join
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
-{
-  "user": {
-    "id": 2,
-    "username": "jogador2"
-  }
-}
 
 ### Sair de um lobby
-POST http://localhost:8080/api/lobbies/1/leave
+POST http://localhost:8080/api/lobbies/4/leave
 Content-Type: application/json
-
-{
-  "user": {
-    "id": 2,
-    "username": "jogador2"
-  }
-}
+Authorization: Bearer {{token}}
 
 ### Listar jogadores de um lobby
-GET http://localhost:8080/api/lobbies/1/players
+GET http://localhost:8080/api/lobbies/4/players
 
 ### Obter host do lobby
-GET http://localhost:8080/api/lobbies/1/host
+GET http://localhost:8080/api/lobbies/4/host

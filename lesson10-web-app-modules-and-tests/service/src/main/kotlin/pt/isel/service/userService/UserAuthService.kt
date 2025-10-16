@@ -23,6 +23,10 @@ sealed class UserError {
     data object AlreadyUsedEmailAddress : UserError()
 
     data object InsecurePassword : UserError()
+
+    data object UserNotFound : UserError()
+
+    data object ErrorDeletingUser : UserError()
 }
 
 sealed class TokenCreationError {
@@ -70,6 +74,14 @@ class UserAuthService(
         val passwordValidationInfo = createPasswordValidationInformation(password)
         return success(repoUsers.createUser(name, email, passwordValidationInfo))
     }
+
+    fun deleteUser(userId: Int): Either<UserError,Boolean>  {
+        val user = repoUsers.findById(userId) ?: return failure(UserError.UserNotFound)
+       val deleted =  repoUsers.deleteById(user.id)
+        return if(deleted) success(true) else failure(UserError.ErrorDeletingUser)
+    }
+
+    fun getAllUsers(): List<User> = repoUsers.findAll()
 
     fun createToken(
         email: String,
