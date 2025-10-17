@@ -2,6 +2,7 @@ package pt.isel.http
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -94,7 +95,7 @@ class LobbyController(
             .joinLobby(id, userId)
         return when (result) {
             is Success -> when(result.value) {
-                0 -> ResponseEntity.status(HttpStatus.OK).body("Player Add to Lobby") // entrou no lobby mas o lobby não começou}
+                0 -> ResponseEntity.status(HttpStatus.OK).body("Player Added to Lobby") // entrou no lobby mas o lobby não começou}
                 else -> {
                     val matchId = result.value
                     ResponseEntity.status(HttpStatus.CREATED).header("Location", "/api/matches/$matchId") // redireciona para a partida atravês do header location
@@ -112,7 +113,7 @@ class LobbyController(
         }
     }
 
-    @PostMapping("/api/lobbies/{id}/leave")
+    @DeleteMapping("/api/lobbies/{id}")
     fun leaveLobby(
         @PathVariable id: Int,
         authenticateUser: AuthenticatedUser
