@@ -5,6 +5,7 @@ import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.domain.Game.pokerDice.GameEngine
 import pt.isel.domain.Game.pokerDice.GamePhase
 import pt.isel.domain.Game.Face
+import pt.isel.domain.Game.pokerDice.PlayerState
 
 /**
  * Wraps the poker-dice GameEngine and wires money flows with RoundBanker.
@@ -35,14 +36,39 @@ object BankedMatchEngine {
                     roundNumber = roundNumber
                 )
                 val playerIds = newGame.playerOrder.map { it.toLong() }
+
                 val opened = RoundBanker.openPot(ante, playerIds, state.wallets)
 
+                // 3) Se apenas 0 ou 1 jogadores puderam pagar -> terminar a match antecipadamente.(Se 0: ninguém paga -> partida não começa; se 1: esse jogador fica com o pot)
+                val eligible = opened.eligiblePlayers
+
+                if (eligible.size <= 1) {
+                    // Actualiza wallets, fecha match antecipadamente
+                    return state.copy(
+                        game = newGame.copy(phase = GamePhase.FINISHED),
+                        wallets = opened.wallets,
+                        openPot = null
+                    )
+                }
+
+                // 4) Há >= 2 jogadores elegíveis: remover do Game os jogadores excluídos
+                val remainingPlayerOrder = newGame.playerOrder.filter { it.toLong() in eligible }
+
+                val remainingPlayers = newGame.players.filterKeys { it.toLong() in eligible }
+
+
+                val adjustedGame = newGame.copy(
+                    playerOrder = remainingPlayerOrder,
+                    players = remainingPlayers
+                )
+
                 state.copy(
-                    game = newGame,
+                    game = adjustedGame,
                     wallets = opened.wallets,
                     openPot = opened.pot
                 )
             }
+
 
             is Command.NextRound -> {
                 // 1) Run the showdown/advance logic in the game.

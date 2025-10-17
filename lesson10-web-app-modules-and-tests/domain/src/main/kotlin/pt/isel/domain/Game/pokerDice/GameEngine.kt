@@ -1,6 +1,7 @@
 package pt.isel.domain.Game.pokerDice
 
 import pt.isel.domain.Game.Face
+import pt.isel.domain.Game.Hand
 import pt.isel.domain.Game.Round.Round
 import pt.isel.domain.Game.Round.RoundState
 
@@ -112,7 +113,10 @@ object GameEngine {
                 val closedRound = currentRound.copy(
                     state = RoundState.CLOSED,
                     winners = winners,
-                    hands = TODO() // showdown.hands 
+                    hands = showdown.hands.mapValues { (_, pair) ->
+                        // pair.second é List<Face> das faces ordenadas
+                        Hand(pair.second)
+                    }
                 )
 
                 val isLast = currentRound.number >= state.totalRounds
@@ -128,22 +132,30 @@ object GameEngine {
                     val nextNumber = currentRound.number + 1
                     val nextPot = state.playerOrder.size * state.ante
                     val nextRound = Round(
-                        number = nextNumber, pot = nextPot, state = RoundState.OPEN,
-                        id = TODO(),
-                        matchId = TODO(),
-                        anteCoins = TODO(),
-                        winners = TODO(),
-                        hands = TODO()
+                        number = nextNumber,
+                        pot = nextPot,
+                        state = RoundState.OPEN,
+                        id = (currentRound.id + 1),            // id incremental simples; ajusta se necessário
+                        matchId = state.id.toLong(),           // garante matchId coerente (Game.id -> Round.matchId)
+                        anteCoins = state.ante,                // valor do ante por ronda
+                        winners = emptyList(),
+                        hands = emptyMap()
                     )
+
+                    // Rotate starting player: next round starts with the next player in order
+                    val nextStartingIndex = if (state.playerOrder.isEmpty()) 0
+                    else (state.currentPlayerIndex + 1) % state.playerOrder.size
+
                     val resetPlayers = state.players.mapValues { (_, ps) ->
                         ps.copy(dice = emptyList(), held = emptySet(), rerollsLeft = 2, done = false)
                     }
                     state.copy(
+                        players = resetPlayers,
                         rounds = state.rounds.dropLast(1) + closedRound + nextRound,
                         balances = newBalances,
-                        players = resetPlayers,
-                        currentPlayerIndex = 0
+                        currentPlayerIndex = nextStartingIndex
                     )
+
                 }
             }
         }

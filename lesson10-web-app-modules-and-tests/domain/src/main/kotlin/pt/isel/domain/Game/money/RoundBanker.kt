@@ -8,8 +8,10 @@ package pt.isel.domain.Game.money
 object RoundBanker {
 
     data class RoundFunds(
-        val pot: Pot,
-        val wallets: Map<Long, Wallet>
+        val pot: Pot?,
+        val wallets: Map<Long, Wallet>,
+        val eligiblePlayers: List<Long>,
+        val excludedPlayers: List<Long>
     )
 
     data class PayoutResult(
@@ -23,17 +25,43 @@ object RoundBanker {
         playerIds: List<Long>,
         wallets: Map<Long, Wallet>
     ): RoundFunds {
+
+        // eligible players
+        val eligible = playerIds.filter { pid ->
+            val w = wallets[pid] ?: error("Missing money for user $pid")
+            w.currentBalance >= ante.amount
+        }
+        val excluded = playerIds.filter { it !in eligible }
+
+        // If 0 or 1 eligible players -> do NOT collect antes; return wallets unchanged
+        if (eligible.size <= 1) {
+            return RoundFunds(
+                pot = null, // no pot opened
+                wallets = wallets, // unchanged
+                eligiblePlayers = eligible,
+                excludedPlayers = excluded
+            )
+        }
+
+        // Otherwise collect ante from eligible players and build pot
         var pot = Pot(matchId = ante.matchId, roundNumber = ante.roundNumber)
         val updatedWallets = wallets.toMutableMap()
 
-        for (pid in playerIds) {
+        for (pid in eligible) {
             val w = updatedWallets[pid] ?: error("Missing wallet for user $pid")
             val (newPot, newWallet) = ante.collectBet(pid, pot, w)
             pot = newPot
             updatedWallets[pid] = newWallet
         }
-        return RoundFunds(pot = pot, wallets = updatedWallets.toMap())
+
+        return RoundFunds(
+            pot = pot,
+            wallets = updatedWallets.toMap(),
+            eligiblePlayers = eligible,
+            excludedPlayers = excluded
+        )
     }
+
 
     fun settleAndPay(
         pot: Pot,
