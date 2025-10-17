@@ -11,6 +11,7 @@ import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.domain.Game.pokerDice.Game
 import pt.isel.domain.Game.pokerDice.GamePhase
+import kotlin.test.assertTrue
 
 class BankedMatchEngineTests {
 
@@ -18,7 +19,8 @@ class BankedMatchEngineTests {
 
     private fun newMatch(
         ante: Int = 10,
-        totalRounds: Int = 3
+        totalRounds: Int = 3,
+        wallets: Map<Long, Wallet>? = null
     ): BankedMatch {
         val game = Game(
             id = 1,
@@ -27,14 +29,15 @@ class BankedMatchEngineTests {
             maxPlayers = 4,
             totalRounds = totalRounds
         )
-        val wallets = mapOf(
+        val defaultWallets = mapOf(
             1L to Wallet(userId = 1L, currentBalance = 100),
             2L to Wallet(userId = 2L, currentBalance = 100)
         )
+
         return BankedMatch(
             matchId = 100L,
             game = game,
-            wallets = wallets,
+            wallets = wallets?: defaultWallets,
             openPot = null
         )
     }
@@ -43,6 +46,13 @@ class BankedMatchEngineTests {
         val s1 = BankedMatchEngine.apply(state, Command.Join(1), roll)
         val s2 = BankedMatchEngine.apply(s1, Command.Join(2), roll)
         return s2
+    }
+
+    private fun joinThreePlayers(state: BankedMatch): BankedMatch {
+        val s1 = BankedMatchEngine.apply(state, Command.Join(1), roll)
+        val s2 = BankedMatchEngine.apply(s1, Command.Join(2), roll)
+        val s3 = BankedMatchEngine.apply(s2, Command.Join(3), roll)
+        return s3
     }
 
     private fun playOneFullRoundToScoring(state: BankedMatch): BankedMatch {
@@ -113,4 +123,47 @@ class BankedMatchEngineTests {
         assertEquals(100, finished.wallets[1L]!!.currentBalance)
         assertEquals(100, finished.wallets[2L]!!.currentBalance)
     }
+
+
+    @Test
+    fun `Start finishes match and does not open pot when only one player can pay ante`() {
+        // player 2 has insufficient balance
+        val wallets = mapOf(
+            1L to Wallet(userId = 1L, currentBalance = 100),
+            2L to Wallet(userId = 2L, currentBalance = 0)
+        )
+        val initial = joinTwoPlayers(newMatch(ante = 10, wallets = wallets))
+        val started = BankedMatchEngine.apply(initial, Command.Start(byUserId = 10), roll)
+
+        // Since only player1 can pay, the engine should NOT open a pot and should finish
+        assertEquals(GamePhase.FINISHED, started.game.phase)
+        assertNull(started.openPot)
+        // Wallets must remain unchanged (no ante collected)
+        assertEquals(100, started.wallets[1L]!!.currentBalance)
+        assertEquals(0, started.wallets[2L]!!.currentBalance)
+    }
+
+    @Test
+    fun `Start excludes players who cannot pay when at least two remain eligible`() {
+        // three players: player3 cannot pay
+        val wallets = mapOf(
+            1L to Wallet(userId = 1L, currentBalance = 100),
+            2L to Wallet(userId = 2L, currentBalance = 100),
+            3L to Wallet(userId = 3L, currentBalance = 0)
+        )
+        val initial = joinThreePlayers(newMatch(ante = 10, wallets = wallets))
+        val started = BankedMatchEngine.apply(initial, Command.Start(byUserId = 10), roll)
+
+        // Since players 1 and 2 can pay, a pot should be opened and player 3 excluded
+        assertEquals(GamePhase.ROLLING, started.game.phase)
+        assertNotNull(started.openPot)
+        // Player 3 must not be in the playerOrder anymore
+        assertTrue(started.game.playerOrder.none { it == 3 })
+        // Eligible players have paid the ante
+        assertEquals(90, started.wallets[1L]!!.currentBalance)
+        assertEquals(90, started.wallets[2L]!!.currentBalance)
+        // Excluded player's wallet unchanged (since he didn't pay)
+        assertEquals(0, started.wallets[3L]!!.currentBalance)
+    }
 }
+

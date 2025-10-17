@@ -5,7 +5,6 @@ import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.domain.Game.pokerDice.GameEngine
 import pt.isel.domain.Game.pokerDice.GamePhase
 import pt.isel.domain.Game.Face
-import pt.isel.domain.Game.pokerDice.PlayerState
 
 /**
  * Wraps the poker-dice GameEngine and wires money flows with RoundBanker.

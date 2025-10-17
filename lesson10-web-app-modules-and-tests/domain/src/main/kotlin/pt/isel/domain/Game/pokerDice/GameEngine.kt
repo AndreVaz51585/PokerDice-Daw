@@ -31,12 +31,14 @@ object GameEngine {
                 require(state.playerOrder.size >= 2) { "Need >= 2 players." }
                 val initialPot = state.playerOrder.size * state.ante
                 val firstRound = Round(
-                    number = 1, pot = initialPot, state = RoundState.OPEN,
-                    id = TODO(),
-                    matchId = TODO(),
-                    anteCoins = TODO(),
-                    winners = TODO(),
-                    hands = TODO()
+                    id = 1L,
+                    number = 1,
+                    matchId = state.id.toLong(),
+                    state = RoundState.OPEN,
+                    anteCoins = state.ante,
+                    pot = initialPot,
+                    winners = emptyList(),
+                    hands = emptyMap()
                 )
                 state.copy(
                     phase = GamePhase.ROLLING,
