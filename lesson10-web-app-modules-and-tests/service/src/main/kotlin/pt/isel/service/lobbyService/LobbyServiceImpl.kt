@@ -31,7 +31,7 @@ class LobbyServiceImpl(
     // estrutura necessária ,implementada em memória para guardar o tempo de criação do lobby e assim podermos controlar o TimeOut
      private val lobbyTimeOuts = ConcurrentHashMap<Int, Long>()
 
-    private val lobbyTimeOutMillis : Long = TimeUnit.SECONDS.toMillis(30)
+    private val lobbyTimeOutMillis : Long = TimeUnit.SECONDS.toMillis(120) //TimeOut de 2 minutos
 
     override fun createLobby(
         hostId: Int,
@@ -125,6 +125,20 @@ class LobbyServiceImpl(
             if (!userInLobby) {
                 return@run failure(LobbyServiceError.UserIsNotInLobby)
             }
+
+            val isHost = lobby.lobbyHost == userId && lobby.state == LobbyState.OPEN  // se o user a sair for o host e o lobby estiver OPEN então os jogadores são removidos e o lobby apagado
+
+            if (isHost){
+                // Remover todos os jogadores do lobby
+                for (player in players) {
+                    repoLobby.remove(lobbyId, player.id)
+                }
+
+                repoLobby.deleteById(lobbyId) // apaga consecutivamente o lobby
+                lobbyTimeOuts.remove(lobbyId) // remove o TimeOut associado ao lobby
+                return@run success(true)
+            }
+
             val removed = repoLobby.remove(lobbyId, userId)
             if (!removed) {
                 return@run failure(LobbyServiceError.ErrorLeavingLobby)
@@ -170,8 +184,15 @@ class LobbyServiceImpl(
         val hasExpired = currentTime >= timeout
 
         return when {
-            playerCount >= lobby.maxPlayers -> LobbyState.FULL // se o numero de jogadores for igual ao maximo o estado passa a FULL
-            playerCount >= lobby.minPlayers && hasExpired -> LobbyState.STARTED // se o numero de jogadores for maior ou igual ao minimo e o tempo tiver expirado o estado passa a STARTED
+            playerCount >= lobby.maxPlayers ->{
+                repoLobby.save(lobby.copy(state = LobbyState.FULL))
+                LobbyState.FULL // se o numero de jogadores for igual ao maximo o estado passa a FULL
+            }
+
+            playerCount >= lobby.minPlayers && hasExpired ->{
+                repoLobby.save(lobby.copy(state = LobbyState.STARTED))
+                LobbyState.STARTED }// se o numero de jogadores for maior ou igual ao minimo e o tempo tiver expirado o estado passa a STARTED
+
             else -> LobbyState.OPEN // caso contrário mantem-se OPEN
         }
     }

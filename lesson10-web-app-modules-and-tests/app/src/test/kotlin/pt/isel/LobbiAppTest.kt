@@ -48,8 +48,10 @@ class LobbyAppTest {
     var port: Int = 0
 
     private lateinit var client: WebTestClient
-    private lateinit var token1: String
-    private lateinit var token2: String
+    private lateinit var token1: String // user 1
+    private lateinit var token2: String // user 2
+    private lateinit var token3: String // user 3
+    private lateinit var token4: String // user 4
 
     private val userInput1 = UserInput(
         name = "Player One",
@@ -63,6 +65,16 @@ class LobbyAppTest {
         password = "secret"
     )
 
+    private val userInput3 = UserInput(
+        name = "Player Three",
+        email = "Player@three.com",
+        password = "secret")
+
+    private val userInput4 = UserInput(
+        name = "Player four",
+        email = "Player@four.com",
+        password = "secret")
+
     @BeforeAll
     fun setup() {
         // Clear data before test
@@ -71,7 +83,7 @@ class LobbyAppTest {
 
         client = WebTestClient.bindToServer().baseUrl("http://localhost:$port/api").build()
 
-        // Create user
+        // Create user 1
         client.post()
             .uri("/users")
             .contentType(MediaType.APPLICATION_JSON)
@@ -80,10 +92,29 @@ class LobbyAppTest {
             .expectStatus()
             .isCreated
 
+        // create user 2
         client.post()
             .uri("/users")
             .contentType(MediaType.APPLICATION_JSON)
             .bodyValue(userInput2)
+            .exchange()
+            .expectStatus()
+            .isCreated
+
+        // create user 3
+        client.post()
+            .uri("/users")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(userInput3)
+            .exchange()
+            .expectStatus()
+            .isCreated
+
+        // create user 4
+        client.post()
+            .uri("/users")
+            .contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(userInput4)
             .exchange()
             .expectStatus()
             .isCreated
@@ -122,6 +153,40 @@ class LobbyAppTest {
                 .responseBody!!
 
         token2 = result2.token
+
+        val result3 =
+            client.post()
+                .uri("/users/token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    mapOf(
+                        "email" to userInput3.email,
+                        "password" to userInput3.password
+                    )
+                ).exchange()
+                .expectStatus().isOk
+                .expectBody(UserCreateTokenOutputModel::class.java)
+                .returnResult()
+                .responseBody!!
+
+        token3 = result3.token
+
+        val result4 =
+            client.post()
+                .uri("/users/token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(
+                    mapOf(
+                        "email" to userInput4.email,
+                        "password" to userInput4.password
+                    )
+                ).exchange()
+                .expectStatus().isOk
+                .expectBody(UserCreateTokenOutputModel::class.java)
+                .returnResult()
+                .responseBody!!
+
+        token4 = result4.token
     }
 
     @Test
@@ -139,7 +204,7 @@ class LobbyAppTest {
         val locationHeader =
             client.post()
                 .uri("/lobbies")
-                .header("Authorization", "Bearer $token1")
+                .header("Authorization", "Bearer $token1") // user1 cria o lobby
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(lobbyInput)
                 .exchange()
@@ -178,9 +243,142 @@ class LobbyAppTest {
             .header("Authorization", "Bearer $token2")
             .exchange()
             .expectStatus().isOk
-            .expectBody(Boolean::class.java)
-            .isEqualTo(true)
+            .expectBody(String::class.java)
+            .isEqualTo("Player Added to Lobby")
     }
+
+
+    @Test
+    fun `when the maxPlayers is reached the match starts and the LobbyState updates to Full`() {
+        val lobbyInput = LobbyInput(
+            name = "Full Lobby",
+            description = "For testing purposes",
+            minPlayers = 2,
+            maxPlayers = 3,
+            rounds = 3,
+            ante = 100
+        )
+
+        // Create a lobby
+        val locationHeader =
+            client.post()
+                .uri("/lobbies")
+                .header("Authorization", "Bearer $token3") // user3 cria o lobby
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(lobbyInput)
+                .exchange()
+                .expectStatus().isCreated
+                .expectHeader()
+                .value("location") { assertTrue(it.startsWith("/api/lobbies/")) }
+                .returnResult(Void::class.java)
+                .responseHeaders
+                .location!!
+                .path
+
+        // Extract ID from location
+        val lobbyId = locationHeader.substringAfterLast("/").toInt()
+
+        // user1 Joins the Lobby
+        client.post()
+            .uri("/lobbies/$lobbyId/join")
+            .header("Authorization", "Bearer $token1")
+            .exchange()
+            .expectStatus().isOk
+            .expectBody(String::class.java)
+            .isEqualTo("Player Added to Lobby")
+
+        // user2 Joins the Lobby - this should start the match
+        client.post()
+            .uri("/lobbies/$lobbyId/join")
+            .header("Authorization", "Bearer $token2")
+            .exchange()
+            .expectStatus().isCreated
+            .expectHeader()
+            .value("location") { assertTrue(it.startsWith("/api/matches/")) }
+            .expectBody()
+            .jsonPath("matchId").exists()
+
+        // user4 tries to Join the Lobby - but its already full
+        client.post()
+            .uri("/lobbies/$lobbyId/join")
+            .header("Authorization", "Bearer $token4")
+            .exchange()
+            .expectStatus().isBadRequest
+            .expectBody()
+            .jsonPath("title")
+            .isEqualTo("lobby-full")
+
+
+
+    }
+
+    @Test
+    fun `should remove players and delete the lobby when the lobby host leaves while the LobbyState is Open`() {
+        // First, clear all lobbies
+        val lobbyInput = LobbyInput(
+            name = "Host to leave Lobby",
+            description = "For testing purposes",
+            minPlayers = 2,
+            maxPlayers = 4,
+            rounds = 3,
+            ante = 100
+        )
+
+        val locationHeader =
+            client.post()
+                .uri("/lobbies")
+                .header("Authorization", "Bearer $token1") // user3 cria o lobby
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue(lobbyInput)
+                .exchange()
+                .expectStatus().isCreated
+                .expectHeader()
+                .value("location") { assertTrue(it.startsWith("/api/lobbies/")) }
+                .returnResult(Void::class.java)
+                .responseHeaders
+                .location!!
+                .path
+
+        val lobbyId = locationHeader.substringAfterLast("/").toInt()
+
+        // user2 Joins the Lobby
+        client.post()
+            .uri("/lobbies/$lobbyId/join")
+            .header("Authorization", "Bearer $token2")
+            .exchange()
+            .expectStatus().isOk
+            .expectBody(String::class.java)
+            .isEqualTo("Player Added to Lobby")
+
+        //user3 joins the lobby
+
+        client.post()
+            .uri("/lobbies/$lobbyId/join")
+            .header("Authorization", "Bearer $token3")
+            .exchange()
+            .expectStatus().isOk
+            .expectBody(String::class.java)
+            .isEqualTo("Player Added to Lobby")
+
+
+        // Lobby Host leaves the lobby
+        client.delete()
+            .uri("/lobbies/$lobbyId")
+            .header("Authorization","Bearer $token1")
+            .exchange()
+            .expectStatus().isOk
+
+        // Verify that the lobby has been deleted
+        client.get()
+            .uri("/lobbies/$lobbyId")
+            .exchange()
+            .expectStatus().isNotFound
+
+
+
+    }
+
+
 
     @Test
     fun `should return 404 when getting non-existent lobby`() {
