@@ -5,12 +5,13 @@ import org.springframework.stereotype.Service
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
+import pt.isel.domain.Game.pokerDice.Game
+import pt.isel.domain.Game.money.Wallet
 import pt.isel.repo.RepositoryMatch
 import pt.isel.repo.TransactionManager
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
-import java.io.Serial
 import java.time.Instant
 
 @Service
@@ -27,11 +28,29 @@ class MatchServiceImpl(
         if (totalRounds <= 0 || ante < 0) {
             return@run failure(MatchServiceError.InvalidState)
         }
-        // Evitar duplicados iniciais
+
+        // Build initial domain Game state. Use lobbyId as hostId by default (adjust if needed).
+        // id will be assigned by repository when persisted (repo implementation can set it).
+        val initialGame = Game(
+            id = 0,
+            hostId = lobbyId,
+            ante = ante,
+            maxPlayers = 4, // default initial; adjust or pass as parameter if you want
+            totalRounds = totalRounds
+        )
+
+        val initialWallets: Map<Long, Wallet> = emptyMap() // wallets start empty; add players will create wallets
+
+        // Create Match in repository with gameState embedded
         val match = repoMatch.createMatch(
             lobbyId = lobbyId,
             totalRounds = totalRounds,
             ante = ante,
+            gameState = initialGame,
+            wallets = initialWallets,
+            state = MatchState.RUNNING, // initial persisted state
+            startedAt = Instant.now(),
+            maxPlayers = 4
         )
         return@run success(match)
     }
@@ -58,6 +77,9 @@ class MatchServiceImpl(
             seatNo = repoMatch.getMaxSeatNo(match.id)+1
         )
         if (!ok) return@run failure(MatchServiceError.Unknown)
+
+        // Optional enhancement: update the persisted Match.gameState to include the new player.
+        // For now, the repository player table is the source of truth for listPlayers.
         success(true)
     }
 
@@ -70,23 +92,31 @@ class MatchServiceImpl(
         }
         val ok = repoMatch.removePlayer(matchId, userId)
         if (!ok) return@run failure(MatchServiceError.Unknown)
+
+        // Optional: update gameState to reflect removal
         success(true)
     }
 
     override fun updateState(matchId: Int, newState: MatchState): Either<MatchServiceError, Boolean> = trxManager.run {
         val match = repoMatch.findById(matchId) ?: return@run failure(MatchServiceError.MatchNotFound)
 
-        // Exemplo simples de validação de transição
+        // Simple validation: cannot change state once finished
         if (match.state == MatchState.FINISHED) {
             return@run failure(MatchServiceError.InvalidState)
         }
+
+        // If transitioning to RUNNING you may want to initialize or start the embedded game.
+        // Currently this method persists the state change; if you want the start to also
+        // cause domain behaviour (e.g. collect antes via GameEngine), add that logic here.
         val ok = repoMatch.updateState(matchId, newState)
         if (!ok) return@run failure(MatchServiceError.Unknown)
+
         success(true)
     }
 
     override fun listPlayers(matchId: Int): List<MatchPlayer> = trxManager.run {
-        // Opcional: validar existência do match
+        // Return players from repo (table). If you rather use match.gameState.players,
+        // ensure gameState is kept up to date on every player add/remove.
         repoMatch.listPlayers(matchId)
     }
 }

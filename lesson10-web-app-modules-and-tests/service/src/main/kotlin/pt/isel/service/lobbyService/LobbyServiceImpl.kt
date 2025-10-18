@@ -1,12 +1,12 @@
 package pt.isel.service.lobbyService
 
-import jakarta.inject.Named
-import org.springframework.context.annotation.Bean
-import org.springframework.stereotype.Component
 import org.springframework.stereotype.Service
 import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.Game.Lobby.LobbyState
-import pt.isel.domain.Game.Match.Match
+import pt.isel.domain.Game.Match.MatchState
+import pt.isel.domain.Game.money.Wallet
+import pt.isel.domain.Game.pokerDice.Game
+import pt.isel.domain.Game.pokerDice.PlayerState
 import pt.isel.domain.user.User
 import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryUser
@@ -14,11 +14,8 @@ import pt.isel.repo.TransactionManager
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
-import pt.isel.service.matchService.MatchServiceError
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
-import kotlin.Result.Companion.failure
-import kotlin.collections.remove
 
 
 @Service
@@ -160,25 +157,55 @@ class LobbyServiceImpl(
         }
 
 
-    override fun startMatch(lobbyId: Int): Either<LobbyServiceError, Int>  =
-         trxManager.run {
-             val lobby = repoLobby.findById(lobbyId) ?: return@run failure(LobbyServiceError.LobbyNotFound)
-             val players = repoLobby.listPlayers(lobbyId)
-             val matchResult : Match =
-                 repoMatch.createMatch(
-                     lobbyId,
-                     lobby.rounds,
-                     lobby.ante
-                 ) // retorna a match ou MatchServiceError
+    override fun startMatch(lobbyId: Int): Either<LobbyServiceError, Int> =
+        trxManager.run {
+            val lobby = repoLobby.findById(lobbyId) ?: return@run failure(LobbyServiceError.LobbyNotFound)
+            val players = repoLobby.listPlayers(lobbyId)
 
-               return@run success(matchResult.id) // retorna o id da match criada
+            val initialPlayerStates = players.associate { player ->
+                player.id to PlayerState(userId = player.id)
+            }
 
-             }
+            val initialGame = Game(
+                id = 0, // se for gerado pelo repositório, mete 0 ou ignora se o construtor não o pedir
+                hostId = lobby.lobbyHost,
+                maxPlayers = lobby.maxPlayers,
+                ante = lobby.ante,
+                totalRounds = lobby.rounds,
+                players = initialPlayerStates,
+            )
+
+            // Cria carteiras (wallets) iniciais
+            val wallets = players.associate { player ->
+                player.id.toLong() to Wallet(userId = player.id, currentBalance = 1000 - lobby.ante)
+            }
+
+            // 3️⃣ Cria o Match no repositório
+            val matchResult = repoMatch.createMatch(
+                lobbyId = lobbyId,
+                totalRounds = lobby.rounds,
+                ante = lobby.ante,
+                gameState = initialGame,
+                wallets = wallets,
+                state = MatchState.RUNNING,
+                currentRoundNo = 1,
+                startedAt = java.time.Instant.now(),
+                finishedAt = null,
+                maxPlayers = lobby.maxPlayers
+            )
+
+            // 4️⃣ Atualiza estado do lobby
+            repoLobby.save(lobby.copy(state = LobbyState.STARTED))
+            lobbyTimeOuts.remove(lobbyId)
+
+            return@run success(matchResult.id)
+        }
 
 
 
 
-     private fun updateLobbyStateIfNeeded(lobby: Lobby, playerCount: Int): LobbyState {
+
+    private fun updateLobbyStateIfNeeded(lobby: Lobby, playerCount: Int): LobbyState {
         val currentTime = System.currentTimeMillis()
         val timeout = lobbyTimeOuts[lobby.id] ?: (currentTime + lobbyTimeOutMillis)
         val hasExpired = currentTime >= timeout

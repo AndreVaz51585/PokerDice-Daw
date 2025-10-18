@@ -3,11 +3,19 @@ package pt.isel.repo
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
+import pt.isel.domain.Game.pokerDice.Game
+import pt.isel.domain.Game.money.Wallet
 import java.time.Instant
+import javax.swing.text.html.parser.Entity
 
 /**
  * Domain port for Match persistence.
  * Keeps domain independent from infrastructure (JDBI, JDBC, etc.).
+ *
+ * NOTE:
+ * - createMatch now accepts a fully formed Game (gameState) and optional wallets
+ *   so the persisted Match contains the game state from the beginning.
+ * - Implementations must (de)serialize the Game and Wallets (e.g. JSON in DB).
  */
 interface RepositoryMatch : Repository<Match> {
 
@@ -23,17 +31,30 @@ interface RepositoryMatch : Repository<Match> {
 
     /**
      * Creates a Match and its initial players (transaction handled externally).
+     *
+     * Now accepts the initial gameState and optional wallets map so the persisted
+     * Match contains the domain Game snapshot from the start.
+     *
+     * Returns the created Match (with its generated id if implementation assigns one).
      */
     fun createMatch(
         lobbyId: Int,
         totalRounds: Int,
         ante: Int,
+        gameState: Game,
+        wallets: Map<Long, Wallet> = emptyMap(),
         state: MatchState = MatchState.RUNNING,
         currentRoundNo: Int = 1,
         startedAt: Instant = Instant.now(),
-        finishedAt: Instant? = null
+        finishedAt: Instant? = null,
+        maxPlayers: Int = 10
     ): Match
 
+    /**
+     * Save / upsert the given match (persist the updated gameState and wallets).
+     * Returns true on success.
+     */
+    override fun save(entity: Match)
 
     /**
      * Updates the state and optionally the finishedAt timestamp.

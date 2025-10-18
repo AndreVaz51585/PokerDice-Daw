@@ -22,7 +22,7 @@ data class Ante(
         require(pot.matchId == matchId && pot.roundNumber == roundNumber) {
             "Ante não corresponde ao pote (match/round)"
         }
-        require(wallet.userId == userId) { "Wallet não corresponde ao user" }
+        require(wallet.userId.toLong() == userId) { "Wallet não corresponde ao user" }
 
         val updatedWallet = wallet.withdraw(amount)
         val updatedPot = pot.addContribution(userId, amount)

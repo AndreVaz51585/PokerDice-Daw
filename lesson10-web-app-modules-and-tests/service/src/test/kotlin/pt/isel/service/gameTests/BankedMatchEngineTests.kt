@@ -30,8 +30,8 @@ class BankedMatchEngineTests {
             totalRounds = totalRounds
         )
         val defaultWallets = mapOf(
-            1L to Wallet(userId = 1L, currentBalance = 100),
-            2L to Wallet(userId = 2L, currentBalance = 100)
+            1L to Wallet(userId = 1, currentBalance = 100),
+            2L to Wallet(userId = 2, currentBalance = 100)
         )
 
         return BankedMatch(
@@ -129,8 +129,8 @@ class BankedMatchEngineTests {
     fun `Start finishes match and does not open pot when only one player can pay ante`() {
         // player 2 has insufficient balance
         val wallets = mapOf(
-            1L to Wallet(userId = 1L, currentBalance = 100),
-            2L to Wallet(userId = 2L, currentBalance = 0)
+            1L to Wallet(userId = 1, currentBalance = 100),
+            2L to Wallet(userId = 2, currentBalance = 0)
         )
         val initial = joinTwoPlayers(newMatch(ante = 10, wallets = wallets))
         val started = BankedMatchEngine.apply(initial, Command.Start(byUserId = 10), roll)
@@ -147,9 +147,9 @@ class BankedMatchEngineTests {
     fun `Start excludes players who cannot pay when at least two remain eligible`() {
         // three players: player3 cannot pay
         val wallets = mapOf(
-            1L to Wallet(userId = 1L, currentBalance = 100),
-            2L to Wallet(userId = 2L, currentBalance = 100),
-            3L to Wallet(userId = 3L, currentBalance = 0)
+            1L to Wallet(userId = 1, currentBalance = 100),
+            2L to Wallet(userId = 2, currentBalance = 100),
+            3L to Wallet(userId = 3, currentBalance = 0)
         )
         val initial = joinThreePlayers(newMatch(ante = 10, wallets = wallets))
         val started = BankedMatchEngine.apply(initial, Command.Start(byUserId = 10), roll)

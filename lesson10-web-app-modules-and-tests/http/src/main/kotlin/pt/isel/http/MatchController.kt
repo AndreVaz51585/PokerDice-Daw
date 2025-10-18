@@ -22,8 +22,6 @@ class MatchController(
     fun createMatch(
         @RequestBody input: MatchInput
     ): ResponseEntity<*> {
-        // Converte a lista de IDs de jogadores para objetos MatchPlayer
-
         val result: Either<MatchServiceError, Match> = matchService.createMatch(
             lobbyId = input.lobbyId,
             totalRounds = input.totalRounds,
@@ -79,7 +77,6 @@ class MatchController(
     fun getMatchPlayers(
         @PathVariable id: Int
     ): ResponseEntity<*> {
-        // Verificar primeiro se a partida existe
         val matchResult = matchService.getMatch(id)
         if (matchResult is Failure) {
             return Problem.MatchNotFound.response(HttpStatus.NOT_FOUND)
@@ -95,13 +92,11 @@ class MatchController(
     fun startMatch(
         @PathVariable id: Int
     ): ResponseEntity<*> {
-        // Primeiro verifica se a partida existe
         val matchResult = matchService.getMatch(id)
         if (matchResult is Failure) {
             return Problem.MatchNotFound.response(HttpStatus.NOT_FOUND)
         }
 
-        // Atualiza o estado da partida para PLAYING
         val result = matchService.updateState(id, MatchState.RUNNING)
 
         return when (result) {
@@ -118,13 +113,11 @@ class MatchController(
     fun endMatch(
         @PathVariable id: Int
     ): ResponseEntity<*> {
-        // Primeiro verifica se a partida existe
         val matchResult = matchService.getMatch(id)
         if (matchResult is Failure) {
             return Problem.MatchNotFound.response(HttpStatus.NOT_FOUND)
         }
 
-        // Atualiza o estado da partida para FINISHED
         val result = matchService.updateState(id, MatchState.FINISHED)
 
         return when (result) {

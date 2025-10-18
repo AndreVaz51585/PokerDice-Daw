@@ -3,7 +3,7 @@ package pt.isel.domain.Game.money
 import java.time.Instant
 
 data class Wallet(
-    val userId: Long,
+    val userId: Int,
     val currentBalance: Int,
     val lastUpdatedAt: Instant = Instant.now()
 ) {

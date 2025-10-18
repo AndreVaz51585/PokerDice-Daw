@@ -15,8 +15,8 @@ class RoundBankerTests {
     fun `openPot collects ante from all wallets and keeps pot open`() {
         val ante = Ante(amount = 10, matchId = 77L, roundNumber = 1)
         val wallets = mapOf(
-            1L to Wallet(userId = 1L, currentBalance = 100),
-            2L to Wallet(userId = 2L, currentBalance = 100)
+            1L to Wallet(userId = 1, currentBalance = 100),
+            2L to Wallet(userId = 2, currentBalance = 100)
         )
 
         val rf = RoundBanker.openPot(ante, playerIds = listOf(1L, 2L), wallets = wallets)
@@ -32,8 +32,8 @@ class RoundBankerTests {
     fun `settleAndPay pays winners and closes the pot`() {
         val ante = Ante(amount = 10, matchId = 99L, roundNumber = 1)
         val initial = mapOf(
-            1L to Wallet(1L, 100),
-            2L to Wallet(2L, 100)
+            1L to Wallet(1, 100),
+            2L to Wallet(2, 100)
         )
         val opened = RoundBanker.openPot(ante, listOf(1L, 2L), initial)
 
@@ -53,7 +53,7 @@ class RoundBankerTests {
     @Test
     fun `openPot fails if a player's wallet is missing`() {
         val ante = Ante(amount = 5, matchId = 11L, roundNumber = 1)
-        val wallets = mapOf(1L to Wallet(1L, 50)) // missing 2L
+        val wallets = mapOf(1L to Wallet(1, 50)) // missing 2L
 
         assertThrows<IllegalStateException> {
             RoundBanker.openPot(ante, playerIds = listOf(1L, 2L), wallets = wallets)
@@ -65,8 +65,8 @@ class RoundBankerTests {
         val ante = Ante(amount = 10, matchId = 77L, roundNumber = 1)
         // only player 1 can pay
         val wallets = mapOf(
-            1L to Wallet(userId = 1L, currentBalance = 100),
-            2L to Wallet(userId = 2L, currentBalance = 5)
+            1L to Wallet(userId = 1, currentBalance = 100),
+            2L to Wallet(userId = 2, currentBalance = 5)
         )
 
         val rf = RoundBanker.openPot(ante, playerIds = listOf(1L, 2L), wallets = wallets)
@@ -86,9 +86,9 @@ class RoundBankerTests {
         val ante = Ante(amount = 10, matchId = 88L, roundNumber = 1)
         // player 3 cannot pay, players 1 and 2 can
         val wallets = mapOf(
-            1L to Wallet(userId = 1L, currentBalance = 100),
-            2L to Wallet(userId = 2L, currentBalance = 100),
-            3L to Wallet(userId = 3L, currentBalance = 0)
+            1L to Wallet(userId = 1, currentBalance = 100),
+            2L to Wallet(userId = 2, currentBalance = 100),
+            3L to Wallet(userId = 3, currentBalance = 0)
         )
 
         val rf = RoundBanker.openPot(ante, playerIds = listOf(1L, 2L, 3L), wallets = wallets)
@@ -110,8 +110,8 @@ class RoundBankerTests {
         val ante = Ante(amount = 10, matchId = 99L, roundNumber = 1)
         // no one can pay
         val wallets = mapOf(
-            1L to Wallet(userId = 1L, currentBalance = 0),
-            2L to Wallet(userId = 2L, currentBalance = 0)
+            1L to Wallet(userId = 1, currentBalance = 0),
+            2L to Wallet(userId = 2, currentBalance = 0)
         )
 
         val rf = RoundBanker.openPot(ante, playerIds = listOf(1L, 2L), wallets = wallets)
