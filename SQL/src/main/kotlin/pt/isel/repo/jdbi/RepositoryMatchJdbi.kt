@@ -52,9 +52,20 @@ class RepositoryMatchJdbi(
             addPlayer(
                 matchId = matchId,
                 userId = host.id,
-                balanceAtStart = 1000, //TODO: Não sei quanto se deve pôr aqui
-                seatNo = getMaxSeatNo(matchId)+1
+                balanceAtStart = 1000, //TODO: Buscar o valor da Wallet daquele User
+                seatNo = 1  // O host tem o lugar 1
             )
+        }
+
+        for (i in lobby.players){
+            if (i.id != host?.id){
+                addPlayer(
+                    matchId = matchId,
+                    userId = i.id,
+                    balanceAtStart = 1000, //TODO: Buscar o valor da Wallet daquele User
+                    seatNo = getMaxSeatNo(matchId) + 1
+                )
+            }
         }
 
         return Match(

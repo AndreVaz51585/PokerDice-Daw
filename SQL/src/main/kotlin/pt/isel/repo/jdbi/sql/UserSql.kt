@@ -24,7 +24,7 @@ object UserSql {
     """
 
     const val CLEAR_USERS = """
-        DELETE FROM dbo.users
+        TRUNCATE TABLE dbo.users RESTART IDENTITY CASCADE
     """
 
     const val CREATE_USER = """

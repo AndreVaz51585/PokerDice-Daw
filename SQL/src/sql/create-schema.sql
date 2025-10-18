@@ -160,9 +160,9 @@ CREATE TABLE IF NOT EXISTS round (
                                       ante_coins       INTEGER NOT NULL CHECK (ante_coins > 0),   -- snapshot do ante para este round
                                       status           round_state NOT NULL DEFAULT 'IN_PROGRESS',
                                       pot_coins        INTEGER NOT NULL DEFAULT 0,                -- materializado por trigger (soma dos ANTE)
-                                      winner_user_id   BIGINT REFERENCES dbo.users(id),
+                                      winner_user_id   BIGINT REFERENCES dbo.users(id) DEFAULT NULL,
                                       started_at       TIMESTAMPTZ,
-                                      ended_at         TIMESTAMPTZ,
+                                      ended_at         TIMESTAMPTZ DEFAULT NULL,
                                       UNIQUE (match_id, number)
 );
 

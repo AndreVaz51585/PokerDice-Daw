@@ -1,5 +1,9 @@
 package pt.isel.repo.jdbi.sql
 
+
+
+
+
 object RoundSql {
     const val SELECT_ROUND_BY_ID = """
         SELECT id, match_id, number, ante_coins, status, pot_coins, winner_user_id, started_at, ended_at
@@ -15,27 +19,27 @@ object RoundSql {
     const val SELECT_ROUNDS_BY_MATCH = """
         SELECT id, match_id, number, ante_coins, status, pot_coins, winner_user_id, started_at, ended_at
         FROM round
-        WHERE match_id = :match_id
+        WHERE match_id = :matchId
         ORDER BY number
     """
 
     const val SELECT_CURRENT_ROUND_BY_MATCH = """
         SELECT id, match_id, number, ante_coins, status, pot_coins, winner_user_id, started_at, ended_at
         FROM round
-        WHERE match_id = :match_id AND status = 'IN_PROGRESS'
+        WHERE match_id = :matchId AND status = 'IN_PROGRESS'
         ORDER BY number DESC
         LIMIT 1
     """
 
     const val INSERT_ROUND = """
-        INSERT INTO round (match_id, number, ante_coins, pot_coins, winner_user_id, started_at)
-        VALUES (:match_id, :number, :ante_coins, :pot_coins, :winner_user_id, :started_at)
+        INSERT INTO round (match_id, number, ante_coins, pot_coins, started_at)
+        VALUES (:matchId, :number, :anteCoins, :potCoins, :startedAt)
         RETURNING id
     """
 
     const val UPDATE_ROUND = """
         UPDATE round
-        SET status = :status, pot_coins = :pot_coins, winner_user_id = :winner_user_id, ended_at = :ended_at
+        SET status = :status, pot_coins = :potCoins, winner_user_id = :winnerUserId, ended_at = :endedAt
         WHERE id = :id
     """
 
@@ -44,18 +48,18 @@ object RoundSql {
     """
 
     const val DELETE_ALL_ROUNDS = """
-        DELETE FROM round
+        TRUNCATE TABLE round RESTART IDENTITY CASCADE
     """
 
     const val START_ROUND = """
         UPDATE round
-        SET started_at = :started_at
+        SET started_at = :startedAt
         WHERE id = :id
     """
 
     const val COMPLETE_ROUND = """
         UPDATE round
-        SET winner_user_id = :winner_user_id, status = :status, ended_at = :ended_at
+        SET winner_user_id = :winnerUserId, status = :status, ended_at = :endedAt
         WHERE id = :id
     """
 
@@ -78,19 +82,19 @@ object RoundSql {
     const val COUNT_PLAYERS_PLAYED = """
         SELECT COUNT(DISTINCT user_id) 
         FROM dice 
-        WHERE round_id = :round_id
+        WHERE round_id = :roundId
     """
 
     const val COUNT_TOTAL_PLAYERS = """
         SELECT COUNT(DISTINCT user_id) 
         FROM match_player
-        WHERE match_id = (SELECT match_id FROM round WHERE id = :round_id)
+        WHERE match_id = (SELECT match_id FROM round WHERE id = :roundId)
     """
 
     const val SELECT_HANDS_BY_ROUND = """
         SELECT user_id, d1, d2, d3
         FROM dice
-        WHERE round_id = :round_id
+        WHERE round_id = :roundId
         AND roll_no = (
             SELECT MAX(roll_no) 
             FROM dice d2 
@@ -102,7 +106,7 @@ object RoundSql {
     const val CHECK_PLAYER_PLAYED = """
         SELECT COUNT(*) 
         FROM dice 
-        WHERE round_id = :round_id 
-        AND user_id = :user_id
+        WHERE round_id = :roundId 
+        AND user_id = :userId
     """
 }

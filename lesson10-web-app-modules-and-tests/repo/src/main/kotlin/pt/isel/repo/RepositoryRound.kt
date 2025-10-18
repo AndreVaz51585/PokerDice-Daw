@@ -2,8 +2,16 @@ package pt.isel.repo
 
 import pt.isel.domain.Game.Round.Round
 import pt.isel.domain.Game.Round.RoundState
+import java.time.Instant
 
 interface RepositoryRound : Repository<Round> {
+
+    fun createRound(
+        matchId: Int,
+        number: Int,
+        anteCoins: Int,
+        startedAt: Instant
+    ): Round
 
     // Encontrar rounds por match
     fun findByMatchId(matchId: Long): List<Round>
@@ -21,7 +29,7 @@ interface RepositoryRound : Repository<Round> {
     fun updateState(roundId: Long, newState: RoundState): Boolean
 
     // Adicionar moedas ao pote
-    fun addToPot(roundId: Long, amount: Int): Int  // Retorna o novo valor do pote
+    fun addToPot(roundId: Long, amount: Int): Boolean
 
     // Obter o pote atual
     fun getPotAmount(roundId: Long): Int
@@ -30,7 +38,7 @@ interface RepositoryRound : Repository<Round> {
     fun allPlayersPlayed(roundId: Long): Boolean
 
     // Obter informações completas do round incluindo mãos dos jogadores
-    fun getRoundWithHands(roundId: Long): Round?
+    fun getRoundWithHands(roundId: Long): Round
 
     // Verificar se um jogador específico já jogou neste round
     fun hasPlayerPlayed(roundId: Long, userId: Int): Boolean
