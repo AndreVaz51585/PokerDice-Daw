@@ -3,7 +3,10 @@ package pt.isel.service.matchService
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
+import pt.isel.domain.Game.money.BankedMatch
+import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.service.Auxiliary.Either
+import pt.isel.service.match.BankedGameMatchEngine
 
 interface MatchService {
     fun createMatch(
@@ -21,4 +24,13 @@ interface MatchService {
     fun updateState(matchId: Int, newState: MatchState): Either<MatchServiceError, Boolean>
 
     fun listPlayers(matchId: Int): List<MatchPlayer>
+
+    fun getBankedMatch(matchId: Int): BankedMatch?
+
+    fun applyCommand(matchId: Int, cmd: Command): Either<MatchServiceError, BankedMatch>
+
+    fun registerMatchEngine(engine: BankedGameMatchEngine)
+
+    fun registerBankedMatchFromDb(matchId: Int): Boolean
+
 }

@@ -13,7 +13,6 @@ data class Lobby(
     val rounds: Int,
     val ante: Int,                          // número inteiro de “moedas” por ronda
     var state: LobbyState = LobbyState.OPEN,
-    val players: List<User> = emptyList()       // lista de players (não apenas um número)
 ) {
     init {
         require(name.isNotBlank()) { " The lobby's name cannot be empty" }

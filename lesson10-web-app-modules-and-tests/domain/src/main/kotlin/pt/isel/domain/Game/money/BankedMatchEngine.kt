@@ -4,7 +4,6 @@ import pt.isel.domain.Game.Round.RoundState
 import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.domain.Game.pokerDice.GameEngine
 import pt.isel.domain.Game.pokerDice.GamePhase
-import pt.isel.domain.Game.Face
 
 /**
  * Wraps the poker-dice GameEngine and wires money flows with RoundBanker.
@@ -21,11 +20,11 @@ import pt.isel.domain.Game.Face
  */
 object BankedMatchEngine {
 
-    fun apply(state: BankedMatch, cmd: Command, roll: () -> Face): BankedMatch {
+    fun apply(state: BankedMatch, cmd: Command): BankedMatch {
         return when (cmd) {
             is Command.Start -> {
                 // 1) Run the game transition.
-                val newGame = GameEngine.apply(state.game, cmd, roll)
+                val newGame = GameEngine.apply(state.game, cmd)
 
                 // 2) Open pot and collect antes for round 1.
                 val roundNumber = 1
@@ -34,7 +33,7 @@ object BankedMatchEngine {
                     matchId = state.matchId,
                     roundNumber = roundNumber
                 )
-                val playerIds = newGame.playerOrder.map { it.toLong() }
+                val playerIds = newGame.playerOrder.map { it }
 
                 val opened = RoundBanker.openPot(ante, playerIds, state.wallets)
 
@@ -51,9 +50,9 @@ object BankedMatchEngine {
                 }
 
                 // 4) Há >= 2 jogadores elegíveis: remover do Game os jogadores excluídos
-                val remainingPlayerOrder = newGame.playerOrder.filter { it.toLong() in eligible }
+                val remainingPlayerOrder = newGame.playerOrder.filter { it in eligible }
 
-                val remainingPlayers = newGame.players.filterKeys { it.toLong() in eligible }
+                val remainingPlayers = newGame.players.filterKeys { it in eligible }
 
 
                 val adjustedGame = newGame.copy(
@@ -71,7 +70,7 @@ object BankedMatchEngine {
 
             is Command.NextRound -> {
                 // 1) Run the showdown/advance logic in the game.
-                val newGame = GameEngine.apply(state.game, cmd, roll)
+                val newGame = GameEngine.apply(state.game, cmd)
 
                 // Determine which round just got closed.
                 val rounds = newGame.rounds
@@ -87,7 +86,7 @@ object BankedMatchEngine {
 
                 // 2) Settle and pay wallets using winners and the current open pot.
                 val currentPot = state.openPot ?: error("No open pot to settle.")
-                val winnersLong = closedRound.winners?.map { it.toLong() }?.toSet() ?: emptySet()
+                val winnersLong = closedRound.winners?.map { it }?.toSet() ?: emptySet()
                 val payout = RoundBanker.settleAndPay(
                     pot = currentPot,
                     winnerUserIds = winnersLong,
@@ -110,7 +109,7 @@ object BankedMatchEngine {
                         matchId = state.matchId,
                         roundNumber = nextRound.number
                     )
-                    val playerIds = newGame.playerOrder.map { it.toLong() }
+                    val playerIds = newGame.playerOrder.map { it }
                     val opened = RoundBanker.openPot(ante, playerIds, payout.wallets)
 
                     state.copy(
@@ -123,7 +122,7 @@ object BankedMatchEngine {
 
             else -> {
                 // Pure delegation for all other commands.
-                val newGame = GameEngine.apply(state.game, cmd, roll)
+                val newGame = GameEngine.apply(state.game, cmd)
                 state.copy(game = newGame)
             }
         }

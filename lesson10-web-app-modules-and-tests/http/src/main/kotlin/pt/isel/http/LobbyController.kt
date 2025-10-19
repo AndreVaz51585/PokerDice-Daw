@@ -17,10 +17,12 @@ import pt.isel.service.Auxiliary.Failure
 import pt.isel.service.Auxiliary.Success
 import pt.isel.service.lobbyService.LobbyService
 import pt.isel.service.lobbyService.LobbyServiceError
+import pt.isel.service.matchService.MatchService
 
 @RestController
 class LobbyController(
-    private val lobbyService: LobbyService
+    private val lobbyService: LobbyService,
+    private val matchService: MatchService
 ) {
 
     @PostMapping("/api/lobbies")
@@ -98,8 +100,12 @@ class LobbyController(
                 0 -> ResponseEntity.status(HttpStatus.OK).body("Player Added to Lobby") // entrou no lobby mas o lobby não começou}
                 else -> {
                     val matchId = result.value
-                    ResponseEntity.status(HttpStatus.CREATED).header("Location", "/api/matches/$matchId") // redireciona para a partida atravês do header location
-                        .body(mapOf("matchId" to matchId))} // entrou no lobby e o lobby começou
+                    // Registar engine / state inicial fora da transacção para começar a emitir SSE
+                    matchService.registerBankedMatchFromDb(matchId)
+                    ResponseEntity.status(HttpStatus.CREATED)
+                        .header("Location", "/api/matches/$matchId")
+                        .body(mapOf("matchId" to matchId))
+                } // entrou no lobby e o lobby começou
             }
             is Failure -> when (result.value) {
                 LobbyServiceError.UserNotFound -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)

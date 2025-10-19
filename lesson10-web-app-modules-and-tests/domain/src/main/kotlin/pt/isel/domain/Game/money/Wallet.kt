@@ -5,7 +5,6 @@ import java.time.Instant
 data class Wallet(
     val userId: Int,
     val currentBalance: Int,
-    val lastUpdatedAt: Instant = Instant.now()
 ) {
     init {
         require(userId > 0L) { "userId inválido" }
@@ -16,7 +15,6 @@ data class Wallet(
         require(amount > 0) { "Depósito deve ser positivo" }
         return copy(
             currentBalance = currentBalance + amount,
-            lastUpdatedAt = Instant.now()
         )
     }
 
@@ -25,7 +23,6 @@ data class Wallet(
         require(currentBalance >= amount) { "Saldo insuficiente" }
         return copy(
             currentBalance = currentBalance - amount,
-            lastUpdatedAt = Instant.now()
         )
     }
 }

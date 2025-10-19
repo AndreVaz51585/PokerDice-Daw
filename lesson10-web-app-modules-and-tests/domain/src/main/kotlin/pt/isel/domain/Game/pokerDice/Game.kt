@@ -2,7 +2,9 @@ package pt.isel.domain.Game.pokerDice
 
 import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.Game.Match.Match
+import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Round.Round
+import kotlin.random.Random.Default.nextInt
 
 
 /**
@@ -15,7 +17,6 @@ import pt.isel.domain.Game.Round.Round
  * - balances: cumulative winnings (chips) per playerId (does not subtract antes here).
  */
 data class Game(
-    val id: Int,
     val matchId: Int,
     val hostId: Int,
     val ante: Int,
@@ -35,25 +36,36 @@ data class Game(
 
 fun createNewGame(
     lobby: Lobby,
-    match: Match
+    match: Match,
+    matchPlayers : List<MatchPlayer>
 ): Game {
-    var futuresPlayers = lobby.players
-    //TODO: Tranformar futuresPlayers do tipo users em  Map<Int, PlayerState>
+    // Define player order based on lobby players
+    val playerOrder = matchPlayers.map { it.userId }
 
+    // Map player IDs to their initial PlayerState
+    val playersMap: Map<Int, PlayerState> =
+        playerOrder.associateWith { PlayerState(it) }
+
+
+    // For each player , asscociate their starting balance
+    val balancesMap: Map<Int, Int> = playerOrder.associateWith { id ->
+        matchPlayers.find { it.userId == id }?.balanceAtStart ?: 0
+    }
+
+    val currentIndex = nextInt( playerOrder.size)
 
     val game = Game(
-        id = lobby.id,
         matchId = match.id,
         hostId =lobby.lobbyHost,
         ante =lobby.ante,
         maxPlayers = lobby.maxPlayers,
-        playerOrder = emptyList() ,     //TODO: Fazer uma função que tire a ordem
-        players = emptyMap(),           // TODO
+        playerOrder = playerOrder ,
+        players = playersMap,
         phase = GamePhase.LOBBY,
         totalRounds = match.totalRounds,
         rounds = match.rounds,
-        currentPlayerIndex = 0,         //TODO: Fazer uma função que vá buscar o que tem turn a true
-        balances = emptyMap()
+        currentPlayerIndex = currentIndex,
+        balances = balancesMap
     )
 
 

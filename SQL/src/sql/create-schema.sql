@@ -232,6 +232,29 @@ CREATE TABLE wallet_tx (
 CREATE INDEX ix_wallet_user ON wallet_tx(user_id);
 CREATE INDEX ix_wallet_round ON wallet_tx(round_id);
 
+-- Persistir snapshot do engine (BankedMatch) para reconstrução / debugging
+CREATE TABLE IF NOT EXISTS match_snapshot (
+                                              match_id    BIGINT NOT NULL REFERENCES match(id) ON DELETE CASCADE,
+    snapshot    JSONB NOT NULL,
+    version     BIGINT NOT NULL DEFAULT 0,
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (match_id)
+    );
+
+CREATE INDEX IF NOT EXISTS ix_match_snapshot_updated_at ON match_snapshot(updated_at);
+
+-- Função upsert para simplificar escrita do snapshot (podem usar também UPSERT direto)
+CREATE OR REPLACE FUNCTION upsert_match_snapshot(p_match_id BIGINT, p_snapshot JSONB)
+RETURNS VOID LANGUAGE plpgsql AS $$
+BEGIN
+INSERT INTO match_snapshot(match_id, snapshot, version, updated_at)
+VALUES (p_match_id, p_snapshot, 1, now())
+    ON CONFLICT (match_id) DO UPDATE
+                                  SET snapshot = EXCLUDED.snapshot,
+                                  version = match_snapshot.version + 1,
+                                  updated_at = now();
+END;
+
 
 ---- Remover tabelas (na ordem reversa devido às dependências)
 --DROP TABLE IF EXISTS wallet_tx CASCADE;

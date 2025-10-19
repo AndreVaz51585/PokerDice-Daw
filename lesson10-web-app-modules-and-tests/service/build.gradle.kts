@@ -22,6 +22,11 @@ dependencies {
     // To get password encode
     implementation("org.springframework.security:spring-security-core:6.5.5")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.7.3") // opcional, se usar integração reativa
+
+
+
     testImplementation("org.springframework:spring-test:6.2.11")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")

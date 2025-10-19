@@ -154,7 +154,6 @@ class RepositoryLobbyJdbi(
             maxPlayers = maxPlayers,
             rounds = rounds,
             ante = ante,
-            players = listOf(host),
             state = LobbyState.OPEN
         )
     }

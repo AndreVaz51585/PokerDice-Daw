@@ -11,8 +11,8 @@ import pt.isel.domain.Game.pokerDice.Game
  * - openPot: the currently open pot for the active round (null only before Start or after settlement).
  */
 data class BankedMatch(
-    val matchId: Long,
+    val matchId: Int,
     val game: Game,
-    val wallets: Map<Long, Wallet>,
+    val wallets: Map<Int, Wallet>,
     val openPot: Pot? = null
 )

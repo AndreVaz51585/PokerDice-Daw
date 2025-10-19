@@ -45,28 +45,6 @@ class RepositoryMatchJdbi(
             .mapTo<Int>()
             .one()
 
-        val lobby  = repoLobby.findById(lobbyId)
-        val host = repoLobby.getLobbyHost(lobby!!)
-
-        if (host != null) {
-            addPlayer(
-                matchId = matchId,
-                userId = host.id,
-                balanceAtStart = 1000, //TODO: Buscar o valor da Wallet daquele User
-                seatNo = 1  // O host tem o lugar 1
-            )
-        }
-
-        for (i in lobby.players){
-            if (i.id != host?.id){
-                addPlayer(
-                    matchId = matchId,
-                    userId = i.id,
-                    balanceAtStart = 1000, //TODO: Buscar o valor da Wallet daquele User
-                    seatNo = getMaxSeatNo(matchId) + 1
-                )
-            }
-        }
 
         return Match(
             id = matchId,

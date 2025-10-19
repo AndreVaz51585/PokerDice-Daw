@@ -14,7 +14,7 @@ import pt.isel.domain.Game.Hand
 data class Round(
     val id: Long = 0,
     val number: Int,
-    val matchId: Long,
+    val matchId: Int,
     val state: RoundState = RoundState.OPEN,
     val anteCoins: Int,
     val pot: Int = 0,

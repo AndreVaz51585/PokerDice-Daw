@@ -1,5 +1,6 @@
 package pt.isel.app
 
+import MatchServiceImpl
 import org.jdbi.v3.core.Jdbi
 import org.jdbi.v3.core.kotlin.KotlinPlugin
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper
@@ -30,6 +31,8 @@ import pt.isel.repo.jdbi.RepositoryMatchJdbi
 import pt.isel.repo.jdbi.RepositoryUserJdbi
 import pt.isel.repo.jdbi.TransactionManagerJdbi
 import pt.isel.repo.mem.RepositoryUserInMem
+import pt.isel.service.matchService.MatchManager
+import pt.isel.service.matchService.MatchService
 import java.time.Clock
 import java.time.Duration
 
@@ -86,6 +89,18 @@ class WebApp {
         repoLobby = RepositoryLobbyJdbi(jdbi.open())
     )
 
+    @Bean
+    fun matchManager(): MatchManager = MatchManager()
+
+    @Bean
+    fun matchService(
+        repoMatch: RepositoryMatch,
+        trxManager: TransactionManager,
+        matchManager: MatchManager,
+        repoLobby: RepositoryLobby,
+    ): MatchService {
+        return MatchServiceImpl(repoLobby,repoMatch, trxManager, matchManager)
+    }
 
     @Bean
     fun usersDomainConfig() =

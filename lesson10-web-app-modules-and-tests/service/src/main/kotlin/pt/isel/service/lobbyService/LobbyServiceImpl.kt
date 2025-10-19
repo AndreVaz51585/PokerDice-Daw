@@ -4,6 +4,11 @@ import org.springframework.stereotype.Service
 import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.Game.Lobby.LobbyState
 import pt.isel.domain.Game.Match.Match
+import pt.isel.domain.Game.Match.MatchPlayer
+import pt.isel.domain.Game.money.BankedMatch
+import pt.isel.domain.Game.money.BankedMatchEngine
+import pt.isel.domain.Game.money.Wallet
+import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.domain.Game.pokerDice.createNewGame
 import pt.isel.domain.user.User
 import pt.isel.repo.RepositoryLobby
@@ -12,6 +17,8 @@ import pt.isel.repo.TransactionManager
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
+import pt.isel.service.match.BankedGameMatchEngine
+import pt.isel.service.matchService.MatchManager
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
@@ -20,7 +27,9 @@ import java.util.concurrent.TimeUnit
 class LobbyServiceImpl(
     private val repoLobby: RepositoryLobby,
     private val repoUser: RepositoryUser,
+   // private val repoWallet: RepositoryWallet,// TODO Necessário  implementar para ir busca do wallet do user
     private val trxManager: TransactionManager,
+    private val matchManager: MatchManager,
 ) : LobbyService {
 
     // estrutura necessária ,implementada em memória para guardar o tempo de criação do lobby e assim podermos controlar o TimeOut
@@ -99,6 +108,7 @@ class LobbyServiceImpl(
             val newPlayerCount = currentPlayers + 1
 
             val added = repoLobby.addPlayerToLobby(lobbyId, userId)
+            println(added)
 
             if (!added) {
                 return@run failure(LobbyServiceError.ErrorJoiningLobby)
@@ -161,13 +171,65 @@ class LobbyServiceImpl(
         trxManager.run {
             val lobby = repoLobby.findById(lobbyId) ?: return@run failure(LobbyServiceError.LobbyNotFound)
             val players = repoLobby.listPlayers(lobbyId)
+
             val matchResult: Match =
                 repoMatch.createMatch(
                     lobbyId,
                     lobby.rounds,
                     lobby.ante
                 ) // retorna a match ou MatchServiceError
-            createNewGame(lobby, matchResult)
+
+
+            // 2) Transfere jogadores do Lobby para a Match e constrói MatchPlayer com balanceAtStart
+            val matchPlayers = mutableListOf<MatchPlayer>()
+            for (user in players) {
+                // tenta obter wallet / escolha do user; fallback para ante ou 0
+                val balanceAtStart = 150  /* try {
+                    repoWallet.findByUserId(user.id)?.currentBalance ?: lobby.ante
+                } catch (_: Throwable) {
+                    lobby.ante
+                }*/
+
+                // persistir jogador na match (assume repoMatch.addPlayer retorna boolean)
+                val seatNo = repoMatch.getMaxSeatNo(matchResult.id) + 1
+                val added = repoMatch.addPlayer(
+                    matchResult.id,
+                    user.id,
+                    seatNo,
+                    balanceAtStart
+                )
+                if (!added) {
+                    return@run failure(LobbyServiceError.ErrorJoiningLobby)
+                }
+
+                matchPlayers.add(
+                        MatchPlayer(
+                        matchId = matchResult.id,
+                        userId = user.id,
+                        seatNo = seatNo,
+                        balanceAtStart = balanceAtStart
+                    )
+                )
+            }
+
+            // Cria o Game de domínio com os matchPlayers
+            val game = createNewGame(lobby, matchResult, matchPlayers)
+
+            // Constrói wallets iniciais (Int userId -> Wallet) a partir de matchPlayers
+            val wallets: Map<Int, Wallet> = matchPlayers.associate { mp ->
+                mp.userId to Wallet(userId = mp.userId, currentBalance = mp.balanceAtStart)
+            }
+
+            val banked = BankedMatch(
+                matchId = matchResult.id,
+                game = game,
+                wallets = wallets,
+                openPot = null
+            )
+
+           val started =  BankedMatchEngine.apply(banked, Command.Start(byUserId = lobby.lobbyHost))
+           val engine = BankedGameMatchEngine(matchResult.id,started)
+            matchManager.register(engine)
             return@run success(matchResult.id)
         }
 

@@ -9,21 +9,21 @@ object RoundBanker {
 
     data class RoundFunds(
         val pot: Pot?,
-        val wallets: Map<Long, Wallet>,
-        val eligiblePlayers: List<Long>,
-        val excludedPlayers: List<Long>
+        val wallets: Map<Int, Wallet>,
+        val eligiblePlayers: List<Int>,
+        val excludedPlayers: List<Int>
     )
 
     data class PayoutResult(
         val closedPot: Pot,
-        val payouts: Map<Long, Int>,
-        val wallets: Map<Long, Wallet>
+        val payouts: Map<Int, Int>,
+        val wallets: Map<Int, Wallet>
     )
 
     fun openPot(
         ante: Ante,
-        playerIds: List<Long>,
-        wallets: Map<Long, Wallet>
+        playerIds: List<Int>,
+        wallets: Map<Int, Wallet>
     ): RoundFunds {
 
         // eligible players
@@ -65,8 +65,8 @@ object RoundBanker {
 
     fun settleAndPay(
         pot: Pot,
-        winnerUserIds: Set<Long>,
-        wallets: Map<Long, Wallet>
+        winnerUserIds: Set<Int>,
+        wallets: Map<Int, Wallet>
     ): PayoutResult {
         val closed = pot.close()
         val splits = closed.computeWinnerSplits(winnerUserIds)

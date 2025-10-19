@@ -1,6 +1,6 @@
 package pt.isel.domain.Game.pokerDice
 
-import pt.isel.domain.Game.Face
+import pt.isel.domain.Game.Dice.roll
 import pt.isel.domain.Game.Hand
 import pt.isel.domain.Game.Round.Round
 import pt.isel.domain.Game.Round.RoundState
@@ -12,7 +12,7 @@ import pt.isel.domain.Game.Round.RoundState
  */
 object GameEngine {
 
-    fun apply(state: Game, cmd: Command, roll: () -> Face): Game {
+    fun apply(state: Game, cmd: Command): Game {
         return when (cmd) {
 
             is Command.Join -> {
@@ -33,7 +33,7 @@ object GameEngine {
                 val firstRound = Round(
                     id = 1L,
                     number = 1,
-                    matchId = state.id.toLong(),
+                    matchId = state.matchId,
                     state = RoundState.OPEN,
                     anteCoins = state.ante,
                     pot = initialPot,
@@ -138,7 +138,7 @@ object GameEngine {
                         pot = nextPot,
                         state = RoundState.OPEN,
                         id = (currentRound.id + 1),            // id incremental simples; ajusta se necessário
-                        matchId = state.id.toLong(),           // garante matchId coerente (Game.id -> Round.matchId)
+                        matchId = state.matchId,           // garante matchId coerente (Game.id -> Round.matchId)
                         anteCoins = state.ante,                // valor do ante por ronda
                         winners = emptyList(),
                         hands = emptyMap()

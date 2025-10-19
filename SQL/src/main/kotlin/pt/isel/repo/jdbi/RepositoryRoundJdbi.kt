@@ -1,9 +1,7 @@
 package pt.isel.repo.jdbi
 
 import org.jdbi.v3.core.Handle
-import org.jdbi.v3.core.generic.GenericType
 import org.jdbi.v3.core.kotlin.mapTo
-import org.jdbi.v3.core.qualifier.QualifiedType
 import org.jdbi.v3.core.statement.StatementContext
 import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.Hand
@@ -22,7 +20,7 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
             return Round(
                 id = rs.getLong("id"),
                 number = rs.getInt("number"),
-                matchId = rs.getLong("match_id"),
+                matchId = rs.getInt("match_id"),
                 state = when (rs.getString("status")) {
                     "IN_PROGRESS" -> RoundState.OPEN
                     "COMPLETED" -> RoundState.CLOSED
@@ -54,7 +52,7 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
 
         return Round(
             id = generatedId,
-            matchId = matchId.toLong(),
+            matchId = matchId,
             number = number,
             state = RoundState.OPEN,
             anteCoins = anteCoins,

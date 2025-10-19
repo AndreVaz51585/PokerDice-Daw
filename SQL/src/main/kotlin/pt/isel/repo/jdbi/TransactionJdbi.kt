@@ -11,6 +11,7 @@ class TransactionJdbi(
     override val repoLobbies = RepositoryLobbyJdbi(handle)
     override val repoMatch = RepositoryMatchJdbi(handle, repoLobbies)
     override val repoRound = RepositoryRoundJdbi(handle)
+   // override val repositoryWallet = RepositoryWalletJdbi(handle)
 
 
     override fun rollback() {

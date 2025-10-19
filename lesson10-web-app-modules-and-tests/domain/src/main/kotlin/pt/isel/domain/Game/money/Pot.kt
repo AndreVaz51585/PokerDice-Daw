@@ -3,10 +3,10 @@ package pt.isel.domain.Game.money
 import java.time.Instant
 
 data class Pot(
-    val matchId: Long,
+    val matchId: Int,
     val roundNumber: Int,
     val createdAt: Instant = Instant.now(),
-    val contributions: Map<Long, Int> = emptyMap(), // userId -> total contributed
+    val contributions: Map<Int, Int> = emptyMap(), // userId -> total contributed
     val total: Int = 0,
     val closed: Boolean = false
 ) {
@@ -22,7 +22,7 @@ data class Pot(
         }
     }
 
-    fun addContribution(userId: Long, amount: Int): Pot {
+    fun addContribution(userId: Int, amount: Int): Pot {
         require(!closed) { "Pote encerrado" }
         require(userId > 0) { "userId inválido" }
         require(amount > 0) { "Contribuição deve ser positiva" }
@@ -40,7 +40,7 @@ data class Pot(
     }
 
     // Equal split across winners; odd chips go to lowest userIds deterministically.
-    fun computeWinnerSplits(winnerUserIds: Set<Long>): Map<Long, Int> {
+    fun computeWinnerSplits(winnerUserIds: Set<Int>): Map<Int, Int> {
         require(closed) { "Pote deve estar encerrado para calcular distribuição" }
         require(winnerUserIds.isNotEmpty()) { "Winners não pode ser vazio" }
         require(winnerUserIds.all { it > 0 }) { "Winner ids inválidos" }
@@ -49,7 +49,7 @@ data class Pot(
         val base = total / winners.size
         var remainder = total % winners.size
 
-        val result = linkedMapOf<Long, Int>()
+        val result = linkedMapOf<Int, Int>()
         for (id in winners) {
             val extra = if (remainder > 0) 1 else 0
             result[id] = base + extra

@@ -19,6 +19,8 @@ dependencies {
     implementation(project(":SQL"))
     implementation("org.jdbi:jdbi3-core:3.43.0")
     implementation("org.jdbi:jdbi3-kotlin:3.43.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.7.3")
 
 
     // BOM do Spring Boot fixa todas as versões (Spring, Jackson, etc.)
@@ -35,6 +37,7 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     testImplementation(kotlin("test"))
     testImplementation("org.springframework.boot:spring-boot-starter-webflux")
+    testImplementation("io.projectreactor:reactor-test:3.5.13") // StepVerifier
 }
 
 tasks.test {
