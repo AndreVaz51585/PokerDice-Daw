@@ -41,13 +41,10 @@ interface RepositoryMatch : Repository<Match> {
         lobbyId: Int,
         totalRounds: Int,
         ante: Int,
-        gameState: Game,
-        wallets: Map<Long, Wallet> = emptyMap(),
         state: MatchState = MatchState.RUNNING,
         currentRoundNo: Int = 1,
         startedAt: Instant = Instant.now(),
-        finishedAt: Instant? = null,
-        maxPlayers: Int = 10
+        finishedAt: Instant? = null
     ): Match
 
     /**

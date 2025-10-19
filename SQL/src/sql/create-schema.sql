@@ -153,6 +153,13 @@ CREATE INDEX ix_match_state ON match(state);
 -- ===========================
 -- Rondas e Turnos
 -- ===========================
+CREATE TABLE IF NOT EXISTS round_winners (
+                                             round_id BIGINT NOT NULL REFERENCES round(id) ON DELETE CASCADE,
+                                             user_id BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
+                                             PRIMARY KEY (round_id, user_id)
+);
+
+
 CREATE TABLE IF NOT EXISTS round (
                                       id               BIGSERIAL PRIMARY KEY,
                                       match_id         BIGINT NOT NULL REFERENCES match(id) ON DELETE CASCADE,
@@ -160,7 +167,6 @@ CREATE TABLE IF NOT EXISTS round (
                                       ante_coins       INTEGER NOT NULL CHECK (ante_coins > 0),   -- snapshot do ante para este round
                                       status           round_state NOT NULL DEFAULT 'IN_PROGRESS',
                                       pot_coins        INTEGER NOT NULL DEFAULT 0,                -- materializado por trigger (soma dos ANTE)
-                                      winner_user_id   BIGINT REFERENCES dbo.users(id) DEFAULT NULL,
                                       started_at       TIMESTAMPTZ,
                                       ended_at         TIMESTAMPTZ DEFAULT NULL,
                                       UNIQUE (match_id, number)

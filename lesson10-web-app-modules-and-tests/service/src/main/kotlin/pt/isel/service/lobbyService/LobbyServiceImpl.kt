@@ -3,10 +3,8 @@ package pt.isel.service.lobbyService
 import org.springframework.stereotype.Service
 import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.Game.Lobby.LobbyState
-import pt.isel.domain.Game.Match.MatchState
-import pt.isel.domain.Game.money.Wallet
-import pt.isel.domain.Game.pokerDice.Game
-import pt.isel.domain.Game.pokerDice.PlayerState
+import pt.isel.domain.Game.Match.Match
+import pt.isel.domain.Game.pokerDice.createNewGame
 import pt.isel.domain.user.User
 import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryUser
@@ -26,9 +24,9 @@ class LobbyServiceImpl(
 ) : LobbyService {
 
     // estrutura necessária ,implementada em memória para guardar o tempo de criação do lobby e assim podermos controlar o TimeOut
-     private val lobbyTimeOuts = ConcurrentHashMap<Int, Long>()
+    private val lobbyTimeOuts = ConcurrentHashMap<Int, Long>()
 
-    private val lobbyTimeOutMillis : Long = TimeUnit.SECONDS.toMillis(120) //TimeOut de 2 minutos
+    private val lobbyTimeOutMillis: Long = TimeUnit.SECONDS.toMillis(120) //TimeOut de 2 minutos
 
     override fun createLobby(
         hostId: Int,
@@ -38,7 +36,7 @@ class LobbyServiceImpl(
         maxPlayers: Int,
         rounds: Int,
         ante: Int,
-       // state: LobbyState
+        // state: LobbyState
     ): Either<LobbyServiceError, Lobby> =
 
         trxManager.run {
@@ -55,7 +53,7 @@ class LobbyServiceImpl(
                 maxPlayers = maxPlayers,
                 rounds = rounds,
                 ante = ante
-               // state = state
+                // state = state
             )
 
             // adicionar contador para definir TimeOut para o lobby Começar caso tenho o numero minimo de jogadores
@@ -82,7 +80,8 @@ class LobbyServiceImpl(
 
     override fun joinLobby(lobbyId: Int, userId: Int): Either<LobbyServiceError, Int> =
         trxManager.run {
-            val user = repoUser.findById(userId) ?: return@run failure(LobbyServiceError.UserNotFound)// verificação desnecessária porque o user já vem com autenticação feita caso contrário daria erro
+            val user = repoUser.findById(userId)
+                ?: return@run failure(LobbyServiceError.UserNotFound)// verificação desnecessária porque o user já vem com autenticação feita caso contrário daria erro
 
             val lobby = repoLobby.findById(lobbyId) ?: return@run failure(LobbyServiceError.LobbyNotFound)
 
@@ -92,7 +91,7 @@ class LobbyServiceImpl(
 
             val isAlreadyInLobby = repoLobby.listPlayers(lobbyId).any { it == user }
 
-            if(isAlreadyInLobby) {
+            if (isAlreadyInLobby) {
                 return@run failure(LobbyServiceError.AlreadyInLobby)
             }
 
@@ -107,14 +106,14 @@ class LobbyServiceImpl(
 
             val newState = updateLobbyStateIfNeeded(lobby, newPlayerCount)
 
-            if(newState == LobbyState.FULL || newState == LobbyState.STARTED) return@run startMatch(lobbyId)
+            if (newState == LobbyState.FULL || newState == LobbyState.STARTED) return@run startMatch(lobbyId)
 
 
 
             return@run success(0) // retorna 0 se o jogador entrou mas o lobby não começou
         }
 
-    override fun leaveLobby(lobbyId: Int, userId: Int) : Either<LobbyServiceError, Boolean> =
+    override fun leaveLobby(lobbyId: Int, userId: Int): Either<LobbyServiceError, Boolean> =
         trxManager.run {
             val lobby = repoLobby.findById(lobbyId) ?: return@run failure(LobbyServiceError.LobbyNotFound)
             val players = repoLobby.listPlayers(lobbyId)
@@ -123,9 +122,10 @@ class LobbyServiceImpl(
                 return@run failure(LobbyServiceError.UserIsNotInLobby)
             }
 
-            val isHost = lobby.lobbyHost == userId && lobby.state == LobbyState.OPEN  // se o user a sair for o host e o lobby estiver OPEN então os jogadores são removidos e o lobby apagado
+            val isHost =
+                lobby.lobbyHost == userId && lobby.state == LobbyState.OPEN  // se o user a sair for o host e o lobby estiver OPEN então os jogadores são removidos e o lobby apagado
 
-            if (isHost){
+            if (isHost) {
                 // Remover todos os jogadores do lobby
                 for (player in players) {
                     repoLobby.remove(lobbyId, player.id)
@@ -161,49 +161,15 @@ class LobbyServiceImpl(
         trxManager.run {
             val lobby = repoLobby.findById(lobbyId) ?: return@run failure(LobbyServiceError.LobbyNotFound)
             val players = repoLobby.listPlayers(lobbyId)
-
-            val initialPlayerStates = players.associate { player ->
-                player.id to PlayerState(userId = player.id)
-            }
-
-            val initialGame = Game(
-                id = 0, // se for gerado pelo repositório, mete 0 ou ignora se o construtor não o pedir
-                hostId = lobby.lobbyHost,
-                maxPlayers = lobby.maxPlayers,
-                ante = lobby.ante,
-                totalRounds = lobby.rounds,
-                players = initialPlayerStates,
-            )
-
-            // Cria carteiras (wallets) iniciais
-            val wallets = players.associate { player ->
-                player.id.toLong() to Wallet(userId = player.id, currentBalance = 1000 - lobby.ante)
-            }
-
-            // 3️⃣ Cria o Match no repositório
-            val matchResult = repoMatch.createMatch(
-                lobbyId = lobbyId,
-                totalRounds = lobby.rounds,
-                ante = lobby.ante,
-                gameState = initialGame,
-                wallets = wallets,
-                state = MatchState.RUNNING,
-                currentRoundNo = 1,
-                startedAt = java.time.Instant.now(),
-                finishedAt = null,
-                maxPlayers = lobby.maxPlayers
-            )
-
-            // 4️⃣ Atualiza estado do lobby
-            repoLobby.save(lobby.copy(state = LobbyState.STARTED))
-            lobbyTimeOuts.remove(lobbyId)
-
+            val matchResult: Match =
+                repoMatch.createMatch(
+                    lobbyId,
+                    lobby.rounds,
+                    lobby.ante
+                ) // retorna a match ou MatchServiceError
+            createNewGame(lobby, matchResult)
             return@run success(matchResult.id)
         }
-
-
-
-
 
     private fun updateLobbyStateIfNeeded(lobby: Lobby, playerCount: Int): LobbyState {
         val currentTime = System.currentTimeMillis()
@@ -211,20 +177,19 @@ class LobbyServiceImpl(
         val hasExpired = currentTime >= timeout
 
         return when {
-            playerCount >= lobby.maxPlayers ->{
+            playerCount >= lobby.maxPlayers -> {
                 repoLobby.save(lobby.copy(state = LobbyState.FULL))
                 LobbyState.FULL // se o numero de jogadores for igual ao maximo o estado passa a FULL
             }
 
-            playerCount >= lobby.minPlayers && hasExpired ->{
+            playerCount >= lobby.minPlayers && hasExpired -> {
                 repoLobby.save(lobby.copy(state = LobbyState.STARTED))
-                LobbyState.STARTED }// se o numero de jogadores for maior ou igual ao minimo e o tempo tiver expirado o estado passa a STARTED
+                LobbyState.STARTED
+            }// se o numero de jogadores for maior ou igual ao minimo e o tempo tiver expirado o estado passa a STARTED
 
             else -> LobbyState.OPEN // caso contrário mantem-se OPEN
         }
     }
-
-
 }
 
 

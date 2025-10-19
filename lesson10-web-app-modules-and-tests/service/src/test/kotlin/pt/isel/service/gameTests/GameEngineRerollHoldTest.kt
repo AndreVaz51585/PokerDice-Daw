@@ -13,7 +13,7 @@ class GameEngineRerollHoldTest {
 
     @Test
     fun hold_preserves_selected_indices() {
-        var g = Game(id = 3, hostId = 7, ante = 1, maxPlayers = 2)
+        var g = Game(id = 3, hostId = 7, ante = 1, maxPlayers = 2, matchId = 3)
         g = GameEngine.apply(g, Command.Join(7), ::roll)
         g = GameEngine.apply(g, Command.Join(8), ::roll)
         g = GameEngine.apply(g, Command.Start(7), ::roll)

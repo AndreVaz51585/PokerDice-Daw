@@ -15,7 +15,7 @@ class GameEnginePotSplitTest {
 
     @Test
     fun pot_split_between_two_equal_five_of_a_kind() {
-        var g = Game(9, hostId = 1, ante = 5, maxPlayers = 2, totalRounds = 1)
+        var g = Game(9, hostId = 1, ante = 5, maxPlayers = 2, totalRounds = 1, matchId = 9)
         g = GameEngine.apply(g, Command.Join(1), ::roll)
         g = GameEngine.apply(g, Command.Join(2), ::roll)
         g = GameEngine.apply(g, Command.Start(1), ::roll)

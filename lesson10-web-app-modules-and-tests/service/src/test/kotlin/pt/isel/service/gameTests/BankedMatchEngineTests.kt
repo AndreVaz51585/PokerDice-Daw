@@ -27,7 +27,8 @@ class BankedMatchEngineTests {
             hostId = 10,
             ante = ante,
             maxPlayers = 4,
-            totalRounds = totalRounds
+            totalRounds = totalRounds,
+            matchId = 1
         )
         val defaultWallets = mapOf(
             1L to Wallet(userId = 1, currentBalance = 100),

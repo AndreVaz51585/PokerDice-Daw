@@ -1,7 +1,9 @@
 package pt.isel.repo.jdbi
 
 import org.jdbi.v3.core.Handle
+import org.jdbi.v3.core.generic.GenericType
 import org.jdbi.v3.core.kotlin.mapTo
+import org.jdbi.v3.core.qualifier.QualifiedType
 import org.jdbi.v3.core.statement.StatementContext
 import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.Hand
@@ -28,10 +30,6 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
                 },
                 anteCoins = rs.getInt("ante_coins"),
                 pot = rs.getInt("pot_coins"),
-                winners = rs.getString("winner_user_id")
-                    ?.split(",")
-                    ?.filter { it.isNotBlank() }
-                    ?.map { it.trim().toInt() },
                 hands = emptyMap() // Mãos serão carregadas separadamente quando necessário
             )
         }
@@ -68,13 +66,11 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
 
 
     override fun findById(id: Int): Round? {
-        var a = handle.createQuery(RoundSql.SELECT_ROUND_BY_ID)
+        return handle.createQuery(RoundSql.SELECT_ROUND_BY_ID)
             .bind("id", id)
             .map(RoundMapper())
             .findOne()
             .orElse(null)
-        println ("findById($id) = $a")
-        return a
     }
 
 
@@ -100,9 +96,9 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
                     }
                 )
                 .bind("potCoins", entity.pot)
-                .bind("winnerUserId", entity.winners)
-                .bind("ended_at", if (entity.state == RoundState.CLOSED) Date() else null)
+                .bind("endedAt", if (entity.state == RoundState.CLOSED) Date() else null)
                 .execute()
+
         } else {
             handle.createUpdate(RoundSql.INSERT_ROUND)
                 .bind("id", entity.id)
@@ -110,11 +106,12 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
                 .bind("number", entity.number)
                 .bind("anteCoins", entity.anteCoins)
                 .bind("potCoins", entity.pot)
-                .bind("winnerUserId", entity.winners)
                 .bind("startedAt", Date())
                 .execute()
         }
     }
+
+
 
 
     override fun deleteById(id: Int): Boolean {
@@ -155,7 +152,6 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
     override fun completeRound(roundId: Long, winnerUserId: Int): Boolean {
         return handle.createUpdate(RoundSql.COMPLETE_ROUND)
             .bind("id", roundId)
-            .bind("winnerUserId", winnerUserId)
             .bind("status", "COMPLETED")
             .bind("endedAt", Date())
             .execute() > 0

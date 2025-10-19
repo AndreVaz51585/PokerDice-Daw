@@ -16,7 +16,7 @@ class GameEngineRoundTest {
 
     @Test
     fun full_round_and_advance() {
-        var g = Game(id = 1, hostId = 10, ante = 5, maxPlayers = 3)
+        var g = Game(id = 1, hostId = 10, ante = 5, maxPlayers = 3, matchId = 1)
         g = GameEngine.apply(g, Command.Join(10), ::roll)
         g = GameEngine.apply(g, Command.Join(11), ::roll)
         g = GameEngine.apply(g, Command.Start(10), ::roll)
@@ -35,7 +35,7 @@ class GameEngineRoundTest {
 
     @Test
     fun finishes_match_last_round() {
-        var g = Game(id = 2, hostId = 1, ante = 2, maxPlayers = 2, totalRounds = 1)
+        var g = Game(id = 2, hostId = 1, ante = 2, maxPlayers = 2, totalRounds = 1, matchId = 2)
         g = GameEngine.apply(g, Command.Join(1), ::roll)
         g = GameEngine.apply(g, Command.Join(2), ::roll)
         g = GameEngine.apply(g, Command.Start(1), ::roll)

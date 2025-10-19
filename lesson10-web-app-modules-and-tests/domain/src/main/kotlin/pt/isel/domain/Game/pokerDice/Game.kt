@@ -1,5 +1,7 @@
 package pt.isel.domain.Game.pokerDice
 
+import pt.isel.domain.Game.Lobby.Lobby
+import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Round.Round
 
 
@@ -14,6 +16,7 @@ import pt.isel.domain.Game.Round.Round
  */
 data class Game(
     val id: Int,
+    val matchId: Int,
     val hostId: Int,
     val ante: Int,
     val maxPlayers: Int,
@@ -27,4 +30,32 @@ data class Game(
 ) {
     val currentRoundNumber: Int get() = rounds.lastOrNull()?.number ?: 0
     val everyoneDone: Boolean get() = players.values.all { it.done && it.dice.size == 5 }
+}
+
+
+fun createNewGame(
+    lobby: Lobby,
+    match: Match
+): Game {
+    var futuresPlayers = lobby.players
+    //TODO: Tranformar futuresPlayers do tipo users em  Map<Int, PlayerState>
+
+
+    val game = Game(
+        id = lobby.id,
+        matchId = match.id,
+        hostId =lobby.lobbyHost,
+        ante =lobby.ante,
+        maxPlayers = lobby.maxPlayers,
+        playerOrder = emptyList() ,     //TODO: Fazer uma função que tire a ordem
+        players = emptyMap(),           // TODO
+        phase = GamePhase.LOBBY,
+        totalRounds = match.totalRounds,
+        rounds = match.rounds,
+        currentPlayerIndex = 0,         //TODO: Fazer uma função que vá buscar o que tem turn a true
+        balances = emptyMap()
+    )
+
+
+    return game
 }

@@ -28,29 +28,11 @@ class MatchServiceImpl(
         if (totalRounds <= 0 || ante < 0) {
             return@run failure(MatchServiceError.InvalidState)
         }
-
-        // Build initial domain Game state. Use lobbyId as hostId by default (adjust if needed).
-        // id will be assigned by repository when persisted (repo implementation can set it).
-        val initialGame = Game(
-            id = 0,
-            hostId = lobbyId,
-            ante = ante,
-            maxPlayers = 4, // default initial; adjust or pass as parameter if you want
-            totalRounds = totalRounds
-        )
-
-        val initialWallets: Map<Long, Wallet> = emptyMap() // wallets start empty; add players will create wallets
-
-        // Create Match in repository with gameState embedded
+        // Evitar duplicados iniciais
         val match = repoMatch.createMatch(
             lobbyId = lobbyId,
             totalRounds = totalRounds,
             ante = ante,
-            gameState = initialGame,
-            wallets = initialWallets,
-            state = MatchState.RUNNING, // initial persisted state
-            startedAt = Instant.now(),
-            maxPlayers = 4
         )
         return@run success(match)
     }
@@ -77,9 +59,6 @@ class MatchServiceImpl(
             seatNo = repoMatch.getMaxSeatNo(match.id)+1
         )
         if (!ok) return@run failure(MatchServiceError.Unknown)
-
-        // Optional enhancement: update the persisted Match.gameState to include the new player.
-        // For now, the repository player table is the source of truth for listPlayers.
         success(true)
     }
 

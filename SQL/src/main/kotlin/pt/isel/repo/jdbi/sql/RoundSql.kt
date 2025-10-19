@@ -1,30 +1,26 @@
 package pt.isel.repo.jdbi.sql
 
-
-
-
-
 object RoundSql {
     const val SELECT_ROUND_BY_ID = """
-        SELECT id, match_id, number, ante_coins, status, pot_coins, winner_user_id, started_at, ended_at
+        SELECT id, match_id, number, ante_coins, status, pot_coins, started_at, ended_at
         FROM round
         WHERE id = :id
     """
 
     const val SELECT_ALL_ROUNDS = """
-        SELECT id, match_id, number, ante_coins, status, pot_coins, winner_user_id, started_at, ended_at
+        SELECT id, match_id, number, ante_coins, status, pot_coins, started_at, ended_at
         FROM round
     """
 
     const val SELECT_ROUNDS_BY_MATCH = """
-        SELECT id, match_id, number, ante_coins, status, pot_coins, winner_user_id, started_at, ended_at
+        SELECT id, match_id, number, ante_coins, status, pot_coins, started_at, ended_at
         FROM round
         WHERE match_id = :matchId
         ORDER BY number
     """
 
     const val SELECT_CURRENT_ROUND_BY_MATCH = """
-        SELECT id, match_id, number, ante_coins, status, pot_coins, winner_user_id, started_at, ended_at
+        SELECT id, match_id, number, ante_coins, status, pot_coins, started_at, ended_at
         FROM round
         WHERE match_id = :matchId AND status = 'IN_PROGRESS'
         ORDER BY number DESC
@@ -39,8 +35,14 @@ object RoundSql {
 
     const val UPDATE_ROUND = """
         UPDATE round
-        SET status = :status, pot_coins = :potCoins, winner_user_id = :winnerUserId, ended_at = :endedAt
+        SET status = :status::round_state, pot_coins = :potCoins, ended_at = :endedAt
         WHERE id = :id
+    """
+    const val SELECT_ROUND_WINNERS = """
+    SELECT u.id, u.name
+    FROM round_winners rw
+    JOIN dbo.users u ON rw.user_id = u.id
+    WHERE rw.round_id = :roundId;
     """
 
     const val DELETE_ROUND = """
@@ -59,13 +61,13 @@ object RoundSql {
 
     const val COMPLETE_ROUND = """
         UPDATE round
-        SET winner_user_id = :winnerUserId, status = :status, ended_at = :endedAt
+        SET status = :status, ended_at = :endedAt
         WHERE id = :id
     """
 
     const val UPDATE_ROUND_STATE = """
         UPDATE round
-        SET status = :status
+        SET status = :status::round_state
         WHERE id = :id
     """
 

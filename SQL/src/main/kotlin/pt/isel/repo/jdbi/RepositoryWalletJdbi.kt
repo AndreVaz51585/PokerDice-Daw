@@ -16,7 +16,7 @@ class RepositoryWalletJdbi(private val jdbi: Jdbi) : RepositoryWallet {
             val balance = getBalanceForUser(handle, id)
             if (balance != null) {
                 Wallet(
-                    userId = userId,
+                    userId = userId.toInt(),
                     currentBalance = balance,
                     lastUpdatedAt = getLastTransactionDate(handle, id) ?: Instant.now()
                 )
@@ -33,7 +33,7 @@ class RepositoryWalletJdbi(private val jdbi: Jdbi) : RepositoryWallet {
             userIds.map { userId ->
                 val balance = getBalanceForUser(handle, userId) ?: 0
                 Wallet(
-                    userId = userId.toLong(),
+                    userId = userId.toInt(),
                     currentBalance = balance,
                     lastUpdatedAt = getLastTransactionDate(handle, userId) ?: Instant.now()
                 )
