@@ -153,11 +153,6 @@ CREATE INDEX ix_match_state ON match(state);
 -- ===========================
 -- Rondas e Turnos
 -- ===========================
-CREATE TABLE IF NOT EXISTS round_winners (
-                                             round_id BIGINT NOT NULL REFERENCES round(id) ON DELETE CASCADE,
-                                             user_id BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
-                                             PRIMARY KEY (round_id, user_id)
-);
 
 
 CREATE TABLE IF NOT EXISTS round (
@@ -176,6 +171,11 @@ CREATE TABLE IF NOT EXISTS round (
 
 -- Cada jogador joga 1 turno por ronda; até 3 lançamentos
 
+CREATE TABLE IF NOT EXISTS round_winners (
+                                             round_id BIGINT NOT NULL REFERENCES round(id) ON DELETE CASCADE,
+                                             user_id BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
+                                             PRIMARY KEY (round_id, user_id)
+);
 -- Histórico dos lançamentos dentro de um turno (1..3)
 CREATE TYPE dice_face AS ENUM ('ACE','KING','QUEEN','JACK','TEN','NINE');
 CREATE TABLE Dice (
