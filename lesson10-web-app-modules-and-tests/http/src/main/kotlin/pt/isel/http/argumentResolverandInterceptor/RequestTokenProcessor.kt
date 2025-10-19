@@ -1,4 +1,4 @@
-package pt.isel.http
+package pt.isel.http.argumentResolverandInterceptor
 
 import org.springframework.stereotype.Component
 import pt.isel.domain.user.AuthenticatedUser

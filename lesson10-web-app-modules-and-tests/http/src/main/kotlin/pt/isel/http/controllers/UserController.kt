@@ -1,4 +1,4 @@
-package pt.isel.http
+package pt.isel.http.controllers
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import pt.isel.domain.user.AuthenticatedUser
 import pt.isel.domain.user.User
-import pt.isel.http.model.Problem
-import pt.isel.http.model.UserCreateTokenInputModel
-import pt.isel.http.model.UserCreateTokenOutputModel
-import pt.isel.http.model.UserHomeOutputModel
-import pt.isel.http.model.UserInput
+import pt.isel.http.model.problem.Problem
+import pt.isel.http.model.user.UserCreateTokenInputModel
+import pt.isel.http.model.user.UserCreateTokenOutputModel
+import pt.isel.http.model.user.UserHomeOutputModel
+import pt.isel.http.model.user.UserInput
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.Failure
 import pt.isel.service.Auxiliary.Success

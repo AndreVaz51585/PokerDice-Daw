@@ -15,4 +15,6 @@ sealed class MatchServiceError {
     data object Unknown: MatchServiceError()
 
     data object ErrorCreatingMatch : MatchServiceError()
+
+    data object LobbyNotFound : MatchServiceError()
 }

@@ -16,10 +16,10 @@ class GameEngineTest {
 
     @Test
     fun join_and_start() {
-        var g = Game(id = 1, hostId = 10, ante = 5, maxPlayers = 4, matchId = 1)
-        g = GameEngine.apply(g, Command.Join(10)) { Face.ACE }
-        g = GameEngine.apply(g, Command.Join(11)) { Face.ACE }
-        g = GameEngine.apply(g, Command.Start(10)) { Face.ACE }
+        var g = Game(matchId = 1, hostId = 10, ante = 5, maxPlayers = 4)
+        g = GameEngine.apply(g, Command.Join(10))
+        g = GameEngine.apply(g, Command.Join(11))
+        g = GameEngine.apply(g, Command.Start(10))
         assertEquals(GamePhase.ROLLING, g.phase)
         assertEquals(1, g.rounds.last().number)
         assertEquals(10, g.rounds.last().pot)
@@ -28,18 +28,18 @@ class GameEngineTest {
     @Test
     fun full_round_to_finish() {
         val roller = fixedFaces(Face.ACE, Face.KING, Face.QUEEN, Face.JACK, Face.TEN)
-        var g = Game(id = 1, hostId = 1, ante = 2, maxPlayers = 3, matchId = 1)
-        g = GameEngine.apply(g, Command.Join(1)) { roller.roll() }
-        g = GameEngine.apply(g, Command.Join(2)) { roller.roll() }
-        g = GameEngine.apply(g, Command.Start(1)) { roller.roll() }
+        var g = Game(matchId = 1, hostId = 1, ante = 2, maxPlayers = 3)
+        g = GameEngine.apply(g, Command.Join(1))
+        g = GameEngine.apply(g, Command.Join(2))
+        g = GameEngine.apply(g, Command.Start(1))
 
-        g = GameEngine.apply(g, Command.Roll(1)) { roller.roll() }
-        g = GameEngine.apply(g, Command.FinishTurn(1)) { roller.roll() }
-        g = GameEngine.apply(g, Command.Roll(2)) { roller.roll() }
-        g = GameEngine.apply(g, Command.FinishTurn(2)) { roller.roll() }
+        g = GameEngine.apply(g, Command.Roll(1))
+        g = GameEngine.apply(g, Command.FinishTurn(1))
+        g = GameEngine.apply(g, Command.Roll(2))
+        g = GameEngine.apply(g, Command.FinishTurn(2))
 
         assertEquals(RoundState.SCORING, g.rounds.last().state)
-        g = GameEngine.apply(g, Command.NextRound(1)) { roller.roll() }
+        g = GameEngine.apply(g, Command.NextRound(1))
         assertEquals(RoundState.CLOSED, g.rounds[g.rounds.size - 2].state)
     }
 }

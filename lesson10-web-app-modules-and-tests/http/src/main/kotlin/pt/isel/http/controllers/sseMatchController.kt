@@ -1,9 +1,10 @@
-package pt.isel.http
+package pt.isel.http.controllers
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -16,44 +17,74 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import pt.isel.domain.Game.money.BankedMatch
 import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.domain.user.AuthenticatedUser
+import pt.isel.http.model.problem.Problem
 import pt.isel.service.matchService.MatchService
 import pt.isel.service.matchService.MatchManager
-import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.Failure
 import pt.isel.service.Auxiliary.Success
+import pt.isel.service.matchService.MatchEventFormatter
+import pt.isel.service.matchService.MatchServiceError
+import kotlin.collections.get
 
 @RestController
 @RequestMapping("/api/matches/sse")
 class SseMatchController(
     private val matchManager: MatchManager,
-    private val matchService: MatchService
+    private val matchService: MatchService,
+    private val eventFormatter: MatchEventFormatter
 ) {
 
     @GetMapping("/{matchId}/events", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun listenMatch(@PathVariable matchId: Int): SseEmitter {
-        val emitter = SseEmitter(0L) // sem timeout
+        val emitter = SseEmitter(0L)
         val job = Job()
         val scope = CoroutineScope(Dispatchers.IO + job)
 
-        // envia snapshot inicial se existir
+        // Variáveis para controlo de estado
+        var lastState: BankedMatch? = null
+        var eventCount = 0
+
+        // Envia snapshot inicial apenas uma vez
         matchManager.get(matchId)?.snapshot()?.let { banked ->
             try {
-                emitter.send(SseEmitter.event().name("match-state").data(banked))
-            } catch (_: Exception) { /* ignora envio inicial falhado */ }
+                val eventId = "$matchId"
+                val eventType = "match-snapshot"
+
+                emitter.send(
+                    SseEmitter.event()
+                        .name(eventType)
+                        .id(eventId)
+                        .data(banked)
+                )
+                lastState = banked
+                eventCount++
+            } catch (_: Exception) { }
         }
 
         scope.launch {
             try {
-                matchManager.events(matchId).collect { banked: BankedMatch ->
+                matchManager.events(matchId).collect { banked ->
                     try {
-                        emitter.send(SseEmitter.event().name("match-state").data(banked))
+                        // Verifica se é diferente do último estado enviado
+                        if (eventFormatter.isDifferentState(lastState, banked)) {
+                            val eventId = "$matchId-${eventCount++}"
+                            val eventType = eventFormatter.detectEventType(lastState, banked)
+                            val actionUser = eventFormatter.detectActionUser(lastState, banked)
+                            val payload = eventFormatter.createEnrichedPayload(banked, eventType, actionUser,  eventId)
+
+                            emitter.send(
+                                SseEmitter.event()
+                                    .name("match-state")
+                                    .id(eventId)
+                                    .data(payload)
+                            )
+
+                            lastState = banked
+                        }
                     } catch (t: Throwable) {
-                        // falha no envio -> termina a coleta para esta ligação
                         throw t
                     }
                 }
-                // Não invocar emitter.complete() aqui para evitar fechar a ligação quando o fluxo completar.
-                // A ligação será cancelada pelo cliente ou pelos handlers abaixo.
             } catch (t: Throwable) {
                 emitter.completeWithError(t)
             }
@@ -65,6 +96,7 @@ class SseMatchController(
 
         return emitter
     }
+
 
     @PostMapping("/{matchId}/events", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun postCommand(
@@ -93,8 +125,12 @@ class SseMatchController(
         }
 
         return when (val res = matchService.applyCommand(matchId, cmd)) {
-            is Failure -> ResponseEntity.badRequest().body(mapOf("error" to res.value.toString()))
-            is Success -> ResponseEntity.ok().build()
+            is Success -> ResponseEntity.status(HttpStatus.OK).build()
+            is Failure ->
+                when(res.value) {
+                 MatchServiceError.Unknown -> Problem.CommandUnknown.response(HttpStatus.BAD_REQUEST)
+                    else -> Problem.Unknown.response(HttpStatus.BAD_REQUEST)
+                }
         }
     }
 }

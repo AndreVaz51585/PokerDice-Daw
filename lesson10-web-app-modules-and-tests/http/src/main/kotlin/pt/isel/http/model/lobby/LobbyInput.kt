@@ -1,4 +1,4 @@
-package pt.isel.http.model
+package pt.isel.http.model.lobby
 
 data class LobbyInput(
   val name: String,
@@ -8,4 +8,3 @@ data class LobbyInput(
   val rounds: Int,
   val ante: Int,
 )
-

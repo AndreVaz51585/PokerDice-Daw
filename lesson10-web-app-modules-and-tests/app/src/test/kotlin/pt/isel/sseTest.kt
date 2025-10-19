@@ -1,6 +1,5 @@
 package pt.isel
 
-import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
@@ -13,9 +12,9 @@ import org.springframework.context.annotation.Primary
 import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import pt.isel.app.WebApp
-import pt.isel.http.model.LobbyInput
-import pt.isel.http.model.UserCreateTokenOutputModel
-import pt.isel.http.model.UserInput
+import pt.isel.http.model.lobby.LobbyInput
+import pt.isel.http.model.user.UserCreateTokenOutputModel
+import pt.isel.http.model.user.UserInput
 import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryUser
 import reactor.test.StepVerifier

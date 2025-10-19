@@ -132,7 +132,8 @@ CREATE TABLE match (
                        state             match_state NOT NULL DEFAULT 'RUNNING',
                        current_round_no  INTEGER NOT NULL DEFAULT 1,
                        started_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
-                       finished_at       TIMESTAMPTZ -- Renomeado de ended_at para manter consistência com o código
+                       finished_at       TIMESTAMPTZ, -- Renomeado de ended_at para manter consistência com o código
+                       max_Players       INTEGER NOT NULL
 );
 
 -- Participantes na partida (com ordem/seat p/ rotação de turnos)
@@ -254,7 +255,7 @@ VALUES (p_match_id, p_snapshot, 1, now())
                                   version = match_snapshot.version + 1,
                                   updated_at = now();
 END;
-
+$$;
 
 ---- Remover tabelas (na ordem reversa devido às dependências)
 --DROP TABLE IF EXISTS wallet_tx CASCADE;

@@ -13,16 +13,16 @@ class GameEngineRerollHoldTest {
 
     @Test
     fun hold_preserves_selected_indices() {
-        var g = Game(id = 3, hostId = 7, ante = 1, maxPlayers = 2, matchId = 3)
-        g = GameEngine.apply(g, Command.Join(7), ::roll)
-        g = GameEngine.apply(g, Command.Join(8), ::roll)
-        g = GameEngine.apply(g, Command.Start(7), ::roll)
+        var g = Game(matchId = 3, hostId = 7, ante = 1, maxPlayers = 2)
+        g = GameEngine.apply(g, Command.Join(7), )
+        g = GameEngine.apply(g, Command.Join(8), )
+        g = GameEngine.apply(g, Command.Start(7),)
 
         // First player initial roll
-        g = GameEngine.apply(g, Command.Roll(7), ::roll)
+        g = GameEngine.apply(g, Command.Roll(7), )
         val firstDice = g.players[7]!!.dice
-        g = GameEngine.apply(g, Command.Hold(7, setOf(1,3)), ::roll)
-        g = GameEngine.apply(g, Command.Roll(7), ::roll) // reroll others
+        g = GameEngine.apply(g, Command.Hold(7, setOf(1,3)), )
+        g = GameEngine.apply(g, Command.Roll(7), ) // reroll others
         val after = g.players[7]!!.dice
         assertEquals(firstDice[1], after[1])
         assertEquals(firstDice[3], after[3])

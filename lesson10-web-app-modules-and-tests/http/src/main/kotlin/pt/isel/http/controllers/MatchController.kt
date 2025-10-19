@@ -1,13 +1,12 @@
-package pt.isel.http
+package pt.isel.http.controllers
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pt.isel.domain.Game.Match.Match
-import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
-import pt.isel.http.model.MatchInput
-import pt.isel.http.model.Problem
+import pt.isel.http.model.match.MatchInput
+import pt.isel.http.model.problem.Problem
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.Failure
 import pt.isel.service.Auxiliary.Success

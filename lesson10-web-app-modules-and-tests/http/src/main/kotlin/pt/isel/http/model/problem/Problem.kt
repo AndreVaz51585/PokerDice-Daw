@@ -1,8 +1,7 @@
-package pt.isel.http.model
+package pt.isel.http.model.problem
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import pt.isel.service.lobbyService.LobbyServiceError
 import java.net.URI
 import kotlin.collections.last
 import kotlin.text.split
@@ -57,5 +56,7 @@ sealed class Problem(
     data object ErrorCreatingUser : Problem(URI("$PROBLEM_URI_PATH/error-creating-user"))
 
     data object ErrorDeletingUser : Problem(URI("$PROBLEM_URI_PATH/error-deleting-user"))
+
+    data object CommandUnknown : Problem(URI("$PROBLEM_URI_PATH/command-unknown"))
 
 }

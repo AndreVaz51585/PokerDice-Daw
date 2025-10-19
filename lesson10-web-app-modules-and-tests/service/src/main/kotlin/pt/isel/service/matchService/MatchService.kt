@@ -31,6 +31,6 @@ interface MatchService {
 
     fun registerMatchEngine(engine: BankedGameMatchEngine)
 
-    fun registerBankedMatchFromDb(matchId: Int): Boolean
+    fun registerBankedMatchFromDb(matchId: Int): Either<MatchServiceError, Boolean>
 
 }

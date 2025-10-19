@@ -1,4 +1,4 @@
-package pt.isel.http.model
+package pt.isel.http.model.match
 
 data class MatchInput(
     val lobbyId: Int,

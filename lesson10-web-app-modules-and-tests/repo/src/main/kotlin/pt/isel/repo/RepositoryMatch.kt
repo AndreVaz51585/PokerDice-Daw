@@ -44,7 +44,8 @@ interface RepositoryMatch : Repository<Match> {
         state: MatchState = MatchState.RUNNING,
         currentRoundNo: Int = 1,
         startedAt: Instant = Instant.now(),
-        finishedAt: Instant? = null
+        finishedAt: Instant? = null,
+        maxPlayers: Int
     ): Match
 
     /**
@@ -75,7 +76,5 @@ interface RepositoryMatch : Repository<Match> {
         balanceAtStart: Int,
     ): Boolean
     fun removePlayer(matchId: Int, userId: Int): Boolean
-    fun whoTurn(matchId: Int): Int?
-    fun setTurn(matchId: Int, userId: Int, turn: Boolean): Boolean
     fun getMaxSeatNo(matchId: Int) : Int
 }

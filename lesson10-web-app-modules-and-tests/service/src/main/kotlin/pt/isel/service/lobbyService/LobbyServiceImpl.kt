@@ -174,9 +174,10 @@ class LobbyServiceImpl(
 
             val matchResult: Match =
                 repoMatch.createMatch(
-                    lobbyId,
-                    lobby.rounds,
-                    lobby.ante
+                    lobbyId = lobbyId,
+                    totalRounds = lobby.rounds,
+                    ante = lobby.ante,
+                    maxPlayers =  lobby.maxPlayers
                 ) // retorna a match ou MatchServiceError
 
 

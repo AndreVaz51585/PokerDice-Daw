@@ -1,4 +1,4 @@
-package pt.isel.http
+package pt.isel.http.controllers
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.user.AuthenticatedUser
-import pt.isel.http.model.LobbyInput
-import pt.isel.http.model.Problem
+import pt.isel.http.model.lobby.LobbyInput
+import pt.isel.http.model.problem.Problem
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.Failure
 import pt.isel.service.Auxiliary.Success

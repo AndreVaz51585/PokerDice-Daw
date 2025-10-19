@@ -1,15 +1,15 @@
 @base = http://localhost:8080
-@tokenteste1 = TYQF8B-ROt2mCocMnOsMWBf-b62Ydq5-g0S7WcqkZG0=
-@tokenteste2 = nFbYJONqz5jyiVRJnKaD06QLceait9IokBo6sklnSqo=
-@tokenteste3 = gxkEOSa_8SFdB7UGRciHEHEu49VKelIEX9Az6JXOre0=
+@tokenteste1 = SKruNekkMt39ja6dYLmTRR-gmZvQCDpYWljIStaBaDc=
+@tokenteste2 = MRd3EOP8B806JTWAuDf6odWbCEjTBJuT44j31mSC6Y8=
+@tokenteste3 = l9eJe5PdDTyxwxFrzNOsId-nm9nGyTv9Z3UC0ZCBwTI=
 @tokenteste4 = gjzRiguAbTk0XSW_oijvtYCjFwZr879c5fM0NIAXXcs=
 ### Registar um novo utilizador
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste3",
-  "email": "test3@gmail.com",
+  "name": "teste1",
+  "email": "test1@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -18,7 +18,7 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test3@gmail.com",
+  "email": "test1@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -44,7 +44,7 @@ Content-Type: application/json
 Authorization: Bearer {{tokenteste1}}
 
 {
-  "name": "Lobby3 sse",
+  "name": "LobbyTeste sse",
   "description": "Descrição do lobby",
   "minPlayers": 2,
   "maxPlayers": 3,
@@ -56,12 +56,12 @@ Authorization: Bearer {{tokenteste1}}
 GET http://localhost:8080/api/lobbies
 
 ### Obter lobby por ID
-GET http://localhost:8080/api/lobbies/2
+GET http://localhost:8080/api/lobbies/4
 
 ### Juntar-se a um lobby
 POST http://localhost:8080/api/lobbies/4/join
 Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{tokenteste2}}
 
 
 ### Sair de um lobby
@@ -70,31 +70,31 @@ Content-Type: application/json
 Authorization: Bearer {{tokenteste1}}
 
 ### Listar jogadores de um lobby
-GET http://localhost:8080/api/lobbies/2/players
+GET http://localhost:8080/api/lobbies/4/players
 
 ### Obter host do lobby
 GET http://localhost:8080/api/lobbies/4/host
 
 ### Obter players de uma partida
-GET http://localhost:8080/api/matches/3/players
+GET http://localhost:8080/api/matches/2/players
 
 ### Listar todas as partidas
 GET http://localhost:8080/api/matches
 
 ### Obter detalhes de uma partida
-GET http://localhost:8080/api/matches/3
+GET http://localhost:8080/api/matches/2
 
 ### 7) Abrir ligação SSE (mantém stream)
-GET {{base}}/api/matches/sse/4/events
+GET {{base}}/api/matches/sse/2/events
 Accept: text/event-stream
 
 ### 8) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/4/events
+POST {{base}}/api/matches/sse/2/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{tokenteste2}}
 
 {
-  "action": "hold"
+  "action": "roll"
 }
 
 ### 9) (Opcional) Forçar envio de snapshot inicial / registar engine
@@ -112,12 +112,12 @@ Authorization: Bearer {{token}}
 }
 
 ### Jogador 1 joga os dados
-POST http://localhost:8080/api/matches/sse/3/events
+POST http://localhost:8080/api/matches/sse/2/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{tokenteste2}}
 
 {
-  "action": "Roll"
+  "action": "finishturn"
 }
 
 ### Jogador 1 segura alguns dados (substitua [1,3] pelos dados que deseja segurar)
@@ -141,9 +141,9 @@ Authorization: Bearer {{tokenteste1}}
 }
 
 ### Jogador 1 finaliza sua jogada
-POST http://localhost:8080/api/matches/sse/4/events
+POST http://localhost:8080/api/matches/sse/2/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{tokenteste2}}
 
 {
   "action": "finishturn"

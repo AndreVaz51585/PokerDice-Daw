@@ -38,11 +38,14 @@ class MatchServiceImpl(
         if (totalRounds <= 0 || ante < 0) {
             return@run failure(MatchServiceError.InvalidState)
         }
+
+        val lobby  = repoLobby.findById(lobbyId) ?: return@run failure(MatchServiceError.LobbyNotFound)
         // Evitar duplicados iniciais
         val match = repoMatch.createMatch(
             lobbyId = lobbyId,
             totalRounds = totalRounds,
             ante = ante,
+            maxPlayers = lobby.maxPlayers
         )
         return@run success(match)
     }
@@ -115,7 +118,7 @@ class MatchServiceImpl(
 
     override fun applyCommand(matchId: Int, cmd: Command): Either<MatchServiceError, BankedMatch> {
         val engine = matchManager.get(matchId) ?: return failure(MatchServiceError.MatchNotFound)
-        val res = runBlocking { engine.dispatch(cmd) } // mantém API síncrona; considere suspender controller
+        val res = runBlocking { engine.dispatch(cmd) }
         return if (res.isSuccess) success(engine.snapshot()) else failure(MatchServiceError.Unknown)
     }
 
@@ -124,14 +127,12 @@ class MatchServiceImpl(
 
     }
 
-    override fun registerBankedMatchFromDb(matchId: Int): Boolean {
-        // Se já existir engine registrado, nada a fazer
-        if (matchManager.get(matchId) != null) return true
+    override fun registerBankedMatchFromDb(matchId: Int): Either<MatchServiceError,Boolean> {
 
-        // O motor já foi criado no lobbyService.startMatch,
-        // mas pode ter sido perdido (por exemplo, após reinicialização)
-        try {
-            val match = repoMatch.findById(matchId) ?: return false
+        if (matchManager.get(matchId) != null) return success(true)
+
+
+            val match = repoMatch.findById(matchId) ?: return failure(MatchServiceError.MatchNotFound)
             val players = repoMatch.listPlayers(matchId)
 
             // Reconstituir o estado do jogo
@@ -144,18 +145,18 @@ class MatchServiceImpl(
                 )
             }
 
-            // Buscar o lobby associado
-            val lobby = repoLobby.findById(match.lobbyId) ?: return false
 
-            // Criar o jogo
+            val lobby = repoLobby.findById(match.lobbyId) ?: return failure(MatchServiceError.LobbyNotFound)
+
+
             val game = createNewGame(lobby, match, matchPlayers)
 
-            // Criar wallets
+
             val wallets = matchPlayers.associate { p ->
                 p.userId to Wallet(userId = p.userId, currentBalance = p.balanceAtStart)
             }
 
-            // Criar BankedMatch
+
             val banked = BankedMatch(
                 matchId = match.id,
                 game = game,
@@ -174,10 +175,10 @@ class MatchServiceImpl(
             val engine = BankedGameMatchEngine(match.id, finalState)
             matchManager.register(engine)
 
-            return true
-        } catch (t: Throwable) {
-            return false
-        }
+            return success(true)
+
+
+
     }
 
 

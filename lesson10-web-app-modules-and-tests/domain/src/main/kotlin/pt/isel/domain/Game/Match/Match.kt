@@ -14,7 +14,7 @@ data class Match(
     val finishedAt: Instant? = null,
     val currentRoundNo: Int = 1,
     val rounds: List<Round> = emptyList(),
-    val maxPlayers: Int = 10
+    val maxPlayers: Int
     ){
     init {
         require(totalRounds >= 1) { "totalRounds tem de ser ≥ 1." }

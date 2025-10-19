@@ -1,5 +1,6 @@
 package pt.isel.domain.Game.money
 
+
 import pt.isel.domain.Game.Round.RoundState
 import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.domain.Game.pokerDice.GameEngine
@@ -19,6 +20,7 @@ import pt.isel.domain.Game.pokerDice.GamePhase
  * - Enforces all money invariants via Wallet/Ante/Pot.
  */
 object BankedMatchEngine {
+
 
     fun apply(state: BankedMatch, cmd: Command): BankedMatch {
         return when (cmd) {
@@ -121,10 +123,20 @@ object BankedMatchEngine {
             }
 
             else -> {
-                // Pure delegation for all other commands.
                 val newGame = GameEngine.apply(state.game, cmd)
-                state.copy(game = newGame)
+                val newState = state.copy(game = newGame)
+
+                val shouldAutoNext = (newGame.phase == GamePhase.ROLLING) && (newGame.everyoneDone)
+
+                if (shouldAutoNext) {
+
+                    val triggerUserId = newGame.hostId
+
+                    return apply(newState, Command.NextRound(triggerUserId))
+                }
+                newState
             }
         }
     }
+
 }
