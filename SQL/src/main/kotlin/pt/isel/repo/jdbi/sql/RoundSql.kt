@@ -45,6 +45,11 @@ object RoundSql {
     WHERE rw.round_id = :roundId;
     """
 
+    const val UPDATE_ROUND_WINNERS = """
+    INSERT INTO round_winners (round_id, user_id)
+    VALUES (:roundId, :userId);
+    """
+
     const val DELETE_ROUND = """
         DELETE FROM round WHERE id = :id
     """

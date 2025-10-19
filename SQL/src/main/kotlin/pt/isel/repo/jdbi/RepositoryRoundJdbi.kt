@@ -109,9 +109,20 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
                 .bind("startedAt", Date())
                 .execute()
         }
+        for (userId in entity.winners ?: emptyList()){
+            handle.createUpdate(RoundSql.UPDATE_ROUND_WINNERS)
+                .bind("roundId", entity.id)
+                .bind("userId", userId)
+                .execute()
+        }
     }
 
-
+    override fun findWinnersByRoundId(roundId: Long): List<Int> {
+        return handle.createQuery(RoundSql.SELECT_ROUND_WINNERS)
+            .bind("roundId", roundId)
+            .mapTo<Int>()
+            .list()
+    }
 
 
     override fun deleteById(id: Int): Boolean {

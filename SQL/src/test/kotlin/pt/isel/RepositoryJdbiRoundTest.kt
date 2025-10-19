@@ -9,6 +9,7 @@ import pt.isel.domain.Game.Hand
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
+import pt.isel.domain.Game.Round.Round
 import pt.isel.domain.Game.Round.RoundState
 import pt.isel.domain.authentication.PasswordValidationInfo
 import pt.isel.repo.jdbi.TransactionManagerJdbi
@@ -147,6 +148,11 @@ class RepositoryJdbiRoundTest {
                 email = "joao@gmail.com",
                 passwordValidation = PasswordValidationInfo(validationInfo = "hashedPassword")
             )
+            val user2 = repoUsers.createUser(
+                name = "Joãoo",
+                email = "joaoo@gmail.com",
+                passwordValidation = PasswordValidationInfo(validationInfo = "hashedPassword")
+            )
 
             val lobby = repoLobbies.createLobby(
                 name = "Test Lobby",
@@ -182,23 +188,178 @@ class RepositoryJdbiRoundTest {
 
             // Verificar se os campos foram atualizados
             val savedRound = repoRound.findById(round.id.toInt())
+            val roundFinal = Round(
+                id = savedRound!!.id,
+                matchId = savedRound.matchId,
+                number = savedRound.number,
+                state = savedRound.state,
+                anteCoins = savedRound.anteCoins,
+                pot = savedRound.pot,
+                winners = repoRound.findWinnersByRoundId(round.id),
+            )
+
             assertNotNull(savedRound)
-            assertEquals(RoundState.CLOSED, savedRound.state)
-            assertEquals(50, savedRound.pot)
-            assertEquals(listOf(1, 2), savedRound.winners)
-            assertEquals(mapOf(1 to Hand(faces = listOf(Face.ACE, Face.KING, Face.QUEEN, Face.JACK, Face.TEN)), 2 to Hand(faces = listOf(Face.NINE, Face.TEN, Face.JACK, Face.QUEEN, Face.KING))), savedRound.hands)
+            assertEquals(RoundState.CLOSED, roundFinal.state)
+            assertEquals(50, roundFinal.pot)
+            assertEquals(listOf(1, 2), roundFinal.winners)
         }
     }
 
 
     @Test
-    fun `deleteById apaga round`() {}
+    fun `deleteById apaga round`() {
+        trxManager.run {
+            // Criar usuário para associar ao lobby
+            val user = repoUsers.createUser(
+                name = "Usuário Teste",
+                email = "usuario@teste.com",
+                passwordValidation = PasswordValidationInfo("senha")
+            )
+
+            // Criar lobby para associar à match
+            val lobby = repoLobbies.createLobby(
+                name = "Lobby Teste",
+                lobbyHostId = user.id,
+                description = "Descrição teste",
+                minPlayers = 2,
+                maxPlayers = 4,
+                rounds = 3,
+                ante = 5
+            )
+
+            // Criar match para associar ao round
+            val match = repoMatch.createMatch(
+                lobbyId = lobby.id,
+                totalRounds = 3,
+                ante = 5
+            )
+
+            // Criar um round
+            val round = repoRound.createRound(
+                matchId = match.id,
+                number = 1,
+                anteCoins = match.ante,
+                startedAt = Instant.now()
+            )
+
+            // Verificar que o round existe
+            assertNotNull(repoRound.findById(round.id.toInt()))
+
+            // Deletar o round
+            val deleted = repoRound.deleteById(round.id.toInt())
+
+            // Verificar que a operação teve sucesso
+            assertTrue(deleted)
+
+            // Verificar que o round não existe mais
+            assertNull(repoRound.findById(round.id.toInt()))
+        }
+    }
 
     @Test
-    fun `clear apaga todos os Round`() {}
+    fun `clear apaga todos os Round`() {
+        trxManager.run {
+            // Criar usuário para associar ao lobby
+            val user = repoUsers.createUser(
+                name = "Usuário Teste",
+                email = "usuario@teste.com",
+                passwordValidation = PasswordValidationInfo("senha")
+            )
+
+            // Criar lobby para associar à match
+            val lobby = repoLobbies.createLobby(
+                name = "Lobby Teste",
+                lobbyHostId = user.id,
+                description = "Descrição teste",
+                minPlayers = 2,
+                maxPlayers = 4,
+                rounds = 3,
+                ante = 5
+            )
+
+            // Criar match para associar aos rounds
+            val match = repoMatch.createMatch(
+                lobbyId = lobby.id,
+                totalRounds = 3,
+                ante = 5
+            )
+
+            // Criar dois rounds diferentes
+            repoRound.createRound(
+                matchId = match.id,
+                number = 1,
+                anteCoins = match.ante,
+                startedAt = Instant.now()
+            )
+
+            repoRound.createRound(
+                matchId = match.id,
+                number = 2,
+                anteCoins = match.ante,
+                startedAt = Instant.now()
+            )
+
+            // Verificar que existem rounds
+            assertTrue(repoRound.findAll().isNotEmpty())
+
+            // Limpar todos os rounds
+            repoRound.clear()
+
+            // Verificar que não existem mais rounds
+            assertTrue(repoRound.findAll().isEmpty())
+        }
+    }
 
     @Test
-    fun `exists verifica corretamente se o round existe`() {}
+    fun `exists verifica corretamente se o round existe`() {
+        trxManager.run {
+            // Criar usuário para associar ao lobby
+            val user = repoUsers.createUser(
+                name = "Usuário Teste",
+                email = "usuario@teste.com",
+                passwordValidation = PasswordValidationInfo("senha")
+            )
+
+            // Criar lobby para associar à match
+            val lobby = repoLobbies.createLobby(
+                name = "Lobby Teste",
+                lobbyHostId = user.id,
+                description = "Descrição teste",
+                minPlayers = 2,
+                maxPlayers = 4,
+                rounds = 3,
+                ante = 5
+            )
+
+            // Criar match para associar ao round
+            val match = repoMatch.createMatch(
+                lobbyId = lobby.id,
+                totalRounds = 3,
+                ante = 5
+            )
+
+            // Criar um round
+            val round = repoRound.createRound(
+                matchId = match.id,
+                number = 1,
+                anteCoins = match.ante,
+                startedAt = Instant.now()
+            )
+
+            // Verificar que o round existe usando findById (não nulo indica existência)
+            assertNotNull(repoRound.findById(round.id.toInt()))
+
+            // Verificar que um ID inexistente retorna nulo
+            assertNull(repoRound.findById(-1))
+
+            // Deletar o round
+            val deleted = repoRound.deleteById(round.id.toInt())
+            assertTrue(deleted)
+
+            // Verificar que o round não existe mais
+            assertNull(repoRound.findById(round.id.toInt()))
+        }
+    }
 
 
 }

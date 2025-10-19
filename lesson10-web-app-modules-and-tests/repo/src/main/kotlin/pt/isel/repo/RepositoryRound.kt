@@ -42,4 +42,6 @@ interface RepositoryRound : Repository<Round> {
 
     // Verificar se um jogador específico já jogou neste round
     fun hasPlayerPlayed(roundId: Long, userId: Int): Boolean
+
+    fun findWinnersByRoundId(roundId: Long): List<Int>
 }
