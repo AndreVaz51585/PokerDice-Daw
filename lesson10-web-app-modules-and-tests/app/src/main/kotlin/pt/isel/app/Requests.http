@@ -1,15 +1,15 @@
 @base = http://localhost:8080
-@tokenteste1 = SKruNekkMt39ja6dYLmTRR-gmZvQCDpYWljIStaBaDc=
-@tokenteste2 = MRd3EOP8B806JTWAuDf6odWbCEjTBJuT44j31mSC6Y8=
-@tokenteste3 = l9eJe5PdDTyxwxFrzNOsId-nm9nGyTv9Z3UC0ZCBwTI=
+@tokenteste1 = c_l9UMAn44a-hVMt0ibmuc2_EufADsmGtaqAwIaVfeI=
+@tokenteste2 = lFwLtQGTB6uRDm2GzlnRooB97xLpOmB6rTULrOdJcKo=
+@tokenteste3 = E3gZl7fvAl-YmAtaPittFvUZpXo77OltbVxS-cCPN7g=
 @tokenteste4 = gjzRiguAbTk0XSW_oijvtYCjFwZr879c5fM0NIAXXcs=
 ### Registar um novo utilizador
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste1",
-  "email": "test1@gmail.com",
+  "name": "teste3",
+  "email": "test3@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -18,7 +18,7 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test1@gmail.com",
+  "email": "test3@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -61,7 +61,7 @@ GET http://localhost:8080/api/lobbies/4
 ### Juntar-se a um lobby
 POST http://localhost:8080/api/lobbies/4/join
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{tokenteste3}}
 
 
 ### Sair de um lobby
@@ -91,7 +91,7 @@ Accept: text/event-stream
 ### 8) Enviar um comando para a partida (gera evento)
 POST {{base}}/api/matches/sse/2/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{tokenteste3}}
 
 {
   "action": "roll"
@@ -114,7 +114,7 @@ Authorization: Bearer {{token}}
 ### Jogador 1 joga os dados
 POST http://localhost:8080/api/matches/sse/2/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{tokenteste3}}
 
 {
   "action": "finishturn"

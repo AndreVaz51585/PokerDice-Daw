@@ -49,12 +49,15 @@ class SseMatchController(
             try {
                 val eventId = "$matchId"
                 val eventType = "match-snapshot"
+                val actionUser = null
+                val payload = eventFormatter.createEnrichedPayload(banked, eventType, actionUser, eventId)
+
 
                 emitter.send(
                     SseEmitter.event()
                         .name(eventType)
                         .id(eventId)
-                        .data(banked)
+                        .data(payload)
                 )
                 lastState = banked
                 eventCount++

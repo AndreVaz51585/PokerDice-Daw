@@ -7,6 +7,7 @@ import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.Game.Lobby.LobbyState
 import pt.isel.domain.user.User
 import pt.isel.repo.RepositoryLobby
+import pt.isel.repo.jdbi.sql.LobbySql
 
 class RepositoryLobbyJdbi(
     private val handle : Handle
@@ -20,7 +21,7 @@ class RepositoryLobbyJdbi(
      * */
     override fun findById(id: Int): Lobby? =
         handle.
-              createQuery("SELECT * FROM lobby WHERE id = :id")
+              createQuery(LobbySql.SELECT_BY_ID)
               .bind("id", id)
               .mapTo<Lobby>()
               .findOne()
@@ -32,7 +33,7 @@ class RepositoryLobbyJdbi(
      *
      * */
     override fun findAll(): List<Lobby> =
-        handle.createQuery("SELECT * FROM lobby")
+        handle.createQuery(LobbySql.SELECT_ALL)
             .mapTo<Lobby>()
             .list()
 
@@ -43,17 +44,7 @@ class RepositoryLobbyJdbi(
      * */
     override fun save(entity: Lobby) {
         handle.createUpdate(
-            """
-            UPDATE lobby
-            SET name = :name,
-                description = :description,
-                min_Players = :minPlayers,
-                max_Players = :maxPlayers,
-                rounds = :rounds,
-                ante = :ante,
-                state = CAST(:state AS lobby_state)
-            WHERE id = :id
-            """
+            LobbySql.UPDATE_LOBBY,
         )
             .bind("id", entity.id)
             .bind("name", entity.name)
@@ -77,7 +68,7 @@ class RepositoryLobbyJdbi(
        /* handle.createQuery("DELETE FROM dbo.LobbyPlayers WHERE lobbyId = :id")
             .bind("id", id)
             .execute()*/
-        val ret = handle.createUpdate("DELETE FROM lobby WHERE id = :id")
+        val ret = handle.createUpdate(LobbySql.DELETE_BY_ID)
             .bind("id", id)
             .execute() > 0
         return ret
@@ -90,7 +81,7 @@ class RepositoryLobbyJdbi(
       * */
     override fun clear() {
        // handle.createUpdate("DELETE FROM dbo.LobbyMembers").execute()
-        handle.createUpdate("DELETE FROM lobby").execute()
+        handle.createUpdate(LobbySql.CLEAR_LOBBIES).execute()
     }
 
     /**
@@ -118,11 +109,7 @@ class RepositoryLobbyJdbi(
     ): Lobby {
         val id = handle
             .createUpdate(
-                """
-            INSERT INTO lobby (lobby_Host,name, description, min_Players, max_Players, rounds, ante,state) 
-            VALUES (:lobbyHostId, :name, :description,:minPlayers, :maxPlayers, :rounds, :ante, CAST(:state AS lobby_state))
-            RETURNING id
-            """,
+                LobbySql.CREATE_LOBBY
             )
             .bind("lobbyHostId", lobbyHostId)
             .bind("name", name)
@@ -139,11 +126,6 @@ class RepositoryLobbyJdbi(
         //no create-shcema já temos um trigger que adiciona manualmente o host à lista de players do lobby
         // porratnto aqui fazemo-lo para ficar coerente
 
-        val host : User =
-            handle.createQuery("SELECT * FROM dbo.users WHERE id = :id")
-                .bind("id", lobbyHostId)
-                .mapTo<User>()
-                .one()
 
         return Lobby(
             id = id,
@@ -165,7 +147,7 @@ class RepositoryLobbyJdbi(
      *
      * */
     override fun getLobbyHost(lobby: Lobby): User? =
-        handle.createQuery("SELECT * FROM dbo.users WHERE id = :id")
+        handle.createQuery(LobbySql.SELECT_HOST)
             .bind("id", lobby.lobbyHost)
             .mapTo<User>()
             .findOne()
@@ -183,12 +165,7 @@ class RepositoryLobbyJdbi(
         limit: Int,
         offset: Int
     ): List<Lobby> =
-        handle.createQuery(  """
-            SELECT * FROM lobby
-            WHERE state = CAST(:state AS lobby_state)
-            ORDER BY id
-            LIMIT :limit OFFSET :offset
-            """
+        handle.createQuery(LobbySql.SELECT_OPEN_LOBBIES_PAGED
         )
             .bind("state", LobbyState.OPEN.name)
             .bind("limit", limit)
@@ -199,11 +176,7 @@ class RepositoryLobbyJdbi(
 
     override fun addPlayerToLobby(lobbyId: Int, playerId: Int): Boolean {
         val rows = handle.createUpdate(
-            """
-            INSERT INTO lobby_player (lobby_id, user_id)
-            VALUES (:lobbyId, :userId)
-            ON CONFLICT DO NOTHING
-            """
+          LobbySql.ADD_PLAYER
         )
             .bind("lobbyId", lobbyId)
             .bind("userId", playerId)
@@ -214,10 +187,7 @@ class RepositoryLobbyJdbi(
 
     override fun remove(lobbyId: Int, userId: Int) : Boolean {
         val rows = handle.createUpdate(
-            """
-            DELETE FROM lobby_player
-            WHERE lobby_id = :lobbyId AND user_id = :userId
-            """
+            LobbySql.REMOVE_PLAYER
         )
             .bind("lobbyId", lobbyId)
             .bind("userId", userId)
@@ -226,13 +196,7 @@ class RepositoryLobbyJdbi(
     }
     override fun listPlayers(lobbyId: Int): List<User> =
         handle.createQuery(
-            """
-            SELECT u.*
-            FROM dbo.users u
-            INNER JOIN lobby_player lp ON lp.user_id = u.id
-            WHERE lp.lobby_id = :lobbyId
-            ORDER BY lp.joined_at
-            """
+            LobbySql.SELECT_PLAYERS
         )
             .bind("lobbyId", lobbyId)
             .mapTo<User>()
@@ -241,10 +205,7 @@ class RepositoryLobbyJdbi(
 
     override fun countPlayers(lobbyId: Int): Int =
         handle.createQuery(
-            """
-            SELECT COUNT(*) FROM lobby_player
-            WHERE lobby_id = :lobbyId
-            """
+          LobbySql.COUNT_PLAYERS
         )
             .bind("lobbyId", lobbyId)
             .mapTo(Int::class.java)
