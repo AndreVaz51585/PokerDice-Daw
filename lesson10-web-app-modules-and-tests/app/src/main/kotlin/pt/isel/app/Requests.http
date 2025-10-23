@@ -1,8 +1,10 @@
 @base = http://localhost:8080
-@tokenteste1 = c_l9UMAn44a-hVMt0ibmuc2_EufADsmGtaqAwIaVfeI=
-@tokenteste2 = lFwLtQGTB6uRDm2GzlnRooB97xLpOmB6rTULrOdJcKo=
-@tokenteste3 = E3gZl7fvAl-YmAtaPittFvUZpXo77OltbVxS-cCPN7g=
+@tokenteste1 = lSlYDZBksc3-2qfRv1xolIi3jfXv76LFZCtK0PmDwqk=
+@tokenteste2 = S6Dj-IxzztidhN3UtAvw8p9W3-vJGs8OBXraWLlcqY0=
+@tokenteste3 = 1IzeHKXVt1IcETfajzFezXAGsNsyi5dr6X-49veb6yM=
 @tokenteste4 = gjzRiguAbTk0XSW_oijvtYCjFwZr879c5fM0NIAXXcs=
+
+
 ### Registar um novo utilizador
 POST http://localhost:8080/api/users
 Content-Type: application/json
@@ -10,7 +12,9 @@ Content-Type: application/json
 {
   "name": "teste3",
   "email": "test3@gmail.com",
-  "password": "minhaSenhaSegura"
+  "password": "minhaSenhaSegura",
+  "invitationCode": "pzyGW5ZW-9k"
+
 }
 
 ### Obter token de autenticação
@@ -23,13 +27,23 @@ Content-Type: application/json
 }
 
 
+### Criar uma invitation
+POST http://localhost:8080/api/invitations
+Content-Type: application/json
+Authorization: bearer {{tokenteste2}}
+
+{
+  "email": "invite@example.com"
+}
+
+
 ### Obter User
 GET http://localhost:8080/api/me
 content-type: application/json
 Authorization: bearer {{tokenteste1}}
 
 ### Apagar User
-DELETE http://localhost:8080/api/users/4
+DELETE http://localhost:8080/api/users/2
 content-type: application/json
 
 ### Listar todos os users
@@ -66,7 +80,7 @@ Authorization: Bearer {{tokenteste2}}
 ### Juntar-se a um lobby
 POST http://localhost:8080/api/lobbies/23/join
 Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{tokenteste2}}
 
 
 ### Sair de um lobby
@@ -132,7 +146,7 @@ Authorization: Bearer {{tokenteste2}}
 ### 8) Enviar um comando para a partida (gera evento)
 POST {{base}}/api/matches/sse/20/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{tokenteste2}}
 
 {
   "action": "roll"

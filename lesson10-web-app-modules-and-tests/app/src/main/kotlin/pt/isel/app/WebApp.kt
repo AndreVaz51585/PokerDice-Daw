@@ -23,6 +23,7 @@ import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryMatch
 import pt.isel.repo.RepositoryUser
 import pt.isel.repo.TransactionManager
+import pt.isel.repo.jdbi.RepositoryInvitationJdbi
 import pt.isel.repo.jdbi.RepositoryLobbyJdbi
 import pt.isel.repo.jdbi.RepositoryMatchJdbi
 import pt.isel.repo.jdbi.RepositoryUserJdbi
@@ -106,6 +107,13 @@ class WebApp {
             tokenRollingTtl = Duration.ofHours(1),
             maxTokensPerUser = 3,
         )
+
+    @Bean
+    fun repositoryInvitation(jdbi: Jdbi) = RepositoryInvitationJdbi(
+        jdbi.open(),
+        repoUser = RepositoryUserJdbi(jdbi.open())
+    )
+
 }
 
 fun main() {

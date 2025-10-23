@@ -15,6 +15,7 @@ class RepositoryUserInMem : RepositoryUser {
         name: String,
         email: String,
         passwordValidation: PasswordValidationInfo,
+        invitationCode: String?
     ): User = User(users.size, name, email, passwordValidation).also { users.add(it) }
 
     override fun findByEmail(email: String): User? = users.firstOrNull { it.email == email }
@@ -73,4 +74,6 @@ class RepositoryUserInMem : RepositoryUser {
         tokens.clear()
         users.clear()
     }
+
+    override fun count(): Long = users.size.toLong()
 }
