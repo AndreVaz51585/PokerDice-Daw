@@ -107,8 +107,6 @@ class MatchServiceImpl(
     }
 
     override fun listPlayers(matchId: Int): List<MatchPlayer> = trxManager.run {
-        // Return players from repo (table). If you rather use match.gameState.players,
-        // ensure gameState is kept up to date on every player add/remove.
         repoMatch.listPlayers(matchId)
     }
 
@@ -135,7 +133,7 @@ class MatchServiceImpl(
             val match = repoMatch.findById(matchId) ?: return failure(MatchServiceError.MatchNotFound)
             val players = repoMatch.listPlayers(matchId)
 
-            // Reconstituir o estado do jogo
+
             val matchPlayers = players.map { player ->
                 MatchPlayer(
                     matchId = match.id,
