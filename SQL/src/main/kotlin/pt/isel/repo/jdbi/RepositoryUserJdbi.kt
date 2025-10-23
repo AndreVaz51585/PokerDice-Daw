@@ -51,6 +51,7 @@ class RepositoryUserJdbi(
         name: String,
         email: String,
         passwordValidation: PasswordValidationInfo,
+        invitationCode: String?
     ): User {
         val id =
             handle
@@ -66,6 +67,11 @@ class RepositoryUserJdbi(
     }
 
 
+    override fun count(): Long {
+        return handle.createQuery("SELECT COUNT(*) FROM dbo.users")
+            .mapTo<Long>()
+            .one()
+    }
 
     override fun findByEmail(email: String): User? =
         handle

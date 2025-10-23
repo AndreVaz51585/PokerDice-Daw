@@ -8,6 +8,8 @@ import pt.isel.domain.token.TokenEncoder
 import pt.isel.domain.token.TokenExternalInfo
 import pt.isel.domain.user.User
 import pt.isel.domain.user.UsersDomainConfig
+import pt.isel.domain.user.invitation.InvitationId
+import pt.isel.repo.RepositoryInvitation
 import pt.isel.repo.RepositoryUser
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
@@ -27,6 +29,12 @@ sealed class UserError {
     data object UserNotFound : UserError()
 
     data object ErrorDeletingUser : UserError()
+
+    data object InvitationCodeRequired : UserError()
+
+    data object InvalidInvitationCode : UserError()
+
+    data object InvitationCodeAlreadyUsed : UserError()
 }
 
 sealed class TokenCreationError {
@@ -39,6 +47,7 @@ class UserAuthService(
     private val tokenEncoder: TokenEncoder,
     private val config: UsersDomainConfig,
     private val repoUsers: RepositoryUser,
+    private val repoInvitation: RepositoryInvitation,
     private val clock: Clock,
 ) {
     private fun validatePassword(
@@ -64,6 +73,7 @@ class UserAuthService(
         name: String,
         email: String,
         password: String,
+        invitationCode: String?,
     ): Either<UserError, User> {
         if (!isSafePassword(password)) {
             return failure(UserError.InsecurePassword)
@@ -71,9 +81,40 @@ class UserAuthService(
         if (repoUsers.findByEmail(email) != null) {
             return failure(UserError.AlreadyUsedEmailAddress)
         }
+
+
+        val isFirstUser = repoUsers.count() == 1L
+
+        if (!isFirstUser) {
+            if (invitationCode == null) {
+                return failure(UserError.InvitationCodeRequired)
+            }
+
+            val invitation = repoInvitation.findByInvitationId(InvitationId(invitationCode))
+                ?: return failure(UserError.InvalidInvitationCode)
+
+            if (invitation.usedBy != null) {
+                return failure(UserError.InvitationCodeAlreadyUsed)
+            }
+
+            val passwordValidationInfo = createPasswordValidationInformation(password)
+            val newUser = repoUsers.createUser(name, email, passwordValidationInfo, invitationCode)
+
+            // Mark invitation as used
+            val usedInvitation = invitation.copy(
+                usedBy = newUser,
+                usedAt = clock.instant()
+            )
+            repoInvitation.save(usedInvitation)
+            return success(newUser)
+        }
+
+        // Logic for the first user (no invitation needed)
         val passwordValidationInfo = createPasswordValidationInformation(password)
-        return success(repoUsers.createUser(name, email, passwordValidationInfo))
+        val user = repoUsers.createUser(name, email, passwordValidationInfo, null)
+        return success(user)
     }
+
 
     fun deleteUser(userId: Int): Either<UserError,Boolean>  {
         val user = repoUsers.findById(userId) ?: return failure(UserError.UserNotFound)

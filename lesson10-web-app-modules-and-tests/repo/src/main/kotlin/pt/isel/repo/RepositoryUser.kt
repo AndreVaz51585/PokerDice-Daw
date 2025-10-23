@@ -14,6 +14,7 @@ interface RepositoryUser : Repository<User> {
         name: String,
         email: String,
         passwordValidation: PasswordValidationInfo,
+        invitationCode: String?
     ): User
 
 
@@ -33,4 +34,5 @@ interface RepositoryUser : Repository<User> {
 
     fun removeTokenByValidationInfo(tokenValidationInfo: TokenValidationInfo): Int
 
+    fun count(): Long
 }
