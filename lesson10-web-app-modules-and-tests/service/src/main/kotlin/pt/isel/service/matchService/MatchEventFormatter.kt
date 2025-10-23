@@ -1,132 +1,144 @@
-// Kotlin
-// file: `lesson10-web-app-modules-and-tests/service/src/main/kotlin/pt/isel/service/events/MatchEventFormatter.kt`
 package pt.isel.service.matchService
 
 import org.springframework.stereotype.Service
-import pt.isel.domain.Game.Face
-import pt.isel.domain.Game.money.BankedMatch
+import pt.isel.domain.Game.Combination
+import pt.isel.domain.Game.Hand
+import pt.isel.domain.Game.Hand.Companion.getCombination
+import pt.isel.domain.Game.Match.MatchState
 import pt.isel.domain.Game.Round.RoundState
+import pt.isel.domain.Game.money.BankedMatch
+import pt.isel.domain.Game.money.Wallet
+import pt.isel.domain.Game.pokerDice.Game
+import pt.isel.domain.Game.pokerDice.PlayerState
+import pt.isel.domain.Game.pokerDice.Showdown
+import kotlin.collections.get
+import kotlin.rem
+import kotlin.text.compareTo
+import kotlin.text.equals
+import kotlin.text.get
+import kotlin.toString
+
 
 @Service
 class MatchEventFormatter {
 
 
-    data class RoundSummary(val number: Int, val state: String, val winners: List<Int>?)
-    data class PlayerDice(val userId: Int, val dice: List<Face>, val held: List<Int>, val rerollsLeft: Int, val done: Boolean)
-    data class CompactState(
-        val matchId: Int,
-        val phase: String,
-        val currentPlayerIndex: Int,
-        val currentRoundNumber: Int,
-        val playerOrder: List<Int>,
-        val players: List<PlayerDice>,
-        val rounds: List<RoundSummary>,
-        val wallets: Map<Int, Int>,
-        val openPotClosed: Boolean?,
-        val openPotTotal: Int?
+    // Defina classes de payload minimalistas
+    data class RollResultPayload(
+        val userId: Int,
+        val dice: List<Any>,
+        val combination: String,
+        val rerollsLeft: Int
     )
 
-    fun toCompactState(state: BankedMatch): CompactState {
-        val players = state.game.players.values.map {
-            PlayerDice(it.userId, it.dice, it.held.toList(), it.rerollsLeft, it.done)
-        }
-        val rounds = state.game.rounds.map { r ->
-            RoundSummary(r.number, r.state.name, r.winners?.ifEmpty { null })
-        }
-        val wallets = state.wallets.mapValues { it.value.currentBalance }
-        val openPotClosed = state.openPot?.closed
-        val openPotTotal = state.openPot?.total
-        return CompactState(
-            matchId = state.matchId,
-            phase = state.game.phase.name,
-            currentPlayerIndex = state.game.currentPlayerIndex,
-            currentRoundNumber = state.game.currentRoundNumber,
-            playerOrder = state.game.playerOrder,
-            players = players,
-            rounds = rounds,
-            wallets = wallets,
-            openPotClosed = openPotClosed,
-            openPotTotal = openPotTotal
+    data class HoldResultPayload(
+        val userId: Int,
+        val dice: List<Any>,
+        val heldIndices: List<Int>,
+
         )
+
+    data class TurnChangePayload(
+        val previousPlayer: Int,
+        val currentPlayer: Int
+    )
+
+    data class RoundSummaryPayload(
+        val roundNumber: Int,
+        val winners: List<Int>,
+        val prize: Int,
+        val wallets: Map<Int, Wallet>,
+        val playersAndCombinations: Map<Int, Hand>?
+    )
+
+    data class SimpleMatchSnapshot(
+        val matchId: Int,
+        val currentRoundNumber: Int ,
+        val playerOrder: List<Int>,
+        val currentPlayer: Int
+    )
+
+    data class GameEndPayload(
+        val winner: Int,
+        val prize: Int,
+        val wallets: Map<Int, Wallet>)
+
+
+    fun createEnrichedPayload(state: BankedMatch, eventType: String, actionBy: Int?, eventId: String): Any {
+        return when (eventType) {
+            "match-snapshot" -> SimpleMatchSnapshot(
+                matchId = state.matchId,
+                currentRoundNumber = state.game.rounds.size,
+                playerOrder = state.game.playerOrder,
+                currentPlayer = state.game.playerOrder.getOrNull(state.game.currentPlayerIndex) ?: -1
+            )
+
+            "dice-rolled" -> {
+                val player = actionBy?.let { state.game.players[it] }
+                if (player != null) {
+                    RollResultPayload(
+                        userId = actionBy,
+                        dice = player.dice,
+                        combination = Hand(player.dice).getCombination().first.toString(),
+                        rerollsLeft = player.rerollsLeft
+                    )
+                } else mapOf("error" to "Jogador não encontrado")
+            }
+
+            "dice-held" -> {
+                val player = actionBy?.let { state.game.players[it] }
+                if (player != null) {
+                    HoldResultPayload(
+                        userId = actionBy,
+                        dice = player.dice,
+                        heldIndices = player.held.toList()
+                    )
+                } else mapOf("error" to "Jogador não encontrado")
+            }
+
+            "turn-change" -> {
+                val prevIndex =
+                    (state.game.currentPlayerIndex - 1 + state.game.playerOrder.size) % state.game.playerOrder.size
+                val prevPlayerId = state.game.playerOrder.getOrNull(prevIndex) ?: -1
+                val currPlayerId = state.game.playerOrder.getOrNull(state.game.currentPlayerIndex) ?: -1
+
+                TurnChangePayload(
+                    previousPlayer = prevPlayerId,
+                    currentPlayer = currPlayerId
+                )
+            }
+
+            "round-complete" -> {
+                val completedRoundIndex = state.game.rounds.size - 2
+                val completedRound = state.game.rounds.getOrNull(completedRoundIndex)
+                val playersCombinations = completedRound?.hands
+
+                RoundSummaryPayload(
+                    roundNumber = completedRound?.number ?: 0,
+                    winners = completedRound?.winners ?: emptyList(),
+                    prize = completedRound?.pot ?: 0,
+                    wallets = state.wallets,
+                    playersAndCombinations = playersCombinations
+                )
+            }
+
+            "game-end" -> {
+                val finalWinner = state.wallets.maxByOrNull { it.value.currentBalance }?.key ?: -1
+                val finalPrize = state.wallets[finalWinner]?.currentBalance ?: 0
+
+                GameEndPayload(
+                    winner = finalWinner,
+                    prize = finalPrize,
+                    wallets = state.wallets
+                )
+            }
+
+            else -> mapOf(
+                "eventType" to eventType,
+                "matchId" to state.matchId
+            )
+        }
     }
 
-    fun isDifferentState(old: BankedMatch?, new: BankedMatch): Boolean {
-        if (old == null) return true
-        val o = toCompactState(old)
-        val n = toCompactState(new)
 
-        if (o.phase != n.phase) return true
-        if (o.currentPlayerIndex != n.currentPlayerIndex) return true
-        if (o.currentRoundNumber != n.currentRoundNumber) return true
-        if (o.playerOrder != n.playerOrder) return true
-        if (o.openPotClosed != n.openPotClosed) return true
-        if (o.openPotTotal != n.openPotTotal) return true
-        if (o.wallets != n.wallets) return true
-
-        val playersEqual = o.players.size == n.players.size &&
-                o.players.zip(n.players).all { (a, b) ->
-                    a.userId == b.userId &&
-                            a.dice == b.dice &&
-                            a.held == b.held &&
-                            a.rerollsLeft == b.rerollsLeft &&
-                            a.done == b.done
-                }
-        if (!playersEqual) return true
-
-        val roundsEqual = o.rounds.size == n.rounds.size &&
-                o.rounds.zip(n.rounds).all { (a, b) ->
-                    a.number == b.number && a.state == b.state && (a.winners ?: emptyList()) == (b.winners)
-                }
-        if (!roundsEqual) return true
-
-        return false
-    }
-
-    fun detectEventType(old: BankedMatch?, new: BankedMatch): String {
-        if (old == null) return "match-started"
-        if (old.game.currentRoundNumber != new.game.currentRoundNumber) return "round-complete"
-        if (old.game.phase != new.game.phase) return "phase-${new.game.phase.name.lowercase()}"
-        if (old.game.currentPlayerIndex != new.game.currentPlayerIndex) return "turn-change"
-        val curId = getCurrentPlayerId(new) ?: return "state-updated"
-        val oldPlayer = old.game.players[curId]
-        val newPlayer = new.game.players[curId]
-        if (oldPlayer != null && newPlayer != null && oldPlayer.dice != newPlayer.dice) return "dice-rolled"
-        if (oldPlayer != null && newPlayer != null && oldPlayer.held != newPlayer.held) return "dice-held"
-        return "state-updated"
-    }
-
-    fun detectActionUser(old: BankedMatch?, new: BankedMatch): Int? {
-        if (old == null) return null
-        val curIndex = new.game.currentPlayerIndex
-        val prevIndex = old.game.currentPlayerIndex
-        if (curIndex != prevIndex) return old.game.playerOrder.getOrNull(prevIndex)
-        return new.game.playerOrder.getOrNull(curIndex)
-    }
-
-    private fun getCurrentPlayerId(state: BankedMatch): Int? =
-        state.game.playerOrder.getOrNull(state.game.currentPlayerIndex)
-
-    fun createEnrichedPayload(
-        state: BankedMatch,
-        eventType: String,
-        actionUserId: Int?,
-        eventId: String
-    ): Map<String, Any?> {
-        val compact = toCompactState(state)
-        val winners = state.game.rounds.firstOrNull { it.state == RoundState.CLOSED }?.winners?.ifEmpty { null }
-        return mapOf(
-            "eventId" to eventId,
-            "matchId" to state.matchId,
-            "eventType" to eventType,
-            "actionBy" to (actionUserId ?: "system"),
-            "currentPlayer" to compact.playerOrder.getOrNull(compact.currentPlayerIndex),
-            "timestamp" to System.currentTimeMillis(),
-            "phase" to compact.phase,
-            "currentRoundNumber" to compact.currentRoundNumber,
-            "winners" to winners,
-            "state" to compact
-        )
-    }
-
-    fun fingerprint(payload: Any): Int = payload.hashCode()
 }

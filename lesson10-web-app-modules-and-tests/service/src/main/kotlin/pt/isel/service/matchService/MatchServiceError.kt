@@ -17,4 +17,10 @@ sealed class MatchServiceError {
     data object ErrorCreatingMatch : MatchServiceError()
 
     data object LobbyNotFound : MatchServiceError()
+
+    data object CommandUnknown : MatchServiceError()
+
+    data object CommandInvalidIndices : MatchServiceError()
+
+    data object NotYourTurn : MatchServiceError()
 }

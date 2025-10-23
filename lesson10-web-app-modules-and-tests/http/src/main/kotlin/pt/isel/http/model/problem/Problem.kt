@@ -59,4 +59,10 @@ sealed class Problem(
 
     data object CommandUnknown : Problem(URI("$PROBLEM_URI_PATH/command-unknown"))
 
+    data object NotYourTurn : Problem(URI("$PROBLEM_URI_PATH/not-your-turn"))
+
+    data object InvalidBodyParameters : Problem(URI("$PROBLEM_URI_PATH/invalid-body-parameters"))
+
+    data object InvalidIndices : Problem(URI("$PROBLEM_URI_PATH/invalid-indices"))
+
 }

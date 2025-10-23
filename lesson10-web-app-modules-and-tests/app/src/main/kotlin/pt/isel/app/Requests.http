@@ -44,22 +44,27 @@ Content-Type: application/json
 Authorization: Bearer {{tokenteste1}}
 
 {
-  "name": "LobbyTeste sse",
+  "name": "Lobby teste",
   "description": "Descrição do lobby",
   "minPlayers": 2,
   "maxPlayers": 3,
-  "rounds": 5,
-  "ante": 100
+  "rounds": 2,
+  "ante": 50
 }
 
 ### Listar todos os lobbies
 GET http://localhost:8080/api/lobbies
 
 ### Obter lobby por ID
-GET http://localhost:8080/api/lobbies/4
+GET http://localhost:8080/api/lobbies/5
 
 ### Juntar-se a um lobby
-POST http://localhost:8080/api/lobbies/4/join
+POST http://localhost:8080/api/lobbies/23/join
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+### Juntar-se a um lobby
+POST http://localhost:8080/api/lobbies/23/join
 Content-Type: application/json
 Authorization: Bearer {{tokenteste3}}
 
@@ -85,16 +90,61 @@ GET http://localhost:8080/api/matches
 GET http://localhost:8080/api/matches/2
 
 ### 7) Abrir ligação SSE (mantém stream)
-GET {{base}}/api/matches/sse/2/events
+GET {{base}}/api/matches/sse/20/events
 Accept: text/event-stream
 
 ### 8) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/2/events
+POST {{base}}/api/matches/sse/20/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste1}}
+
+{
+  "action": "roll"
+}
+
+### 9) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/sse/20/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste1}}
+
+{
+  "action": "finish-turn"
+}
+
+### 8) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/sse/20/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+{
+  "action": "roll"
+}
+
+### 9) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/sse/20/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+{
+  "action": "finish-turn"
+}
+
+### 8) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/sse/20/events
 Content-Type: application/json
 Authorization: Bearer {{tokenteste3}}
 
 {
   "action": "roll"
+}
+
+### 9) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/sse/20/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste3}}
+
+{
+  "action": "finish-turn"
 }
 
 ### 9) (Opcional) Forçar envio de snapshot inicial / registar engine
@@ -112,22 +162,22 @@ Authorization: Bearer {{token}}
 }
 
 ### Jogador 1 joga os dados
-POST http://localhost:8080/api/matches/sse/2/events
+POST http://localhost:8080/api/matches/sse/8/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{tokenteste2}}
 
 {
-  "action": "finishturn"
+  "action": "roll"
 }
 
 ### Jogador 1 segura alguns dados (substitua [1,3] pelos dados que deseja segurar)
-POST http://localhost:8080/api/matches/sse/3/events
+POST http://localhost:8080/api/matches/sse/8/events
 Content-Type: application/json
 Authorization: Bearer {{tokenteste1}}
 
 {
-  "action":"Hold",
-  "diceIndices": [1, 3]
+  "action": "Hold",
+  "indices": [1, 3]
 }
 
 ### Jogador 1 rola novamente
@@ -141,12 +191,12 @@ Authorization: Bearer {{tokenteste1}}
 }
 
 ### Jogador 1 finaliza sua jogada
-POST http://localhost:8080/api/matches/sse/2/events
+POST http://localhost:8080/api/matches/sse/8/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{tokenteste1}}
 
 {
-  "action": "finishturn"
+  "action": "finish-turn"
 }
 
 ### Jogador 2 joga os dados
