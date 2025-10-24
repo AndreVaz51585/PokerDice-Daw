@@ -65,4 +65,10 @@ sealed class Problem(
 
     data object InvalidIndices : Problem(URI("$PROBLEM_URI_PATH/invalid-indices"))
 
+    data object InvitationCodeRequired : Problem(URI("$PROBLEM_URI_PATH/invitation-code-required"))
+
+    data object InvalidInvitationCode : Problem(URI("$PROBLEM_URI_PATH/invalid-invitation-code"))
+
+    data object InvitationCodeAlreadyUsed : Problem(URI("$PROBLEM_URI_PATH/invitation-code-already-used"))
+
 }
