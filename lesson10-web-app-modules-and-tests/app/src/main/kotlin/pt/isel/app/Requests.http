@@ -1,218 +1,335 @@
-@base = http://localhost:8080
-@tokenteste1 = UaP7Ir0l6zayoNWXUvwmuuDyqyaAr0y5iJBlsD6OP8U=
-@tokenteste2 = OENJ_g70iiMNQn6CB-qqn8degGYX9zIxfV0yxvZJ5sg=
-@tokenteste3 = uwnZi8CRokojHBv7khJo6nbZATn8wc6ywtEuhyCgDqs=
-@tokenteste4 = AR8mFui5GRcO1ylrLhwlucpJ5EXSv9GqCWvmSyp1U4g=
-@tokenteste5 = NxiTgOc-r9iKRKnkcoOFaXCbEAB4o92Tu6nyt8pdYtw=
+###
+@baseUrl = http://localhost:8080/api
+@user1_token = yIDVU5-N8HaD-LfC9tR5X-r4pHrkStOmAXWrqRJqjtM=
+@user2_token = iXL5m1DVYTxpXsdwiSOtb1sAQRQJQWyZGjbVBDprVxs=
+@user3_token = f7AH8YcRIklJtlwIyeSFTb2gk7UQvX29ehyyTJAI4bY=
+@user4_token = P4ZrHwuZeDjkvVNUBA0qNi3blaJRkBOxuH2RfZwSyTw=
 
-### Registar um novo utilizador
-POST http://localhost:8080/api/users
+### 1.1 (SUCESSO) - Criar o Utilizador 1 (Anfitrião)
+POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "name": "teste5",
-  "email": "test5@gmail.com",
-  "password": "minhaSenhaSegura"
+  "name": "Anfitrião Demo",
+  "email": "host@demo.com",
+  "password": "PasswordForte123",
+  "invitationCode": null
 }
 
-### Obter token de autenticação
-POST http://localhost:8080/api/users/token
+### 1.2 (SUCESSO) - Login do Anfitrião para obter token e criar convite
+POST {{baseUrl}}/users/token
 Content-Type: application/json
 
 {
-  "email": "test5@gmail.com",
-  "password": "minhaSenhaSegura"
+  "email": "host@demo.com",
+  "password": "PasswordForte123"
 }
 
-### Obter User
-GET http://localhost:8080/api/me
-content-type: application/json
-Authorization: bearer {{tokenteste1}}
+### 1.3 (SUCESSO) - Anfitrião cria um código de convite
+POST {{baseUrl}}/invitations
+Authorization: Bearer {{user1_token}}
 
-### Apagar User
-DELETE http://localhost:8080/api/users/4
-content-type: application/json
-
-### Listar todos os users
-GET http://localhost:8080/api/users
-content-type: application/json
-
-### Criar um lobby
-POST http://localhost:8080/api/lobbies
+### 1.4 (ERRO) -> insecure-password
+POST {{baseUrl}}/users
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
 
 {
-  "name": "Lobby teste",
-  "description": "Descrição do lobby",
-  "minPlayers": 2,
+  "name": "Utilizador Inseguro",
+  "email": "inseguro@demo.com",
+  "password": "123"
+}
+
+### 1.5 (ERRO) -> invitation-code-required
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Sem Convite",
+  "email": "semconvite@demo.com",
+  "password": "PasswordForte123"
+}
+
+### 1.6 (ERRO) -> email-already-in-use
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Anfitrião Duplicado",
+  "email": "host@demo.com",
+  "password": "OutraPasswordForte"
+}
+
+### 1.7 (ERRO) -> invalid-invitation-code
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Convite Falso",
+  "email": "falso@demo.com",
+  "password": "PasswordForte123",
+  "invitationCode": "codigo-invalido"
+}
+
+### 1.8 (SUCESSO) - Registar Jogador 2 com o convite válido
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Jogador 2",
+  "email": "jogador2@demo.com",
+  "password": "PasswordForte123",
+  "invitationCode": "YeNeLhljGRM"
+}
+
+### 1.9 (ERRO) -> invitation-code-already-used
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Jogador Atrasado",
+  "email": "atrasado@demo.com",
+  "password": "PasswordForte123",
+  "invitationCode": "V0hiw1B4wck"
+}
+
+### 1.10 (SUCESSO) - Anfitrião cria um código de convite
+POST {{baseUrl}}/invitations
+Authorization: Bearer {{user1_token}}
+
+### 1.11 (SUCESSO) - Setup: Registar Jogador 3 e 4 para testes futuros
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Jogador 3",
+  "email": "jogador3@demo.com",
+  "password": "PasswordForte123",
+  "invitationCode": "oYgkqGxqMeM"
+}
+
+###
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Jogador 4",
+  "email": "jogador4@demo.com",
+  "password": "PasswordForte123",
+  "invitationCode": "NkmrTQNywFU"
+}
+
+### 1.12 (ERRO) -> user-not-found -> Tentativa de apagar um utilizador inexistente
+DELETE {{baseUrl}}/users/99999
+
+### 2.1 (SUCESSO) - Login dos Jogadores 2, 3 e 4
+POST {{baseUrl}}/users/token
+Content-Type: application/json
+
+{
+  "email": "jogador2@demo.com",
+  "password": "PasswordForte123"
+}
+
+###
+POST {{baseUrl}}/users/token
+Content-Type: application/json
+
+{
+  "email": "jogador3@demo.com",
+  "password": "PasswordForte123"
+}
+
+###
+POST {{baseUrl}}/users/token
+Content-Type: application/json
+
+{
+  "email": "jogador4@demo.com",
+  "password": "PasswordForte123"
+}
+
+### 2.2 (SUCESSO) - Anfitrião (Utilizador 1) cria um lobby para 3 jogadores (ID=1)
+POST {{baseUrl}}/lobbies
+Content-Type: application/json
+Authorization: Bearer {{user1_token}}
+
+{
+  "name": "Lobby da Demo",
+  "description": "Lobby para 3 jogadores",
+  "minPlayers": 3,
   "maxPlayers": 3,
   "rounds": 2,
   "ante": 50
 }
 
-### Listar todos os lobbies
-GET http://localhost:8080/api/lobbies
+### 2.3 (ERRO) -> lobby-not-found -> Tentativa de entrar num lobby inexistente.
+POST {{baseUrl}}/lobbies/9999/join
+Authorization: Bearer {{user2_token}}
 
-### Obter lobby por ID
-GET http://localhost:8080/api/lobbies/25
+### 2.4 (SUCESSO) - Jogador 2 entra no lobby
+POST {{baseUrl}}/lobbies/1/join
+Authorization: Bearer {{user2_token}}
 
+### 2.5 (ERRO) -> already-in-lobby -> O Jogador 2 tenta entrar novamente.
+POST {{baseUrl}}/lobbies/1/join
+Authorization: Bearer {{user2_token}}
 
-### Juntar-se a um lobby
-POST http://localhost:8080/api/lobbies/4/join
-Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+### 2.6 (ERRO) -> user-is-not-in-lobby - O Jogador 4, que não está no lobby, tenta sair.
+DELETE {{baseUrl}}/lobbies/1
+Authorization: Bearer {{user4_token}}
 
+### 2.7 (SUCESSO) - Jogador 3 entra no lobby -> Inicia a Partida (ID=1)
+POST {{baseUrl}}/lobbies/1/join
+Authorization: Bearer {{user3_token}}
 
-### Sair de um lobby
-POST http://localhost:8080/api/lobbies/3/leave
-Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+### 2.8 (ERRO) -> lobby-full -> O Jogador 4 tenta entrar.
+POST {{baseUrl}}/lobbies/1/join
+Authorization: Bearer {{user4_token}}
 
-### Listar jogadores de um lobby
-GET http://localhost:8080/api/lobbies/25/players
+### 3.1 (ERRO) -> match-not-found -> Tentamos aceder a uma partida com ID inexistente.
+GET {{baseUrl}}/matches/9999
 
-### Obter host do lobby
-GET http://localhost:8080/api/lobbies/4/host
-
-### Obter players de uma partida
-GET http://localhost:8080/api/matches/2/players
-
-### Listar todas as partidas
-GET http://localhost:8080/api/matches
-
-### Obter detalhes de uma partida
-GET http://localhost:8080/api/matches/2
-
-### 7) Abrir ligação SSE (mantém stream)
-GET {{base}}/api/matches/sse/3/events
+### 3.2 (SUCESSO) - Setup: Jogadores abrem ligação SSE para a partida 1
+GET {{baseUrl}}/matches/sse/1/events
 Accept: text/event-stream
+Authorization: Bearer {{user1_token}}
 
-### 8) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/3/events
+### 3.3 (SUCESSO) - Ronda 1: Anfitrião (Utilizador 1) rola os dados
+POST {{baseUrl}}/matches/sse/1/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{user1_token}}
 
 {
   "action": "roll"
 }
 
-### 9) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/3/events
+### 3.4 (ERRO) -> invalid-indices -> O Anfitrião tenta segurar índices inválidos.
+POST {{baseUrl}}/matches/sse/1/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{user1_token}}
 
 {
-  "action": "finish-turn"
+  "action": "hold",
+  "indices": [0, 99]
 }
 
-### 8) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/3/events
+### 3.5 (SUCESSO) - Anfitrião segura alguns dados
+# Mostra a mecânica de segurar dados. Ex: segurar os dados nos índices 0 e 2.
+POST {{baseUrl}}/matches/sse/1/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{user1_token}}
 
 {
-  "action": "roll"
+  "action": "hold",
+  "indices": [0, 2]
 }
 
-### 9) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/3/events
+### 3.6 (SUCESSO) - Anfitrião rola novamente (reroll)
+POST {{baseUrl}}/matches/sse/1/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
-
-{
-  "action": "finish-turn"
-}
-
-### 8) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/3/events
-Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{user1_token}}
 
 {
   "action": "roll"
 }
 
-### 9) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/3/events
+### 3.7 (SUCESSO) - Continuação da Ronda 1 -> Anfitrião termina a vez.
+POST {{baseUrl}}/matches/sse/1/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{user1_token}}
 
 {
   "action": "finish-turn"
 }
 
-### 9) (Opcional) Forçar envio de snapshot inicial / registar engine
-### Use apenas se existir um endpoint administrativo para registar um BankedMatch
-POST {{base}}/api/internal/matches/1/register-banked
+### Jogador 2 joga e termina a vez.
+POST {{baseUrl}}/matches/sse/1/events
 Content-Type: application/json
-Authorization: Bearer {{token}}
-
-{
-  "matchId": 1,
-  "round": 0,
-  "players": [],
-  "pot": 0,
-  "state": "NOT_STARTED"
-}
-
-### Jogador 1 joga os dados
-POST http://localhost:8080/api/matches/sse/8/events
-Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{user2_token}}
 
 {
   "action": "roll"
 }
 
-### Jogador 1 segura alguns dados (substitua [1,3] pelos dados que deseja segurar)
-POST http://localhost:8080/api/matches/sse/8/events
+###
+POST {{baseUrl}}/matches/sse/1/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{user2_token}}
 
 {
-  "action": "Hold",
-  "indices": [1, 3]
+  "type": "finish-turn"
 }
 
-### Jogador 1 rola novamente
-POST http://localhost:8080/api/matches/sse/3/events
+### Jogador 3 joga e termina a vez -> FIM DA RONDA 1
+POST {{baseUrl}}/matches/sse/1/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{user3_token}}
 
 {
-  "action": "Roll",
-  "playerId": 1
+  "type": "roll"
 }
-
-### Jogador 1 finaliza sua jogada
-POST http://localhost:8080/api/matches/sse/8/events
+###
+POST {{baseUrl}}/matches/sse/1/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{user3_token}}
 
 {
-  "action": "finish-turn"
+  "type": "finish-turn"
 }
 
-### Jogador 2 joga os dados
-POST http://localhost:8080/api/matches/sse/4/events
+### 3.8 (SUCESSO) - Ronda 2: O fluxo continua
+POST {{baseUrl}}/matches/sse/1/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{user1_token}}
 
 {
-  "action": "Roll"
+  "type": "roll"
 }
 
-### Jogador 2 finaliza sua jogada
-POST http://localhost:8080/api/matches/sse/{matchId}/events
+###
+POST {{baseUrl}}/matches/sse/1/events
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{user1_token}}
 
 {
-  "action": "Done"
-
+  "type": "finish-turn"
 }
 
-### Obter detalhes de uma partida
-GET {{base}}/api/matches/sse/2
+###
+POST {{baseUrl}}/matches/sse/1/events
+Content-Type: application/json
+Authorization: Bearer {{user2_token}}
+
+{
+  "type": "roll"
+}
+
+###
+POST {{baseUrl}}/matches/sse/1/events
+Content-Type: application/json
+Authorization: Bearer {{user2_token}}
+
+{
+  "type": "finish-turn"
+}
+
+###
+POST {{baseUrl}}/matches/sse/1/events
+Content-Type: application/json
+Authorization: Bearer {{user3_token}}
+
+{
+  "type": "roll"
+}
+
+###
+POST {{baseUrl}}/matches/sse/1/events
+Content-Type: application/json
+Authorization: Bearer {{user3_token}}
+
+{
+  "type": "finish-turn"
+}
+
+
 
