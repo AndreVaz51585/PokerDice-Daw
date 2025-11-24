@@ -64,7 +64,7 @@ class LobbyServiceImpl(
                 ante = ante
                 // state = state
             )
-
+                                    
             // adicionar contador para definir TimeOut para o lobby Começar caso tenho o numero minimo de jogadores
             lobbyTimeOuts[lobby.id] = System.currentTimeMillis() + lobbyTimeOutMillis
 

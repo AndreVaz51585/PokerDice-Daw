@@ -23,7 +23,6 @@ import kotlin.toString
 class MatchEventFormatter {
 
 
-    // Defina classes de payload minimalistas
     data class RollResultPayload(
         val userId: Int,
         val dice: List<Any>,

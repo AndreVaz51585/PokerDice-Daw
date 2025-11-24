@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import pt.isel.domain.Game.Round.RoundState
 import pt.isel.domain.Game.pokerDice.Command
+import pt.isel.domain.Game.pokerDice.GamePhase
 import pt.isel.domain.user.AuthenticatedUser
 import pt.isel.http.model.problem.Problem
 import pt.isel.service.Auxiliary.Either
@@ -35,8 +36,17 @@ class SseMatchController(
     private val eventFormatter: MatchEventFormatter,
     private val sseMatchService: sseMatchService
 ) {
+
+    /** Mapa que associa cada matchId a uma lista de listeners (funções) que serão notificadas dos eventos.
+     *  Cada listener é uma função que recebe três parâmetros:
+     * - eventType: String? - o tipo do evento (ou nulo para heartbeats)
+     * - eventId: String? - o identificador do evento (ou nulo para heartbeats)
+     * - payload: Any? - o payload do evento (ou nulo para heartbeats)
+     */
     private val listenersByMatch = mutableMapOf<Int, MutableList<(String?, String?, Any?) -> Unit>>()
     private val lock = ReentrantLock()
+
+    /** Contador para contar cada conexão SSE */
     private var connectionCounter = 0
 
     // Executor para heartbeats globais
@@ -78,10 +88,10 @@ class SseMatchController(
 
     @GetMapping("/{matchId}/events", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun listenMatch(@PathVariable matchId: Int): SseEmitter {
-        val connId = ++connectionCounter
+        val connId = ++connectionCounter // Incrementa o contador de conexões
         val emitter = SseEmitter(TimeUnit.HOURS.toMillis(1))
 
-        // Envia snapshot inicial
+        // Envia snapshot com o estado inicial da partida
         matchManager.get(matchId)?.snapshot()?.let { banked ->
             try {
                 val eventId = "$matchId"
@@ -142,12 +152,12 @@ class SseMatchController(
             }
             is Success -> {
                 val cmd = cmdResult.value
-                val prevState = matchManager.get(matchId)?.snapshot()
+                val prevState = matchManager.get(matchId)?.snapshot() // aqui retorna o estado antes do comando ser aplicado retornando o valor mais recente
                 when (val res = matchService.applyCommand(matchId, cmd)) {
                     is Success -> {
                         val afterState = matchManager.get(matchId)?.snapshot()
                         if (afterState != null) {
-                            val eventId = "$matchId-${System.currentTimeMillis()}"
+                            val eventId = "$matchId"
 
                             val responsePayload = when (cmd) {
                                 is Command.Roll -> eventFormatter.createEnrichedPayload(afterState, "dice-rolled", userId, eventId)
@@ -155,19 +165,29 @@ class SseMatchController(
                                 else -> mapOf("status" to "command applied")
                             }
 
-                            val roundEndedAndNewStarted = prevState?.game?.rounds?.size != afterState.game.rounds.size
 
-                            if (roundEndedAndNewStarted) {
+                            // quando o jogo termina, o numero de rondas mantém se igual , portanto temos de arranjar um diferencial
+                            val roundEndedAndNewStarted = prevState?.game?.rounds?.size != afterState.game.rounds.size
+                            val gameState = afterState.game.phase // qual é o estado atual do jogo
+
+                            if (gameState == GamePhase.FINISHED ){
+                                // Broadcast fim do jogo
+                                val gameEndType = "game-end"
+                                val gameEndPayload = eventFormatter.createEnrichedPayload(afterState, gameEndType, userId, eventId)
+                                broadcastEvent(matchId, gameEndType, eventId, gameEndPayload)
+                            }
+
+                           else if (roundEndedAndNewStarted) {
                                 // Broadcast fim de ronda para todos os ouvintes
                                 val roundEventType = "round-complete"
                                 val roundPayload = eventFormatter.createEnrichedPayload(afterState, roundEventType, userId, eventId)
                                 broadcastEvent(matchId, roundEventType, eventId, roundPayload)
 
-                                // Verificar se o jogo terminou (apenas um jogador com saldo >= ante)
+                                // Verificar se o jogo terminou (apenas um jogador com saldo >= ante ou fase do jogo é FINISHED)
 
                                 val ante = afterState.game.ante
                                 val playersAbleToPay = afterState.wallets.count { it.value.currentBalance >= ante }
-                                val shouldEndGame = playersAbleToPay <= 1 || afterState.game.rounds.size > afterState.game.totalRounds
+                                val shouldEndGame = playersAbleToPay <= 1
                                 if (shouldEndGame) {
                                     // Broadcast fim do jogo
                                     val gameEndType = "game-end"

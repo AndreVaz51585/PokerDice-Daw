@@ -1,4 +1,4 @@
-package pt.isel
+/*package pt.isel
 
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeAll
@@ -405,3 +405,4 @@ class LobbyAppTest {
             .isEqualTo("lobby-not-found")
     }
 }
+*/

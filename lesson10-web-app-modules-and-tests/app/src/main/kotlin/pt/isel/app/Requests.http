@@ -1,18 +1,36 @@
 @base = http://localhost:8080
-@tokenteste1 = UaP7Ir0l6zayoNWXUvwmuuDyqyaAr0y5iJBlsD6OP8U=
+@tokenteste1 = ma4o5DcFOcc3daTjZ3r8ZSL44Mn1b74Gh-m-zijV3LQ=
 @tokenteste2 = OENJ_g70iiMNQn6CB-qqn8degGYX9zIxfV0yxvZJ5sg=
 @tokenteste3 = uwnZi8CRokojHBv7khJo6nbZATn8wc6ywtEuhyCgDqs=
 @tokenteste4 = AR8mFui5GRcO1ylrLhwlucpJ5EXSv9GqCWvmSyp1U4g=
-@tokenteste5 = NxiTgOc-r9iKRKnkcoOFaXCbEAB4o92Tu6nyt8pdYtw=
+@tokenteste5 = om0PVXHgCOy-k5ouXEEfrxi05hE8sw2uJU8Pnr53ykw=
 
-### Registar um novo utilizador
+@invitatioCode = k0hagqan1hs
+
+### Registar um novo utilizador sem código de convite
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "name": "teste1",
+  "email": "test1@gmail.com",
+  "password": "minhaSenhaSegura"
+}
+
+### Código de Convite
+POST http://localhost:8080/api/invitations
+Content-Type: application/json
+Authorization: Bearer {{tokenteste1}}
+
+### Registar um novo utilizador com código de convite
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
   "name": "teste5",
   "email": "test5@gmail.com",
-  "password": "minhaSenhaSegura"
+  "password": "minhaSenhaSegura",
+  "invitationCode": "{{invitatioCode}}"
 }
 
 ### Obter token de autenticação
@@ -27,7 +45,7 @@ Content-Type: application/json
 ### Obter User
 GET http://localhost:8080/api/me
 content-type: application/json
-Authorization: bearer {{tokenteste1}}
+Authorization: bearer {{tokenteste5}}
 
 ### Apagar User
 DELETE http://localhost:8080/api/users/4
@@ -40,14 +58,14 @@ content-type: application/json
 ### Criar um lobby
 POST http://localhost:8080/api/lobbies
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{tokenteste5}}
 
 {
-  "name": "Lobby teste",
+  "name": "teste Jogo",
   "description": "Descrição do lobby",
   "minPlayers": 2,
-  "maxPlayers": 3,
-  "rounds": 2,
+  "maxPlayers": 2,
+  "rounds": 3,
   "ante": 50
 }
 
@@ -55,13 +73,13 @@ Authorization: Bearer {{tokenteste1}}
 GET http://localhost:8080/api/lobbies
 
 ### Obter lobby por ID
-GET http://localhost:8080/api/lobbies/25
+GET http://localhost:8080/api/lobbies/5
 
 
 ### Juntar-se a um lobby
-POST http://localhost:8080/api/lobbies/4/join
+POST http://localhost:8080/api/lobbies/1/join
 Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{tokenteste1}}
 
 
 ### Sair de um lobby
@@ -70,26 +88,43 @@ Content-Type: application/json
 Authorization: Bearer {{tokenteste1}}
 
 ### Listar jogadores de um lobby
-GET http://localhost:8080/api/lobbies/25/players
+GET http://localhost:8080/api/lobbies/3/players
 
 ### Obter host do lobby
 GET http://localhost:8080/api/lobbies/4/host
 
 ### Obter players de uma partida
-GET http://localhost:8080/api/matches/2/players
+GET http://localhost:8080/api/matches/1/players
 
 ### Listar todas as partidas
 GET http://localhost:8080/api/matches
 
 ### Obter detalhes de uma partida
-GET http://localhost:8080/api/matches/2
+GET http://localhost:8080/api/matches/7
 
 ### 7) Abrir ligação SSE (mantém stream)
-GET {{base}}/api/matches/sse/3/events
+GET {{base}}/api/matches/sse/1/events
 Accept: text/event-stream
 
 ### 8) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/3/events
+POST {{base}}/api/matches/sse/1/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste5}}
+
+{
+  "action": "roll"
+}
+
+### 9) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/sse/1/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste5}}
+
+{
+  "action": "finish-turn"
+}
+### 8) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/sse/1/events
 Content-Type: application/json
 Authorization: Bearer {{tokenteste1}}
 
@@ -98,13 +133,14 @@ Authorization: Bearer {{tokenteste1}}
 }
 
 ### 9) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/3/events
+POST {{base}}/api/matches/sse/1/events
 Content-Type: application/json
 Authorization: Bearer {{tokenteste1}}
 
 {
   "action": "finish-turn"
 }
+
 
 ### 8) Enviar um comando para a partida (gera evento)
 POST {{base}}/api/matches/sse/3/events

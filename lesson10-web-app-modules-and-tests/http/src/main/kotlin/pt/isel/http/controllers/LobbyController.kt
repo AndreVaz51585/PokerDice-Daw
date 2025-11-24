@@ -40,7 +40,7 @@ class LobbyController(
 
          is Success ->
                 ResponseEntity
-                    .status(HttpStatus.CREATED)
+                    .status(HttpStatus.SEE_OTHER)
                     .header(
                         "Location",
                         "/api/lobbies/${result.value.id}",
@@ -97,12 +97,12 @@ class LobbyController(
             .joinLobby(id, userId)
         return when (result) {
             is Success -> when(result.value) {
-                0 -> ResponseEntity.status(HttpStatus.OK).body("Player Added to Lobby") // entrou no lobby mas o lobby não começou}
+                0 -> ResponseEntity.status(HttpStatus.OK).body("Player Added to Lobby") // entrou no lobby mas o lobby não começou
                 else -> {
                     val matchId = result.value
                     // Registar engine / state inicial fora da transacção para começar a emitir SSE
                     matchService.registerBankedMatchFromDb(matchId)
-                    ResponseEntity.status(HttpStatus.CREATED)
+                    ResponseEntity.status(HttpStatus.CREATED) // aqui não está a fazer o redirect como é suposto porque o status não pode ser da familia 200 mas sim 300 portanto podemos apenas enviar o id da partida....
                         .header("Location", "/api/matches/$matchId")
                         .body(mapOf("matchId" to matchId))
                 } // entrou no lobby e o lobby começou
@@ -119,7 +119,7 @@ class LobbyController(
         }
     }
 
-    @DeleteMapping("/api/lobbies/{id}")
+    @PostMapping("/api/lobbies/{id}/leave")
     fun leaveLobby(
         @PathVariable id: Int,
         authenticateUser: AuthenticatedUser
