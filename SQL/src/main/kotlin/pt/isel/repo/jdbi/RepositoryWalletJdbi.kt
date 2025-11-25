@@ -10,7 +10,6 @@ import pt.isel.domain.Game.Match.MatchState
 import pt.isel.domain.Game.money.Wallet
 import pt.isel.domain.Game.money.WalletTransaction
 import pt.isel.repo.RepositoryWallet
-import pt.isel.repo.jdbi.RepositoryMatchJdbi.PartialMatchRow
 import pt.isel.repo.jdbi.sql.LobbySql
 import pt.isel.repo.jdbi.sql.MatchSql
 import pt.isel.repo.jdbi.sql.WalletSql
@@ -59,14 +58,10 @@ class RepositoryWalletJdbi(private val handle: Handle) : RepositoryWallet {
     }
 
     override fun save(entity: Wallet) {
-        handle.createQuery(WalletSql.UPDATE_WALLET)
-            .map { rs, _ ->
-                Wallet(
-                    userId = rs.getInt("user_id"),
-                    currentBalance = rs.getInt("amount_coins")
-                )
-            }
-            .list()
+        handle.createUpdate(WalletSql.UPDATE_WALLET)
+            .bind("amount_coins", entity.currentBalance)
+            .bind("userId", entity.userId)
+            .execute()
     }
 
 
@@ -83,7 +78,7 @@ class RepositoryWalletJdbi(private val handle: Handle) : RepositoryWallet {
 
     override fun getBalance(userId: Int): Int {
         val wallet = handle.createQuery(WalletSql.SELECT_WALLET)
-            .bind("user_id", userId.toString())
+            .bind("user_id", userId)
             .map { rs, _ -> rs.getInt("amount_coins")
             }
             .one()

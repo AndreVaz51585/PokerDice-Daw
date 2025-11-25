@@ -14,7 +14,7 @@ object WalletSql {
 
     const val UPDATE_WALLET = """
             UPDATE wallet
-            SET amount_coins = :amount
+            SET amount_coins = :amount_coins
             WHERE user_id = :userId;
     """
 

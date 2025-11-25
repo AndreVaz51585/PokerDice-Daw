@@ -223,7 +223,7 @@ CREATE TABLE Hand (
 CREATE TABLE wallet (
                            user_id           BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
                            amount_coins      INTEGER NOT NULL DEFAULT 0,               -- débito < 0, crédito > 0
-                           CHECK (amount_coins <> 0)
+                           CHECK (amount_coins >= 0)
 );
 
 CREATE INDEX ix_wallet_user ON wallet(user_id);
@@ -265,6 +265,8 @@ $$;
 --DROP TABLE IF EXISTS invitation CASCADE;
 --DROP TABLE IF EXISTS dbo.Tokens CASCADE;
 --DROP TABLE IF EXISTS dbo.users CASCADE;
+--DROP TABLE IF EXISTS wallet CASCADE;
+
 --
 ---- Remover triggers
 --DROP TRIGGER IF EXISTS lobby_add_host ON lobby;
