@@ -56,4 +56,28 @@ class WalletServiceImpl (
             val all = repoWallet.findAll()
             return@run success(all)
         }
+
+    override fun deposit(userId: Int, amount: Int): Either<WalletServiceError, Wallet> =
+        trxManager.run {
+            val wallet = repoWallet.findById(userId)
+                ?: return@run failure(WalletServiceError.WalletNotFound)
+
+            val updated = wallet.deposit(amount)   // chama o domínio
+
+            repoWallet.save(updated)               // persiste
+
+            success(updated)
+        }
+
+    override fun withdraw(userId: Int, amount: Int): Either<WalletServiceError, Wallet> =
+        trxManager.run {
+            val wallet = repoWallet.findById(userId)
+                ?: return@run failure(WalletServiceError.WalletNotFound)
+
+            val updated = wallet.withdraw(amount)   // domínio
+            repoWallet.save(updated)                // grava na BD
+
+            success(updated)
+        }
+
 }

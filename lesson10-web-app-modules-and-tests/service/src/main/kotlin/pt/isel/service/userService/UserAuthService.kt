@@ -21,26 +21,6 @@ import java.time.Instant
 import java.util.Base64.getUrlDecoder
 import java.util.Base64.getUrlEncoder
 
-sealed class UserError {
-    data object AlreadyUsedEmailAddress : UserError()
-
-    data object InsecurePassword : UserError()
-
-    data object UserNotFound : UserError()
-
-    data object ErrorDeletingUser : UserError()
-
-    data object InvitationCodeRequired : UserError()
-
-    data object InvalidInvitationCode : UserError()
-
-    data object InvitationCodeAlreadyUsed : UserError()
-}
-
-sealed class TokenCreationError {
-    data object UserOrPasswordAreInvalid : TokenCreationError()
-}
-
 @Named
 class UserAuthService(
     private val passwordEncoder: PasswordEncoder,

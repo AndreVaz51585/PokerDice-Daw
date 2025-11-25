@@ -1,11 +1,11 @@
 @base = http://localhost:8080
 @tokenteste1 = ma4o5DcFOcc3daTjZ3r8ZSL44Mn1b74Gh-m-zijV3LQ=
-@tokenteste2 = OENJ_g70iiMNQn6CB-qqn8degGYX9zIxfV0yxvZJ5sg=
+@tokenteste2 = 7q8x_OlImWz2eQrygbVzrb3Uw6CoHzQv5ttuylfOd1A=
 @tokenteste3 = uwnZi8CRokojHBv7khJo6nbZATn8wc6ywtEuhyCgDqs=
 @tokenteste4 = AR8mFui5GRcO1ylrLhwlucpJ5EXSv9GqCWvmSyp1U4g=
 @tokenteste5 = om0PVXHgCOy-k5ouXEEfrxi05hE8sw2uJU8Pnr53ykw=
 
-@invitatioCode = k0hagqan1hs
+@invitatioCode = RnGZofo3pIE
 
 ### Registar um novo utilizador sem código de convite
 POST http://localhost:8080/api/users
@@ -20,7 +20,7 @@ Content-Type: application/json
 ### Código de Convite
 POST http://localhost:8080/api/invitations
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{tokenteste2}}
 
 ### Registar um novo utilizador com código de convite
 POST http://localhost:8080/api/users
@@ -38,14 +38,14 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test5@gmail.com",
+  "email": "test1@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
 ### Obter User
 GET http://localhost:8080/api/me
 content-type: application/json
-Authorization: bearer {{tokenteste5}}
+Authorization: bearer {{tokenteste2}}
 
 ### Apagar User
 DELETE http://localhost:8080/api/users/4
@@ -254,3 +254,23 @@ GET {{base}}/api/matches/sse/2
 
 ### Wallets
 GET {{base}}/api/wallets
+
+### Deposit
+POST {{base}}/api/wallets/2/deposit
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+{
+  "amount": 10
+
+}
+
+### Withdraw
+POST {{base}}/api/wallets/2/withdraw
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+{
+  "amount": 10
+
+}

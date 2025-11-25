@@ -134,7 +134,6 @@ class MatchEventFormatter
                     )
 
                 val prize = completedRound.pot
-                // 🔥 1. Atualizar wallets dos vencedores NO ESTADO
                 val winners = completedRound.winners ?: emptyList()
 
                 winners.forEach { winnerId ->

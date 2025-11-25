@@ -14,4 +14,9 @@ interface WalletService {
     fun update(wallet: Wallet): Either<WalletServiceError, Unit>
 
     fun getAll(): Either<WalletServiceError, List<Wallet>>
+
+    fun deposit(userId: Int, amount: Int): Either<WalletServiceError, Wallet>
+
+    fun withdraw(userId: Int, amount: Int): Either<WalletServiceError, Wallet>
+
 }

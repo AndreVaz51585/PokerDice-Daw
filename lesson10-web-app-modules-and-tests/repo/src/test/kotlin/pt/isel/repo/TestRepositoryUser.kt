@@ -1,15 +1,15 @@
 package pt.isel.repo
 
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertNotNull
 import pt.isel.domain.authentication.PasswordValidationInfo
 import pt.isel.domain.token.Token
 import pt.isel.domain.token.TokenValidationInfo
 import pt.isel.repo.mem.RepositoryUserInMem
 import java.time.Instant
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 class TestRepositoryUser {
     private lateinit var repo: RepositoryUser
@@ -21,14 +21,18 @@ class TestRepositoryUser {
 
     @Test
     fun `createUser and findById`() {
-        val user = repo.createUser("Alice", "alice@isel.pt", PasswordValidationInfo("hash"))
+        val user = repo.createUser(
+            "Alice", "alice@isel.pt", PasswordValidationInfo("hash"),
+            invitationCode = "TODO()"
+        )
         val found = repo.findById(user.id)
         assertEquals(user, found)
     }
 
     @Test
     fun `findByEmail returns correct user`() {
-        val user = repo.createUser("Bob", "bob@isel.pt", PasswordValidationInfo("hash2"))
+        val user = repo.createUser("Bob", "bob@isel.pt", PasswordValidationInfo("hash2"),
+            invitationCode = "TODO()")
         val found = repo.findByEmail("bob@isel.pt")
         assertEquals(user, found)
         assertNull(repo.findByEmail("notfound@isel.pt"))
@@ -36,7 +40,8 @@ class TestRepositoryUser {
 
     @Test
     fun `createToken and getTokenByTokenValidationInfo`() {
-        val user = repo.createUser("Carol", "carol@isel.pt", PasswordValidationInfo("hash3"))
+        val user = repo.createUser("Carol", "carol@isel.pt", PasswordValidationInfo("hash3"),
+            invitationCode = "TODO()")
         val tokenValidationInfo = TokenValidationInfo("token123")
         val now = Instant.now()
         val token = Token(tokenValidationInfo, user.id, now, now)
@@ -49,7 +54,8 @@ class TestRepositoryUser {
 
     @Test
     fun `createToken removes oldest when maxTokens exceeded`() {
-        val user = repo.createUser("Dave", "dave@isel.pt", PasswordValidationInfo("hash4"))
+        val user = repo.createUser("Dave", "dave@isel.pt", PasswordValidationInfo("hash4"),
+            invitationCode = "TODO()")
         val init = Instant.now().minusSeconds(60)
         val t1 = Token(TokenValidationInfo("t1"), user.id, init, Instant.now().minusSeconds(10))
         val t2 = Token(TokenValidationInfo("t2"), user.id, init, Instant.now().minusSeconds(5))
@@ -65,7 +71,8 @@ class TestRepositoryUser {
 
     @Test
     fun `updateTokenLastUsed replaces token`() {
-        val user = repo.createUser("Eve", "eve@isel.pt", PasswordValidationInfo("hash5"))
+        val user = repo.createUser("Eve", "eve@isel.pt", PasswordValidationInfo("hash5"),
+            invitationCode = "TODO()")
         val info = TokenValidationInfo("tokenEve")
         val init = Instant.now().minusSeconds(200)
         val tokenOld = Token(info, user.id, init, Instant.now().minusSeconds(100))
@@ -79,7 +86,8 @@ class TestRepositoryUser {
 
     @Test
     fun `removeTokenByValidationInfo removes token`() {
-        val user = repo.createUser("Frank", "frank@isel.pt", PasswordValidationInfo("hash6"))
+        val user = repo.createUser("Frank", "frank@isel.pt", PasswordValidationInfo("hash6"),
+            invitationCode = "TODO()")
         val info = TokenValidationInfo("tokenFrank")
         val token = Token(info, user.id, Instant.now(), Instant.now())
         repo.createToken(token, maxTokens = 2)
