@@ -20,10 +20,12 @@ import pt.isel.service.Auxiliary.Failure
 import pt.isel.service.Auxiliary.Success
 import pt.isel.service.userService.UserAuthService
 import pt.isel.service.userService.UserError
+import pt.isel.service.walletService.WalletService
 
 @RestController
 class UserController(
     private val userService: UserAuthService,
+    private val walletService: WalletService,
 ) {
     /**
      * Try with:
@@ -42,6 +44,10 @@ class UserController(
         val result: Either<UserError, User> =
             userService
                 .createUser(userInput.name, userInput.email, userInput.password, userInput.invitationCode)
+
+        if (result is Success) {
+            walletService.createWallet(result.value.id)
+        }
 
         return when (result) {
             is Success ->

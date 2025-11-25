@@ -1,7 +1,3 @@
-
-import pt.isel.service.matchService.MatchManager
-import pt.isel.service.matchService.MatchService
-import pt.isel.service.matchService.MatchServiceError
 import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Service
 import pt.isel.domain.Game.Match.Match
@@ -9,22 +5,23 @@ import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
 import pt.isel.domain.Game.money.BankedMatch
 import pt.isel.domain.Game.money.BankedMatchEngine
-import pt.isel.domain.Game.money.Wallet
 import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.domain.Game.pokerDice.createNewGame
 import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryMatch
 import pt.isel.repo.TransactionManager
-import pt.isel.service.Auxiliary.Either
-import pt.isel.service.Auxiliary.failure
-import pt.isel.service.Auxiliary.success
+import pt.isel.service.Auxiliary.*
 import pt.isel.service.match.BankedGameMatchEngine
-import kotlin.collections.get
+import pt.isel.service.matchService.MatchManager
+import pt.isel.service.matchService.MatchService
+import pt.isel.service.matchService.MatchServiceError
+import pt.isel.service.walletService.WalletService
 
 @Service
 class MatchServiceImpl(
     private val repoLobby: RepositoryLobby,
     private val repoMatch: RepositoryMatch,
+    private val walletService: WalletService,
     private val trxManager: TransactionManager,
     private val matchManager: MatchManager,
 ) : MatchService {
@@ -39,7 +36,7 @@ class MatchServiceImpl(
             return@run failure(MatchServiceError.InvalidState)
         }
 
-        val lobby  = repoLobby.findById(lobbyId) ?: return@run failure(MatchServiceError.LobbyNotFound)
+        val lobby = repoLobby.findById(lobbyId) ?: return@run failure(MatchServiceError.LobbyNotFound)
         // Evitar duplicados iniciais
         val match = repoMatch.createMatch(
             lobbyId = lobbyId,
@@ -125,59 +122,57 @@ class MatchServiceImpl(
 
     }
 
-    override fun registerBankedMatchFromDb(matchId: Int): Either<MatchServiceError,Boolean> {
+    override fun registerBankedMatchFromDb(matchId: Int): Either<MatchServiceError, Boolean> {
 
         if (matchManager.get(matchId) != null) return success(true)
 
 
-            val match = repoMatch.findById(matchId) ?: return failure(MatchServiceError.MatchNotFound)
-            val players = repoMatch.listPlayers(matchId)
+        val match = repoMatch.findById(matchId) ?: return failure(MatchServiceError.MatchNotFound)
+        val players = repoMatch.listPlayers(matchId)
 
 
-            val matchPlayers = players.map { player ->
-                MatchPlayer(
-                    matchId = match.id,
-                    userId = player.userId,
-                    seatNo = player.seatNo,
-                    balanceAtStart = player.balanceAtStart
-                )
-            }
-
-
-            val lobby = repoLobby.findById(match.lobbyId) ?: return failure(MatchServiceError.LobbyNotFound)
-
-
-            val game = createNewGame(lobby, match, matchPlayers)
-
-
-            val wallets = matchPlayers.associate { p ->
-                p.userId to Wallet(userId = p.userId, currentBalance = p.balanceAtStart)
-            }
-
-
-            val banked = BankedMatch(
+        val matchPlayers = players.map { player ->
+            MatchPlayer(
                 matchId = match.id,
-                game = game,
-                wallets = wallets,
-                openPot = null
+                userId = player.userId,
+                seatNo = player.seatNo,
+                balanceAtStart = player.balanceAtStart
             )
+        }
 
-            // Aplicar comando Start se necessário
-            val finalState = if (match.state != MatchState.RUNNING) {
-                BankedMatchEngine.apply(banked, Command.Start(byUserId = lobby.lobbyHost))
-            } else {
-                banked
+        val lobby = repoLobby.findById(match.lobbyId) ?: return failure(MatchServiceError.LobbyNotFound)
+
+        val game = createNewGame(lobby, match, matchPlayers)
+
+        val wallets = matchPlayers.associate { p ->
+
+            val walletResult = walletService.getWallet(p.userId)
+
+            val wallet = when (walletResult) {
+                is Success -> walletResult.value
+                is Failure -> return failure(MatchServiceError.PlayerNotFound)
             }
+            p.userId to wallet
+        }
 
-            // Registrar engine
-            val engine = BankedGameMatchEngine(match.id, finalState)
-            matchManager.register(engine)
+        val banked = BankedMatch(
+            matchId = match.id,
+            game = game,
+            wallets = wallets,
+            openPot = null
+        )
 
-            return success(true)
+        // Aplicar comando Start se necessário
+        val finalState = if (match.state != MatchState.RUNNING) {
+            BankedMatchEngine.apply(banked, Command.Start(byUserId = lobby.lobbyHost))
+        } else {
+            banked
+        }
 
+        // Registrar engine
+        val engine = BankedGameMatchEngine(match.id, finalState)
+        matchManager.register(engine)
 
-
+        return success(true)
     }
-
-
 }

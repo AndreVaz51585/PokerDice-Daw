@@ -11,6 +11,7 @@ import pt.isel.domain.Game.money.Wallet
 import pt.isel.domain.Game.pokerDice.Game
 import pt.isel.domain.Game.pokerDice.PlayerState
 import pt.isel.domain.Game.pokerDice.Showdown
+import pt.isel.service.walletService.WalletService
 import kotlin.collections.get
 import kotlin.rem
 import kotlin.text.compareTo
@@ -20,8 +21,8 @@ import kotlin.toString
 
 
 @Service
-class MatchEventFormatter {
-
+class MatchEventFormatter
+    (private val walletService: WalletService) {
 
     data class RollResultPayload(
         val userId: Int,
@@ -107,7 +108,7 @@ class MatchEventFormatter {
                 )
             }
 
-            "round-complete" -> {
+            /*"round-complete" -> {
                 val completedRoundIndex = state.game.rounds.size - 2
                 val completedRound = state.game.rounds.getOrNull(completedRoundIndex)
                 val playersCombinations = completedRound?.hands
@@ -119,7 +120,39 @@ class MatchEventFormatter {
                     wallets = state.wallets,
                     playersAndCombinations = playersCombinations
                 )
+            }*/
+
+            "round-complete" -> {
+                val completedRoundIndex = state.game.rounds.size - 2
+                val completedRound = state.game.rounds.getOrNull(completedRoundIndex) ?:
+                    return RoundSummaryPayload(
+                        roundNumber = 0,
+                        winners = emptyList(),
+                        prize = 0,
+                        wallets = state.wallets,
+                        playersAndCombinations = null
+                    )
+
+                val prize = completedRound.pot
+                // 🔥 1. Atualizar wallets dos vencedores NO ESTADO
+                val winners = completedRound.winners ?: emptyList()
+
+                winners.forEach { winnerId ->
+                    val wallet = state.wallets[winnerId]
+                        ?: error("Wallet não encontrada para userId $winnerId — isto não deveria acontecer")
+
+                    walletService.update(Wallet(wallet.userId, wallet.currentBalance+prize))
+                }
+
+                RoundSummaryPayload(
+                    roundNumber = completedRound.number,
+                    winners = winners,
+                    prize = prize,
+                    wallets = state.wallets,
+                    playersAndCombinations = completedRound.hands
+                )
             }
+
 
             "game-end" -> {
                 val finalWinner = state.wallets.maxByOrNull { it.value.currentBalance }?.key ?: -1

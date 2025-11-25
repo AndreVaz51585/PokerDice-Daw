@@ -13,6 +13,7 @@ import pt.isel.domain.Game.pokerDice.createNewGame
 import pt.isel.domain.user.User
 import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryUser
+import pt.isel.repo.RepositoryWallet
 import pt.isel.repo.TransactionManager
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
@@ -27,7 +28,7 @@ import java.util.concurrent.TimeUnit
 class LobbyServiceImpl(
     private val repoLobby: RepositoryLobby,
     private val repoUser: RepositoryUser,
-   // private val repoWallet: RepositoryWallet,// TODO Necessário  implementar para ir busca do wallet do user
+    private val repoWallet: RepositoryWallet,// TODO Necessário  implementar para ir busca do wallet do user
     private val trxManager: TransactionManager,
     private val matchManager: MatchManager,
 ) : LobbyService {

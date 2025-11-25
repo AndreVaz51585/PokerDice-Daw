@@ -252,3 +252,5 @@ Authorization: Bearer {{tokenteste2}}
 ### Obter detalhes de uma partida
 GET {{base}}/api/matches/sse/2
 
+### Wallets
+GET {{base}}/api/wallets

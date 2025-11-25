@@ -19,17 +19,11 @@ import pt.isel.http.argumentResolverandInterceptor.AuthenticatedUserArgumentReso
 import pt.isel.http.argumentResolverandInterceptor.AuthenticationInterceptor
 import pt.isel.mapper.PasswordValidationInfoMapper
 import pt.isel.mapper.TokenValidationInfoMapper
-import pt.isel.repo.RepositoryLobby
-import pt.isel.repo.RepositoryMatch
-import pt.isel.repo.RepositoryUser
-import pt.isel.repo.TransactionManager
-import pt.isel.repo.jdbi.RepositoryInvitationJdbi
-import pt.isel.repo.jdbi.RepositoryLobbyJdbi
-import pt.isel.repo.jdbi.RepositoryMatchJdbi
-import pt.isel.repo.jdbi.RepositoryUserJdbi
-import pt.isel.repo.jdbi.TransactionManagerJdbi
+import pt.isel.repo.*
+import pt.isel.repo.jdbi.*
 import pt.isel.service.matchService.MatchManager
 import pt.isel.service.matchService.MatchService
+import pt.isel.service.walletService.WalletService
 import java.time.Clock
 import java.time.Duration
 
@@ -74,6 +68,9 @@ class WebApp {
     @Bean
     fun repositoryLobby(jdbi : Jdbi) : RepositoryLobby = RepositoryLobbyJdbi(jdbi.open())
 
+    @Bean
+    fun repositoryWallet(jdbi : Jdbi) : RepositoryWallet = RepositoryWalletJdbi(jdbi.open())
+
 
     @Bean
     fun transactionManager(jdbi: Jdbi): TransactionManager =
@@ -95,8 +92,9 @@ class WebApp {
         trxManager: TransactionManager,
         matchManager: MatchManager,
         repoLobby: RepositoryLobby,
+        walletService: WalletService,
     ): MatchService {
-        return MatchServiceImpl(repoLobby,repoMatch, trxManager, matchManager)
+        return MatchServiceImpl(repoLobby,repoMatch, walletService ,trxManager, matchManager)
     }
 
     @Bean

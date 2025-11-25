@@ -1,29 +1,20 @@
 package pt.isel.repo.jdbi
 
 import org.jdbi.v3.core.Handle
-import org.jdbi.v3.core.Jdbi
-import org.jdbi.v3.core.kotlin.mapTo
-import pt.isel.domain.Game.Lobby.Lobby
-import pt.isel.domain.Game.Lobby.LobbyState
-import pt.isel.domain.Game.Match.Match
-import pt.isel.domain.Game.Match.MatchState
+import org.springframework.stereotype.Repository
 import pt.isel.domain.Game.money.Wallet
-import pt.isel.domain.Game.money.WalletTransaction
 import pt.isel.repo.RepositoryWallet
-import pt.isel.repo.jdbi.sql.LobbySql
-import pt.isel.repo.jdbi.sql.MatchSql
 import pt.isel.repo.jdbi.sql.WalletSql
-import java.time.Instant
 
 class RepositoryWalletJdbi(private val handle: Handle) : RepositoryWallet {
-
-
-    override fun createWallet(user_id: Int){
+    
+    override fun createWallet(user_id: Int): Wallet{
         handle.createUpdate(
                 WalletSql.CREATE_WALLET
             )
             .bind("user_id", user_id)
             .execute()
+        return Wallet(user_id, 0)
     }
 
 
@@ -76,12 +67,13 @@ class RepositoryWalletJdbi(private val handle: Handle) : RepositoryWallet {
         handle.createUpdate(WalletSql.CLEAR_WALLET).execute()
     }
 
-    override fun getBalance(userId: Int): Int {
+    override fun getBalance(userId: Int): Int? {
         val wallet = handle.createQuery(WalletSql.SELECT_WALLET)
             .bind("user_id", userId)
             .map { rs, _ -> rs.getInt("amount_coins")
             }
-            .one()
+            .findOne()
+            .orElse(null)
         return wallet
     }
 
