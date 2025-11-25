@@ -36,7 +36,10 @@ class RepositoryJdbiLobbyTest {
     @Test
     fun `createLobby e findById`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser(
+                "Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()"
+            )
             val lobby = repoLobbies.createLobby(
                 lobbyHostId = host.id,
                 name = "Lobby A",
@@ -57,7 +60,10 @@ class RepositoryJdbiLobbyTest {
     @Test
     fun `save atualiza campos do lobby`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser(
+                "Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()"
+            )
             val lobby = repoLobbies.createLobby(host.id, "L0", "D0", 2, 4, 3, 1)
             val updated = lobby.copy(
                 name = "L1",
@@ -84,10 +90,22 @@ class RepositoryJdbiLobbyTest {
     @Test
     fun `listAllOpenLobbies com paginacao`() {
         trxManager.run {
-            val h1 = repoUsers.createUser("H1", "h1@isel.pt", PasswordValidationInfo("x"))
-            val h2 = repoUsers.createUser("H2", "h2@isel.pt", PasswordValidationInfo("x"))
-            val h3 = repoUsers.createUser("H3", "h3@isel.pt", PasswordValidationInfo("x"))
-            val h4 = repoUsers.createUser("H4", "h4@isel.pt", PasswordValidationInfo("x"))
+            val h1 = repoUsers.createUser(
+                "H1", "h1@isel.pt", PasswordValidationInfo("x"),
+                invitationCode = "TODO()"
+            )
+            val h2 = repoUsers.createUser(
+                "H2", "h2@isel.pt", PasswordValidationInfo("x"),
+                invitationCode = "TODO()"
+            )
+            val h3 = repoUsers.createUser(
+                "H3", "h3@isel.pt", PasswordValidationInfo("x"),
+                invitationCode = "TODO()"
+            )
+            val h4 = repoUsers.createUser(
+                "H4", "h4@isel.pt", PasswordValidationInfo("x"),
+                invitationCode = "TODO()"
+            )
 
             repoLobbies.createLobby(h1.id, "O1", "d", 2, 4, 3, 1)
             repoLobbies.createLobby(h2.id, "C1", "d", 2, 4, 3, 1) // quero closed
@@ -110,9 +128,18 @@ class RepositoryJdbiLobbyTest {
     @Test
     fun `gestao de players add list count remove`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("h"))
-            val u1 = repoUsers.createUser("U1", "u1@isel.pt", PasswordValidationInfo("h"))
-            val u2 = repoUsers.createUser("U2", "u2@isel.pt", PasswordValidationInfo("h"))
+            val host = repoUsers.createUser(
+                "Host", "host@isel.pt", PasswordValidationInfo("h"),
+                invitationCode = "TODO()"
+            )
+            val u1 = repoUsers.createUser(
+                "U1", "u1@isel.pt", PasswordValidationInfo("h"),
+                invitationCode = "TODO()"
+            )
+            val u2 = repoUsers.createUser(
+                "U2", "u2@isel.pt", PasswordValidationInfo("h"),
+                invitationCode = "TODO()"
+            )
             val lobby = repoLobbies.createLobby(host.id, "Lobby P", "D", 2, 4, 3, 1)
 
             // o trigger pode já ter inserido o host; ignora o resultado
@@ -139,7 +166,10 @@ class RepositoryJdbiLobbyTest {
     @Test
     fun `getLobbyHost devolve o user do host`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("h"))
+            val host = repoUsers.createUser(
+                "Host", "host@isel.pt", PasswordValidationInfo("h"),
+                invitationCode = "TODO()"
+            )
             val lobby = repoLobbies.createLobby(host.id, "Lobby H", "D", 2, 4, 3, 1)
             val foundHost = repoLobbies.getLobbyHost(lobby)
             assertNotNull(foundHost)
@@ -150,7 +180,10 @@ class RepositoryJdbiLobbyTest {
     @Test
     fun `deleteById apaga lobby`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("h"))
+            val host = repoUsers.createUser(
+                "Host", "host@isel.pt", PasswordValidationInfo("h"),
+                invitationCode = "TODO()"
+            )
             val lobby = repoLobbies.createLobby(host.id, "Lobby D", "D", 2, 4, 3, 1)
             assertNotNull(repoLobbies.findById(lobby.id))
             repoLobbies.deleteById(lobby.id)
@@ -161,8 +194,14 @@ class RepositoryJdbiLobbyTest {
     @Test
     fun `clear apaga todos os lobbies`() {
         trxManager.run {
-            val h1 = repoUsers.createUser("H1", "h1@isel.pt", PasswordValidationInfo("x"))
-            val h2 = repoUsers.createUser("H2", "h2@isel.pt", PasswordValidationInfo("x"))
+            val h1 = repoUsers.createUser(
+                "H1", "h1@isel.pt", PasswordValidationInfo("x"),
+                invitationCode = "TODO()"
+            )
+            val h2 = repoUsers.createUser(
+                "H2", "h2@isel.pt", PasswordValidationInfo("x"),
+                invitationCode = "TODO()"
+            )
             repoLobbies.createLobby(h1.id, "L1", "d", 2, 4, 3, 1)
             repoLobbies.createLobby(h2.id, "L2", "d", 2, 4, 3, 1)
             assertTrue(repoLobbies.findAll().isNotEmpty())

@@ -40,8 +40,10 @@ class RepositoryJdbiMatchTest {
     @Test
     fun `createMatch e findById`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
-            val player = repoUsers.createUser("Player", "player@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
+            val player = repoUsers.createUser("Player", "player@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
             val lobby = repoLobbies.createLobby(
                 lobbyHostId = host.id,
                 name = "Lobby Test",
@@ -52,7 +54,7 @@ class RepositoryJdbiMatchTest {
                 ante = 10
             )
             val match = repoMatch.createMatch(
-                lobbyId = lobby.id, totalRounds = 5, ante = 20
+                lobbyId = lobby.id, totalRounds = 5, ante = 20, maxPlayers = 10
             )
             val players = listOf(
                 MatchPlayer(
@@ -81,9 +83,10 @@ class RepositoryJdbiMatchTest {
     @Test
     fun `updateState atualiza estado do match`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
-            val match = repoMatch.createMatch(lobby.id, 5, 20)
+            val match = repoMatch.createMatch(lobby.id, 5, 20, maxPlayers = 10)
 
             val now = Instant.now()
             assertTrue(repoMatch.updateState(match.id, MatchState.FINISHED, now))
@@ -98,10 +101,11 @@ class RepositoryJdbiMatchTest {
     @Test
     fun `updateCurrentRound atualiza ronda atual`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
 
-            val match = repoMatch.createMatch(lobby.id, 5, 20)
+            val match = repoMatch.createMatch(lobby.id, 5, 20, maxPlayers = 10)
 
             assertTrue(repoMatch.updateCurrentRound(match.id, 3))
 
@@ -114,12 +118,15 @@ class RepositoryJdbiMatchTest {
     @Test
     fun `listPlayers retorna jogadores do match`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
-            val player1 = repoUsers.createUser("Player1", "p1@isel.pt", PasswordValidationInfo("hash"))
-            val player2 = repoUsers.createUser("Player2", "p2@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
+            val player1 = repoUsers.createUser("Player1", "p1@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
+            val player2 = repoUsers.createUser("Player2", "p2@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
 
-            val match = repoMatch.createMatch(lobby.id, 5, 20)
+            val match = repoMatch.createMatch(lobby.id, 5, 20, maxPlayers = 10)
 
             repoMatch.addPlayer(
                 matchId = match.id,
@@ -147,11 +154,13 @@ class RepositoryJdbiMatchTest {
     @Test
     fun `addPlayer e removePlayer funcionam corretamente`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
-            val player1 = repoUsers.createUser("Player1", "p1@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
+            val player1 = repoUsers.createUser("Player1", "p1@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
 
-            val match = repoMatch.createMatch(lobby.id, 5, 20)
+            val match = repoMatch.createMatch(lobby.id, 5, 20, maxPlayers = 10)
 
 
             assertTrue(
@@ -177,9 +186,10 @@ class RepositoryJdbiMatchTest {
     @Test
     fun `save atualiza todos os campos do match`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
-            val match = repoMatch.createMatch(lobby.id, 5, 20)
+            val match = repoMatch.createMatch(lobby.id, 5, 20, maxPlayers = 10)
 
             MatchPlayer(
                 userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
@@ -192,7 +202,7 @@ class RepositoryJdbiMatchTest {
                 ante = 50, // alterado
                 state = MatchState.FINISHED, // alterado
                 currentRoundNo = 3, // alterado
-                startedAt = match.startedAt, finishedAt = now, rounds = emptyList()
+                startedAt = match.startedAt, finishedAt = now, rounds = emptyList(), maxPlayers = 10
             )
             repoMatch.save(updated)
 
@@ -209,9 +219,10 @@ class RepositoryJdbiMatchTest {
     @Test
     fun `deleteById apaga match`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
-            val match = repoMatch.createMatch(lobby.id, 5, 20)
+            val match = repoMatch.createMatch(lobby.id, 5, 20, maxPlayers = 10)
 
             assertTrue(repoMatch.deleteById(match.id))
             assertNull(repoMatch.findById(match.id))
@@ -221,11 +232,13 @@ class RepositoryJdbiMatchTest {
     @Test
     fun `setPlayerActive altera estado de ativação do jogador`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
-            val player = repoUsers.createUser("Player", "player@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
+            val player = repoUsers.createUser("Player", "player@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
 
-            val match = repoMatch.createMatch(lobby.id, 5, 20)
+            val match = repoMatch.createMatch(lobby.id, 5, 20, maxPlayers = 10)
 
             repoMatch.addPlayer(
                 matchId = match.id,
@@ -254,17 +267,18 @@ class RepositoryJdbiMatchTest {
     @Test
     fun `clear apaga todos os Match`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
 
-            var match1 = repoMatch.createMatch(lobby.id, 5, 20)
+            var match1 = repoMatch.createMatch(lobby.id, 5, 20, maxPlayers = 10)
 
             MatchPlayer(
                 userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match1.id, turn = false
             )
 
 
-            var match2 = repoMatch.createMatch(lobby.id, 6, 30)
+            var match2 = repoMatch.createMatch(lobby.id, 6, 30, maxPlayers = 10)
 
             assertNotNull(repoMatch.findById(match1.id))
             assertNotNull(repoMatch.findById(match2.id))
@@ -279,9 +293,10 @@ class RepositoryJdbiMatchTest {
     @Test
     fun `exists verifica corretamente se o match existe`() {
         trxManager.run {
-            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"))
+            val host = repoUsers.createUser("Host", "host@isel.pt", PasswordValidationInfo("hash"),
+                invitationCode = "TODO()")
             val lobby = repoLobbies.createLobby(host.id, "Lobby", "Desc", 2, 4, 3, 10)
-            val match = repoMatch.createMatch(lobby.id, 5, 20)
+            val match = repoMatch.createMatch(lobby.id, 5, 20, maxPlayers = 10)
 
             MatchPlayer(
                 userId = host.id, seatNo = 1, balanceAtStart = 1000, active = true, matchId = match.id, turn = false
@@ -302,17 +317,20 @@ fun seedUsersLobbyAndMatch(trxManager: TransactionManagerJdbi) {
         val host = repoUsers.createUser(
             name = "Host",
             email = "host_${System.currentTimeMillis()}@isel.pt",
-            passwordValidation = PasswordValidationInfo("hash")
+            passwordValidation = PasswordValidationInfo("hash"),
+            invitationCode = "TODO()"
         )
         val player1 = repoUsers.createUser(
             name = "Player1",
             email = "p1_${System.currentTimeMillis()}@isel.pt",
-            passwordValidation = PasswordValidationInfo("hash")
+            passwordValidation = PasswordValidationInfo("hash"),
+            invitationCode = "TODO()"
         )
         val player2 = repoUsers.createUser(
             name = "Player2",
             email = "p2_${System.currentTimeMillis()}@isel.pt",
-            passwordValidation = PasswordValidationInfo("hash")
+            passwordValidation = PasswordValidationInfo("hash"),
+            invitationCode = "TODO()"
         )
 
         // 2) Criar lobby com o id do host criado
@@ -331,6 +349,7 @@ fun seedUsersLobbyAndMatch(trxManager: TransactionManagerJdbi) {
             currentRoundNo = 1,               // Adiciona número da rodada atual
             startedAt = Instant.now(),        // Adiciona timestamp de início
             finishedAt = null                 // Adiciona timestamp de finalização como null
+            , maxPlayers = 10
         )
 
     }

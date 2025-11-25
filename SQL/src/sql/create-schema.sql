@@ -220,18 +220,13 @@ CREATE TABLE Hand (
 -- ===========================
 -- Movimentos/Transações (saldo)
 -- ===========================
-CREATE TABLE wallet_tx (
-                           id                BIGSERIAL PRIMARY KEY,
+CREATE TABLE wallet (
                            user_id           BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
-                           --match_id          BIGINT REFERENCES match(id) ON DELETE SET NULL,
-                           round_id          BIGINT REFERENCES round(id) ON DELETE SET NULL,
-                           amount_coins      INTEGER NOT NULL,               -- débito < 0, crédito > 0
-                           created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+                           amount_coins      INTEGER NOT NULL DEFAULT 0,               -- débito < 0, crédito > 0
                            CHECK (amount_coins <> 0)
 );
 
-CREATE INDEX ix_wallet_user ON wallet_tx(user_id);
-CREATE INDEX ix_wallet_round ON wallet_tx(round_id);
+CREATE INDEX ix_wallet_user ON wallet(user_id);
 
 -- Persistir snapshot do engine (BankedMatch) para reconstrução / debugging
 CREATE TABLE IF NOT EXISTS match_snapshot (
@@ -258,7 +253,7 @@ END;
 $$;
 
 ---- Remover tabelas (na ordem reversa devido às dependências)
---DROP TABLE IF EXISTS wallet_tx CASCADE;
+--DROP TABLE IF EXISTS wallet CASCADE;
 --DROP TABLE IF EXISTS Hand CASCADE;
 --DROP TABLE IF EXISTS Dice CASCADE;
 --DROP TABLE IF EXISTS round CASCADE;

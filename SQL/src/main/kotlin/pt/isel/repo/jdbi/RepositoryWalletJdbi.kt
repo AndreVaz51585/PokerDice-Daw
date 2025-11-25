@@ -2,130 +2,92 @@ package pt.isel.repo.jdbi
 
 import org.jdbi.v3.core.Handle
 import org.jdbi.v3.core.Jdbi
+import org.jdbi.v3.core.kotlin.mapTo
+import pt.isel.domain.Game.Lobby.Lobby
+import pt.isel.domain.Game.Lobby.LobbyState
+import pt.isel.domain.Game.Match.Match
+import pt.isel.domain.Game.Match.MatchState
 import pt.isel.domain.Game.money.Wallet
 import pt.isel.domain.Game.money.WalletTransaction
 import pt.isel.repo.RepositoryWallet
+import pt.isel.repo.jdbi.RepositoryMatchJdbi.PartialMatchRow
+import pt.isel.repo.jdbi.sql.LobbySql
+import pt.isel.repo.jdbi.sql.MatchSql
 import pt.isel.repo.jdbi.sql.WalletSql
 import java.time.Instant
 
-class RepositoryWalletJdbi(private val jdbi: Jdbi) : RepositoryWallet {
+class RepositoryWalletJdbi(private val handle: Handle) : RepositoryWallet {
+
+
+    override fun createWallet(user_id: Int){
+        handle.createUpdate(
+                WalletSql.CREATE_WALLET
+            )
+            .bind("user_id", user_id)
+            .execute()
+    }
+
 
     override fun findById(id: Int): Wallet? {
-        return jdbi.withHandle<Wallet?, Exception> { handle ->
-            val userId = id.toLong()
-            val balance = getBalanceForUser(handle, id)
-            if (balance != null) {
+        val wallet = handle.createQuery(WalletSql.SELECT_WALLET)
+            .bind("user_id", id)
+            .map { rs, _ ->
                 Wallet(
-                    userId = userId.toInt(),
-                    currentBalance = balance
+                    userId = rs.getInt("user_id"),
+                    currentBalance = rs.getInt("amount_coins"),
                 )
-            } else {
-                null
             }
-        }
+            .findOne()
+            .orElse(null)
+            ?: return null
+
+        return wallet
     }
 
     override fun findAll(): List<Wallet> {
-        return jdbi.withHandle<List<Wallet>, Exception> { handle ->
-            val userIds = handle.createQuery(WalletSql.SELECT_DISTINCT_USERS).mapTo(Int::class.java).list()
-
-            userIds.map { userId ->
-                val balance = getBalanceForUser(handle, userId) ?: 0
+        val wallet = handle.createQuery(WalletSql.SELECT_ALL_WALLET)
+            .map { rs, _ ->
                 Wallet(
-                    userId = userId.toInt(),
-                    currentBalance = balance,
+                    userId = rs.getInt("user_id"),
+                    currentBalance = rs.getInt("amount_coins")
                 )
             }
-        }
+            .list()
+
+        // N+1. Para volume elevado, considerar join + agregação.
+        return wallet
     }
 
     override fun save(entity: Wallet) {
-        jdbi.useHandle<Exception> { handle ->
-            val currentBalance = getBalanceForUser(handle, entity.userId.toInt()) ?: 0
-            val difference = entity.currentBalance - currentBalance
-
-            if (difference != 0) {
-                handle.createUpdate(WalletSql.INSERT_TRANSACTION).bind("userId", entity.userId)
-                    .bind("roundId", null as Long?)  // Especificar o tipo explicitamente
-                    .bind("amount", difference).execute()
+        handle.createQuery(WalletSql.UPDATE_WALLET)
+            .map { rs, _ ->
+                Wallet(
+                    userId = rs.getInt("user_id"),
+                    currentBalance = rs.getInt("amount_coins")
+                )
             }
-        }
+            .list()
     }
 
+
     override fun deleteById(id: Int): Boolean {
-        return jdbi.withHandle<Boolean, Exception> { handle ->
-            val rowsAffected = handle.createUpdate(WalletSql.DELETE_USER_TRANSACTIONS).bind("userId", id).execute()
-            rowsAffected > 0
-        }
+        val ret = handle.createUpdate(WalletSql.DELETE_BY_ID)
+            .bind("user_id", id)
+            .execute() > 0
+        return ret
     }
 
     override fun clear() {
-        jdbi.useHandle<Exception> { handle ->
-            handle.execute(WalletSql.CLEAR_ALL_TRANSACTIONS)
-        }
-    }
-
-
-    override fun addTransaction(
-        userId: Int, amount: Int, roundId: Int?
-    ): Int {
-        if (amount == 0) throw IllegalArgumentException("Transação com valor zero não é permitida")
-
-        return jdbi.withHandle<Int, Exception> { handle ->
-            handle.createUpdate(WalletSql.INSERT_TRANSACTION).bind("userId", userId).bind("roundId", roundId)
-                .bind("amount", amount).executeAndReturnGeneratedKeys("id").mapTo(Int::class.java).one()
-        }
+        handle.createUpdate(WalletSql.CLEAR_WALLET).execute()
     }
 
     override fun getBalance(userId: Int): Int {
-        return jdbi.withHandle<Int, Exception> { handle ->
-            getBalanceForUser(handle, userId) ?: 0
-        }
+        val wallet = handle.createQuery(WalletSql.SELECT_WALLET)
+            .bind("user_id", userId.toString())
+            .map { rs, _ -> rs.getInt("amount_coins")
+            }
+            .one()
+        return wallet
     }
 
-    override fun getTransactionHistory(userId: Int): List<WalletTransaction> {
-        return jdbi.withHandle<List<WalletTransaction>, Exception> { handle ->
-            handle.createQuery(WalletSql.SELECT_TRANSACTIONS_BY_USER).bind("userId", userId).map { rs, _ ->
-                    WalletTransaction(
-                        id = rs.getInt("id"),
-                        userId = rs.getInt("user_id"),
-                        roundId = rs.getObject("round_id") as? Int,
-                        amount = rs.getInt("amount_coins"),
-                        createdAt = rs.getTimestamp("created_at").toInstant()
-                    )
-                }.list()
-        }
-    }
-
-    override fun getTransactionsByRound(userId: Int, roundId: Int): List<WalletTransaction> {
-        return jdbi.withHandle<List<WalletTransaction>, Exception> { handle ->
-            handle.createQuery(WalletSql.SELECT_TRANSACTIONS_BY_ROUND).bind("userId", userId).bind("roundId", roundId)
-                .map { rs, _ ->
-                    WalletTransaction(
-                        id = rs.getInt("id"),
-                        userId = rs.getInt("user_id"),
-                        roundId = rs.getObject("round_id") as? Int,
-                        amount = rs.getInt("amount_coins"),
-                        createdAt = rs.getTimestamp("created_at").toInstant()
-                    )
-                }.list()
-        }
-    }
-
-    override fun hasSufficientFunds(userId: Int, amount: Int): Boolean {
-        if (amount <= 0) return true
-
-        val balance = getBalance(userId)
-        return balance >= amount
-    }
-
-    // Métodos auxiliares privados
-    private fun getBalanceForUser(handle: Handle, userId: Int): Int? {
-        return handle.createQuery(WalletSql.SELECT_USER_BALANCE).bind("userId", userId).mapTo(Int::class.java).one()
-    }
-
-    private fun getLastTransactionDate(handle: Handle, userId: Int): Instant? {
-        return handle.createQuery(WalletSql.SELECT_LAST_TRANSACTION_DATE).bind("userId", userId)
-            .mapTo(Instant::class.java).findOne().orElse(null)
-    }
 }

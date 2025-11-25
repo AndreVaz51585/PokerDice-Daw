@@ -45,7 +45,8 @@ class RepositoryJdbiRoundTest {
             repoUsers.createUser(
                 name = "João",
                 email = "joao@gmail.com",
-                passwordValidation = PasswordValidationInfo(validationInfo = "hashedPassword")
+                passwordValidation = PasswordValidationInfo(validationInfo = "hashedPassword"),
+                invitationCode = "TODO()"
             )
 
             repoLobbies.createLobby(
@@ -63,6 +64,7 @@ class RepositoryJdbiRoundTest {
                 lobbyId = 1,               // usar um lobby existente ou mockado no setup
                 totalRounds = 3,
                 ante = 5,
+                maxPlayers = 10
             )
 
             // Act: criar o round e obter por id
@@ -97,7 +99,8 @@ class RepositoryJdbiRoundTest {
             val user = repoUsers.createUser(
                 name = "João",
                 email = "joao@gmail.com",
-                passwordValidation = PasswordValidationInfo(validationInfo = "hashedPassword")
+                passwordValidation = PasswordValidationInfo(validationInfo = "hashedPassword"),
+                invitationCode = "TODO()"
             )
 
             val lobby = repoLobbies.createLobby(
@@ -113,7 +116,8 @@ class RepositoryJdbiRoundTest {
             val match = repoMatch.createMatch(
                 lobbyId = lobby.id,
                 totalRounds = 3,
-                ante = 5
+                ante = 5,
+                maxPlayers = 10
             )
 
             // Criar um round inicial
@@ -146,12 +150,14 @@ class RepositoryJdbiRoundTest {
             val user = repoUsers.createUser(
                 name = "João",
                 email = "joao@gmail.com",
-                passwordValidation = PasswordValidationInfo(validationInfo = "hashedPassword")
+                passwordValidation = PasswordValidationInfo(validationInfo = "hashedPassword"),
+                invitationCode = "TODO()"
             )
             val user2 = repoUsers.createUser(
                 name = "Joãoo",
                 email = "joaoo@gmail.com",
-                passwordValidation = PasswordValidationInfo(validationInfo = "hashedPassword")
+                passwordValidation = PasswordValidationInfo(validationInfo = "hashedPassword"),
+                invitationCode = "TODO()"
             )
 
             val lobby = repoLobbies.createLobby(
@@ -167,7 +173,8 @@ class RepositoryJdbiRoundTest {
             val match = repoMatch.createMatch(
                 lobbyId = lobby.id,
                 totalRounds = 3,
-                ante = 5
+                ante = 5,
+                maxPlayers = 10
             )
 
             val round = repoRound.createRound(
@@ -213,7 +220,8 @@ class RepositoryJdbiRoundTest {
             val user = repoUsers.createUser(
                 name = "Usuário Teste",
                 email = "usuario@teste.com",
-                passwordValidation = PasswordValidationInfo("senha")
+                passwordValidation = PasswordValidationInfo("senha"),
+                invitationCode = "TODO()"
             )
 
             // Criar lobby para associar à match
@@ -231,7 +239,8 @@ class RepositoryJdbiRoundTest {
             val match = repoMatch.createMatch(
                 lobbyId = lobby.id,
                 totalRounds = 3,
-                ante = 5
+                ante = 5,
+                maxPlayers = 10
             )
 
             // Criar um round
@@ -263,7 +272,8 @@ class RepositoryJdbiRoundTest {
             val user = repoUsers.createUser(
                 name = "Usuário Teste",
                 email = "usuario@teste.com",
-                passwordValidation = PasswordValidationInfo("senha")
+                passwordValidation = PasswordValidationInfo("senha"),
+                invitationCode = "TODO()"
             )
 
             // Criar lobby para associar à match
@@ -281,7 +291,8 @@ class RepositoryJdbiRoundTest {
             val match = repoMatch.createMatch(
                 lobbyId = lobby.id,
                 totalRounds = 3,
-                ante = 5
+                ante = 5,
+                maxPlayers = 10
             )
 
             // Criar dois rounds diferentes
@@ -317,7 +328,8 @@ class RepositoryJdbiRoundTest {
             val user = repoUsers.createUser(
                 name = "Usuário Teste",
                 email = "usuario@teste.com",
-                passwordValidation = PasswordValidationInfo("senha")
+                passwordValidation = PasswordValidationInfo("senha"),
+                invitationCode = "TODO()"
             )
 
             // Criar lobby para associar à match
@@ -335,7 +347,8 @@ class RepositoryJdbiRoundTest {
             val match = repoMatch.createMatch(
                 lobbyId = lobby.id,
                 totalRounds = 3,
-                ante = 5
+                ante = 5,
+                maxPlayers = 10
             )
 
             // Criar um round

@@ -13,7 +13,7 @@ interface Transaction {
     val repoLobbies : RepositoryLobby
     val repoMatch : RepositoryMatch
     val repoRound: RepositoryRound
-    //val repoWallet: RepositoryWallet
+    val repoWallet: RepositoryWallet
 
 
     fun rollback()
