@@ -2,6 +2,7 @@ package pt.isel.service.walletService
 
 import org.springframework.stereotype.Service
 import pt.isel.domain.Game.money.Wallet
+import pt.isel.domain.user.AuthenticatedUser
 import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryUser
 import pt.isel.repo.RepositoryWallet
@@ -57,8 +58,13 @@ class WalletServiceImpl (
             return@run success(all)
         }
 
-    override fun deposit(userId: Int, amount: Int): Either<WalletServiceError, Wallet> =
+    override fun deposit(userId: Int, pathId : Int, amount: Int): Either<WalletServiceError, Wallet> =
         trxManager.run {
+
+            if (userId != pathId) {
+                return@run failure(WalletServiceError.NoPermission)
+            }
+
             val wallet = repoWallet.findById(userId)
                 ?: return@run failure(WalletServiceError.WalletNotFound)
 
@@ -69,8 +75,19 @@ class WalletServiceImpl (
             success(updated)
         }
 
-    override fun withdraw(userId: Int, amount: Int): Either<WalletServiceError, Wallet> =
+    override fun withdraw(userId: Int, pathId: Int, amount: Int): Either<WalletServiceError, Wallet> =
         trxManager.run {
+
+            if (userId != pathId) {
+                return@run failure(WalletServiceError.NoPermission)
+            }
+
+            val user = repoUser.findById(userId)
+                ?: return@run failure(WalletServiceError.UserNotFound)
+            if (user.id != userId) {
+                return@run failure(WalletServiceError.UserNotFound)
+            }
+
             val wallet = repoWallet.findById(userId)
                 ?: return@run failure(WalletServiceError.WalletNotFound)
 

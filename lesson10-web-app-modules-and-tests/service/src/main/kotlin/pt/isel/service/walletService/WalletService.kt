@@ -2,6 +2,7 @@ package pt.isel.service.walletService
 
 import pt.isel.domain.Game.money.Wallet
 import pt.isel.service.Auxiliary.Either
+import java.nio.file.Path
 
 interface WalletService {
 
@@ -15,8 +16,8 @@ interface WalletService {
 
     fun getAll(): Either<WalletServiceError, List<Wallet>>
 
-    fun deposit(userId: Int, amount: Int): Either<WalletServiceError, Wallet>
+    fun deposit(userId: Int, pathId: Int, amount: Int): Either<WalletServiceError, Wallet>
 
-    fun withdraw(userId: Int, amount: Int): Either<WalletServiceError, Wallet>
+    fun withdraw(userId: Int,pathId: Int ,  amount: Int): Either<WalletServiceError, Wallet>
 
 }
