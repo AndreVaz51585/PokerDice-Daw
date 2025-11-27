@@ -16,10 +16,12 @@ import pt.isel.repo.RepositoryUser
 import pt.isel.repo.RepositoryWallet
 import pt.isel.repo.TransactionManager
 import pt.isel.service.Auxiliary.Either
+import pt.isel.service.Auxiliary.Success
 import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
 import pt.isel.service.match.BankedGameMatchEngine
 import pt.isel.service.matchService.MatchManager
+import pt.isel.service.walletService.WalletService
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
@@ -31,6 +33,7 @@ class LobbyServiceImpl(
     private val repoWallet: RepositoryWallet,// TODO Necessário  implementar para ir busca do wallet do user
     private val trxManager: TransactionManager,
     private val matchManager: MatchManager,
+    private val walletService: WalletService,
 ) : LobbyService {
 
     // estrutura necessária ,implementada em memória para guardar o tempo de criação do lobby e assim podermos controlar o TimeOut
@@ -94,6 +97,14 @@ class LobbyServiceImpl(
                 ?: return@run failure(LobbyServiceError.UserNotFound)// verificação desnecessária porque o user já vem com autenticação feita caso contrário daria erro
 
             val lobby = repoLobby.findById(lobbyId) ?: return@run failure(LobbyServiceError.LobbyNotFound)
+
+            val wallet = walletService.getAmount(userId)
+            if (wallet is Success){
+                if (wallet.value < lobby.ante){
+                    return@run failure(LobbyServiceError.NotEnoughMoney)
+                }
+            }
+
 
             if (lobby.state == LobbyState.FULL) {
                 return@run failure(LobbyServiceError.LobbyFull)

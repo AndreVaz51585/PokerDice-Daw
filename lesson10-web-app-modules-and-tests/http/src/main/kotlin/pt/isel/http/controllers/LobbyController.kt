@@ -114,6 +114,7 @@ class LobbyController(
                 LobbyServiceError.LobbyFull -> Problem.LobbyFull.response(HttpStatus.BAD_REQUEST)
                 LobbyServiceError.ErrorJoiningLobby -> Problem.ErrorJoiningLobby.response(HttpStatus.BAD_REQUEST)
                 LobbyServiceError.AlreadyInLobby -> Problem.AlreadyInLobby.response(HttpStatus.BAD_REQUEST)
+                LobbyServiceError.NotEnoughMoney -> Problem.NotEnoughMoney.response(HttpStatus.BAD_REQUEST)
                 else -> Problem.ErrorJoiningLobby.response(HttpStatus.BAD_REQUEST)
             }
         }
