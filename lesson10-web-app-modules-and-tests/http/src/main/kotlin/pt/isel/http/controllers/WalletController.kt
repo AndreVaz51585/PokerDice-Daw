@@ -75,7 +75,7 @@ class WalletController(
 
         return when (result) {
 
-            is Success -> ResponseEntity.ok(result.value)
+            is Success -> ResponseEntity.ok(result.value.currentBalance)
 
             is Failure -> when (result.value) {
                 is WalletServiceError.NoPermission -> Problem.NoPermission.response(
@@ -100,7 +100,7 @@ class WalletController(
 
         return when (val result = walletService.withdraw(user.user.id, userId, amount.amount)) {
 
-            is Success -> ResponseEntity.ok(result.value)
+            is Success -> ResponseEntity.ok(result.value.currentBalance)
 
             is Failure -> when (result.value) {
                 is WalletServiceError.NoPermission -> Problem.NoPermission.response(
