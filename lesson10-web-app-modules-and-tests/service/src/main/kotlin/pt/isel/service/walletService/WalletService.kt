@@ -8,7 +8,7 @@ interface WalletService {
 
     fun createWallet(userId: Int): Either<WalletServiceError, Wallet>
 
-    fun getWallet(userId: Int): Either<WalletServiceError, Wallet>
+    fun getWallet(userId: Int,pathId: Int): Either<WalletServiceError, Wallet>
 
     fun getAmount(userId: Int): Either<WalletServiceError, Int>
 

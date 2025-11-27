@@ -33,6 +33,36 @@ class WalletController(
         }
     }
 
+    @GetMapping("/api/wallets/{userId}")
+    fun getWallet(
+        user: AuthenticatedUser,
+        @PathVariable userId: Int
+    ): ResponseEntity<Any> {
+
+        val result = walletService.getWallet(user.user.id, userId)
+
+        return when (result) {
+
+            is Success -> {
+                ResponseEntity.ok(result.value)   // value é a wallet do User
+            }
+
+            is Failure -> when (result.value) {
+                is WalletServiceError.NoPermission -> Problem.NoPermission.response(
+                    HttpStatus.BAD_REQUEST,
+                )
+                WalletServiceError.UserNotFound -> Problem.UserNotFound.response(
+                    HttpStatus.BAD_REQUEST,
+                )
+                WalletServiceError.WalletNotFound -> Problem.WalletNotFound.response(
+                    HttpStatus.BAD_REQUEST,
+                )
+
+            }
+        }
+    }
+
+
     @PostMapping("/api/wallets/{userId}/deposit")
     fun deposit(
         user: AuthenticatedUser,

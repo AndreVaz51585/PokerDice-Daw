@@ -33,8 +33,12 @@ class WalletServiceImpl (
             return@run success(wallet)
         }
 
-    override fun getWallet(userId: Int): Either<WalletServiceError, Wallet> =
+    override fun getWallet(userId: Int, pathId: Int): Either<WalletServiceError, Wallet> =
         trxManager.run {
+
+            if (userId != pathId) {
+                return@run failure(WalletServiceError.NoPermission)
+            }
 
             val wallet = repoWallet.findById(userId) ?: return@run failure(WalletServiceError.WalletNotFound)
             return@run success(wallet)
