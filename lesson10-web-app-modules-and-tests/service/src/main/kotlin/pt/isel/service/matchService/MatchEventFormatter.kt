@@ -4,25 +4,18 @@ import org.springframework.stereotype.Service
 import pt.isel.domain.Game.Combination
 import pt.isel.domain.Game.Hand
 import pt.isel.domain.Game.Hand.Companion.getCombination
-import pt.isel.domain.Game.Match.MatchState
-import pt.isel.domain.Game.Round.RoundState
 import pt.isel.domain.Game.money.BankedMatch
 import pt.isel.domain.Game.money.Wallet
-import pt.isel.domain.Game.pokerDice.Game
-import pt.isel.domain.Game.pokerDice.PlayerState
-import pt.isel.domain.Game.pokerDice.Showdown
+import pt.isel.service.statisticsService.StatisticsService
 import pt.isel.service.walletService.WalletService
-import kotlin.collections.get
-import kotlin.rem
-import kotlin.text.compareTo
-import kotlin.text.equals
-import kotlin.text.get
-import kotlin.toString
 
 
 @Service
 class MatchEventFormatter
-    (private val walletService: WalletService) {
+    (
+    private val walletService: WalletService,
+    private val statisticsService: StatisticsService
+) {
 
     data class RollResultPayload(
         val userId: Int,
@@ -53,7 +46,7 @@ class MatchEventFormatter
 
     data class SimpleMatchSnapshot(
         val matchId: Int,
-        val currentRoundNumber: Int ,
+        val currentRoundNumber: Int,
         val playerOrder: List<Int>,
         val currentPlayer: Int
     )
@@ -61,7 +54,8 @@ class MatchEventFormatter
     data class GameEndPayload(
         val winner: Int,
         val prize: Int,
-        val wallets: Map<Int, Wallet>)
+        val wallets: Map<Int, Wallet>
+    )
 
 
     fun createEnrichedPayload(state: BankedMatch, eventType: String, actionBy: Int?, eventId: String): Any {
@@ -102,6 +96,18 @@ class MatchEventFormatter
                 val prevPlayerId = state.game.playerOrder.getOrNull(prevIndex) ?: -1
                 val currPlayerId = state.game.playerOrder.getOrNull(state.game.currentPlayerIndex) ?: -1
 
+                val dices = state.game.players[prevPlayerId]?.dice ?: emptyList()
+                val combination = Hand(dices).getCombination().first
+                when (combination) {
+                    Combination.FIVE_OF_A_KIND -> statisticsService.incrementFiveOfAKind(prevPlayerId)
+                    Combination.FOUR_OF_A_KIND -> statisticsService.incrementFourOfAKind(prevPlayerId)
+                    Combination.FULL_HOUSE -> statisticsService.incrementFullHouse(prevPlayerId)
+                    Combination.STRAIGHT -> statisticsService.incrementStraight(prevPlayerId)
+                    Combination.THREE_OF_A_KIND -> statisticsService.incrementThreeOfAKind(prevPlayerId)
+                    Combination.TWO_PAIR -> statisticsService.incrementTwoPair(prevPlayerId)
+                    Combination.PAIR -> statisticsService.incrementOnePair(prevPlayerId)
+                    Combination.BUST -> statisticsService.incrementBust(prevPlayerId)
+                }
                 TurnChangePayload(
                     previousPlayer = prevPlayerId,
                     currentPlayer = currPlayerId
@@ -124,14 +130,13 @@ class MatchEventFormatter
 
             "round-complete" -> {
                 val completedRoundIndex = state.game.rounds.size - 2
-                val completedRound = state.game.rounds.getOrNull(completedRoundIndex) ?:
-                    return RoundSummaryPayload(
-                        roundNumber = 0,
-                        winners = emptyList(),
-                        prize = 0,
-                        wallets = state.wallets,
-                        playersAndCombinations = null
-                    )
+                val completedRound = state.game.rounds.getOrNull(completedRoundIndex) ?: return RoundSummaryPayload(
+                    roundNumber = 0,
+                    winners = emptyList(),
+                    prize = 0,
+                    wallets = state.wallets,
+                    playersAndCombinations = null
+                )
 
                 val prize = completedRound.pot
                 val winners = completedRound.winners ?: emptyList()
@@ -140,7 +145,8 @@ class MatchEventFormatter
                     val wallet = state.wallets[winnerId]
                         ?: error("Wallet não encontrada para userId $winnerId — isto não deveria acontecer")
 
-                    walletService.update(Wallet(wallet.userId, wallet.currentBalance+prize))
+                    walletService.update(Wallet(wallet.userId, wallet.currentBalance + prize))
+                    statisticsService.incrementGamesWon(winnerId)
                 }
 
                 RoundSummaryPayload(

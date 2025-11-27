@@ -27,7 +27,7 @@ POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste1",
+  "name": "teste2",
   "email": "test2@gmail.com",
   "password": "minhaSenhaSegura",
   "invitationCode": "{{invitatioCode}}"
@@ -48,7 +48,7 @@ content-type: application/json
 Authorization: bearer {{tokenteste2}}
 
 ### Apagar User
-DELETE http://localhost:8080/api/users/4
+DELETE http://localhost:8080/api/users/2
 content-type: application/json
 
 ### Listar todos os users
@@ -66,7 +66,7 @@ Authorization: Bearer {{tokenteste1}}
   "minPlayers": 2,
   "maxPlayers": 2,
   "rounds": 3,
-  "ante": 50
+  "ante": 1000
 }
 
 ### Listar todos os lobbies
@@ -77,7 +77,7 @@ GET http://localhost:8080/api/lobbies/5
 
 
 ### Juntar-se a um lobby
-POST http://localhost:8080/api/lobbies/2/join
+POST http://localhost:8080/api/lobbies/3/join
 Content-Type: application/json
 Authorization: Bearer {{tokenteste2}}
 
@@ -274,3 +274,15 @@ Authorization: Bearer {{tokenteste5}}
   "amount": 10
 
 }
+
+### Statistics
+GET {{base}}/api/statistics
+
+### Get Statistics
+GET {{base}}/api/statistics/3
+
+### Inc games played
+GET {{base}}/api/statistics/1/inc_games_played
+
+### Inc
+GET {{base}}/api/statistics/1/inc_games_won

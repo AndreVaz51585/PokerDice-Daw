@@ -23,6 +23,7 @@ import pt.isel.repo.*
 import pt.isel.repo.jdbi.*
 import pt.isel.service.matchService.MatchManager
 import pt.isel.service.matchService.MatchService
+import pt.isel.service.statisticsService.StatisticsService
 import pt.isel.service.walletService.WalletService
 import java.time.Clock
 import java.time.Duration
@@ -80,8 +81,10 @@ class WebApp {
     @Bean
     fun repositoryMatch(jdbi: Jdbi): RepositoryMatch = RepositoryMatchJdbi(
         jdbi.open(),
-        repoLobby = RepositoryLobbyJdbi(jdbi.open())
-    )
+        repoLobby = RepositoryLobbyJdbi(jdbi.open()))
+
+    @Bean
+    fun repositoryStatistics(jdbi: Jdbi): RepositoryStatistics = RepositoryStatisticsJdbi(jdbi.open())
 
     @Bean
     fun matchManager(): MatchManager = MatchManager()
@@ -92,7 +95,7 @@ class WebApp {
         trxManager: TransactionManager,
         matchManager: MatchManager,
         repoLobby: RepositoryLobby,
-        walletService: WalletService,
+        walletService: WalletService
     ): MatchService {
         return MatchServiceImpl(repoLobby,repoMatch, walletService ,trxManager, matchManager)
     }

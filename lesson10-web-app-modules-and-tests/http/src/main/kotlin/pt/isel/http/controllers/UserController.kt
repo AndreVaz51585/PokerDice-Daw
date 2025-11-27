@@ -45,10 +45,6 @@ class UserController(
             userService
                 .createUser(userInput.name, userInput.email, userInput.password, userInput.invitationCode)
 
-        if (result is Success) {
-            walletService.createWallet(result.value.id)
-        }
-
         return when (result) {
             is Success ->
                 ResponseEntity

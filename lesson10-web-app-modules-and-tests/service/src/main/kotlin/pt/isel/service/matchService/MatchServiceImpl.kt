@@ -146,7 +146,10 @@ class MatchServiceImpl(
 
         val wallets = matchPlayers.associate { p ->
 
-            val walletResult = walletService.getWallet(p.userId,p.userId)
+            val walletResult = walletService.getWallet(
+                p.userId,
+                p.userId,
+            )
 
             val wallet = when (walletResult) {
                 is Success -> walletResult.value
