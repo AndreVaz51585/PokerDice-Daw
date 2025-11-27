@@ -76,4 +76,6 @@ sealed class Problem(
     data object WalletNotFound : Problem(URI("$PROBLEM_URI_PATH/wallet-not-found"))
 
     data object NotEnoughMoney : Problem(URI("$PROBLEM_URI_PATH/not-enough-money"))
+
+    data object StatisticsNotFound : Problem(URI("$PROBLEM_URI_PATH/statistics-not-found"))
 }

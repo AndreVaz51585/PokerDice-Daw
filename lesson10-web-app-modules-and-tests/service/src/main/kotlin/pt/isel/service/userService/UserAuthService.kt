@@ -14,6 +14,8 @@ import pt.isel.repo.RepositoryUser
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
+import pt.isel.service.statisticsService.StatisticsService
+import pt.isel.service.walletService.WalletService
 import java.security.SecureRandom
 import java.time.Clock
 import java.time.Duration
@@ -29,6 +31,8 @@ class UserAuthService(
     private val repoUsers: RepositoryUser,
     private val repoInvitation: RepositoryInvitation,
     private val clock: Clock,
+    private val walletService: WalletService,
+    private val statisticService: StatisticsService
 ) {
     private fun validatePassword(
         password: String,
@@ -79,6 +83,10 @@ class UserAuthService(
 
             val passwordValidationInfo = createPasswordValidationInformation(password)
             val newUser = repoUsers.createUser(name, email, passwordValidationInfo, invitationCode)
+
+            walletService.createWallet(newUser.id)
+            statisticService.createStatistics(newUser.id)
+
 
             // Mark invitation as used
             val usedInvitation = invitation.copy(

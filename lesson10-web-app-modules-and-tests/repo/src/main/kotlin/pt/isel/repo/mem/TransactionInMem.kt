@@ -8,7 +8,8 @@ class TransactionInMem(
     override val repoLobbies: RepositoryLobby,
     override val repoMatch: RepositoryMatch,
     override val repoRound: RepositoryRound,
-    override val repoWallet: RepositoryWallet
+    override val repoWallet: RepositoryWallet,
+    override val repoStatistics: RepositoryStatistics
 ) : Transaction {
     override fun rollback(): Unit = throw UnsupportedOperationException()
 }

@@ -14,7 +14,7 @@ interface Transaction {
     val repoMatch : RepositoryMatch
     val repoRound: RepositoryRound
     val repoWallet: RepositoryWallet
-
+    val repoStatistics: RepositoryStatistics
 
     fun rollback()
 }

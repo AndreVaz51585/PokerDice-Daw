@@ -252,6 +252,23 @@ VALUES (p_match_id, p_snapshot, 1, now())
 END;
 $$;
 
+CREATE TABLE statistics (
+                                   user_id INT PRIMARY KEY REFERENCES dbo.Users (id) ON DELETE CASCADE,
+
+                                   games_played INT NOT NULL DEFAULT 0,
+                                   games_won INT NOT NULL DEFAULT 0,
+
+    -- Frequências por tipo de mão
+                                   five_of_a_kind INT NOT NULL DEFAULT 0,
+                                   four_of_a_kind INT NOT NULL DEFAULT 0,
+                                   full_house INT NOT NULL DEFAULT 0,
+                                   straight INT NOT NULL DEFAULT 0,
+                                   three_of_a_kind INT NOT NULL DEFAULT 0,
+                                   two_pair INT NOT NULL DEFAULT 0,
+                                   one_pair INT NOT NULL DEFAULT 0,
+                                   bust INT NOT NULL DEFAULT 0
+);
+
 ---- Remover tabelas (na ordem reversa devido às dependências)
 --DROP TABLE IF EXISTS wallet CASCADE;
 --DROP TABLE IF EXISTS Hand CASCADE;

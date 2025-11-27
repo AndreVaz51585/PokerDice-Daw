@@ -21,6 +21,8 @@ import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
 import pt.isel.service.match.BankedGameMatchEngine
 import pt.isel.service.matchService.MatchManager
+import pt.isel.service.statisticsService.StatisticsService
+import pt.isel.service.userService.UserAuthService
 import pt.isel.service.walletService.WalletService
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -30,10 +32,11 @@ import java.util.concurrent.TimeUnit
 class LobbyServiceImpl(
     private val repoLobby: RepositoryLobby,
     private val repoUser: RepositoryUser,
-    private val repoWallet: RepositoryWallet,// TODO Necessário  implementar para ir busca do wallet do user
     private val trxManager: TransactionManager,
     private val matchManager: MatchManager,
+    //private val userService: UserAuthService,
     private val walletService: WalletService,
+    private val statisticsService: StatisticsService
 ) : LobbyService {
 
     // estrutura necessária ,implementada em memória para guardar o tempo de criação do lobby e assim podermos controlar o TimeOut
@@ -191,7 +194,7 @@ class LobbyServiceImpl(
                     ante = lobby.ante,
                     maxPlayers =  lobby.maxPlayers
                 ) // retorna a match ou MatchServiceError
-
+            statisticsService.incrementGamesPlayed(lobby.lobbyHost)
 
             // 2) Transfere jogadores do Lobby para a Match e constrói MatchPlayer com balanceAtStart
             val matchPlayers = mutableListOf<MatchPlayer>()
@@ -214,6 +217,8 @@ class LobbyServiceImpl(
                 if (!added) {
                     return@run failure(LobbyServiceError.ErrorJoiningLobby)
                 }
+                statisticsService.incrementGamesPlayed(user.id)
+
 
                 matchPlayers.add(
                         MatchPlayer(

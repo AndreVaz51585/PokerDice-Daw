@@ -1,7 +1,6 @@
 package pt.isel.repo
 
 import pt.isel.domain.Game.money.Wallet
-import pt.isel.domain.Game.money.WalletTransaction
 
 interface RepositoryWallet : Repository<Wallet> {
 
