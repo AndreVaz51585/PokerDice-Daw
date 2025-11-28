@@ -1,11 +1,11 @@
 @base = http://localhost:8080
-@tokenteste1 = wpJpF-4_Eix9fxzHNTw4iVjYkvZbvB6z9xkQ8YRlS3Y=
-@tokenteste2 = uFtu2wu9mr6TNJdtsLrr96Yd5PpzVgPZn2PMrz9Yc6U=
-@tokenteste3 = uwnZi8CRokojHBv7khJo6nbZATn8wc6ywtEuhyCgDqs=
-@tokenteste4 = AR8mFui5GRcO1ylrLhwlucpJ5EXSv9GqCWvmSyp1U4g=
-@tokenteste5 = eTpnlbiQZJ6qufsMES7KEeb7iYxFRNzpCcXrmYBaigM=
+@tokenteste1 = 3UyishAOQgS05Xnq2HNHdnG0x5NQlEDD5kMrD_F07Yw=
+@tokenteste2 = 2WE9CKUi5b9dDKrDoxVaksmJ_g0UKZEwumlxAxVyUfc=
+@tokenteste3 = bnJx3_dY2dW63VzQceCsmX2faq-kBK3or2fP4a8Mgto=
+@tokenteste4 = xljXJAXzdsn98-cfi_M6lYm-t05LIW2RmGEQ30GR654=
+@tokenteste5 = WeS1to8r9T6i2W0_DMTWnQhzzdDIfxYUe558MzY0aD0=
 
-@invitatioCode = C_2MSZgJSE4
+@invitatioCode = d8_4j57YPbA
 
 ### Registar um novo utilizador sem código de convite
 POST http://localhost:8080/api/users
@@ -20,15 +20,15 @@ Content-Type: application/json
 ### Código de Convite
 POST http://localhost:8080/api/invitations
 Content-Type: application/json
-Authorization: Bearer {{tokenteste5}}
+Authorization: Bearer {{tokenteste1}}
 
 ### Registar um novo utilizador com código de convite
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste2",
-  "email": "test2@gmail.com",
+  "name": "teste5",
+  "email": "test5@gmail.com",
   "password": "minhaSenhaSegura",
   "invitationCode": "{{invitatioCode}}"
 }
@@ -38,17 +38,17 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test1@gmail.com",
+  "email": "test5@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
 ### Obter User
 GET http://localhost:8080/api/me
 content-type: application/json
-Authorization: bearer {{tokenteste2}}
+Authorization: bearer {{tokenteste4}}
 
 ### Apagar User
-DELETE http://localhost:8080/api/users/2
+DELETE http://localhost:8080/api/users/3
 content-type: application/json
 
 ### Listar todos os users
@@ -58,7 +58,7 @@ content-type: application/json
 ### Criar um lobby
 POST http://localhost:8080/api/lobbies
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{tokenteste3}}
 
 {
   "name": "teste Jogo",
@@ -66,29 +66,29 @@ Authorization: Bearer {{tokenteste1}}
   "minPlayers": 2,
   "maxPlayers": 2,
   "rounds": 3,
-  "ante": 1000
+  "ante": 10
 }
 
 ### Listar todos os lobbies
 GET http://localhost:8080/api/lobbies
 
 ### Obter lobby por ID
-GET http://localhost:8080/api/lobbies/5
+GET http://localhost:8080/api/lobbies/6
 
 
 ### Juntar-se a um lobby
-POST http://localhost:8080/api/lobbies/3/join
+POST http://localhost:8080/api/lobbies/4/join
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{tokenteste3}}
 
 
 ### Sair de um lobby
-POST http://localhost:8080/api/lobbies/3/leave
+POST http://localhost:8080/api/lobbies/1/leave
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{tokenteste4}}
 
 ### Listar jogadores de um lobby
-GET http://localhost:8080/api/lobbies/3/players
+GET http://localhost:8080/api/lobbies/6/players
 
 ### Obter host do lobby
 GET http://localhost:8080/api/lobbies/4/host
@@ -100,7 +100,7 @@ GET http://localhost:8080/api/matches/1/players
 GET http://localhost:8080/api/matches
 
 ### Obter detalhes de uma partida
-GET http://localhost:8080/api/matches/7
+GET http://localhost:8080/api/matches/1
 
 ### 7) Abrir ligação SSE (mantém stream)
 GET {{base}}/api/matches/sse/1/events
@@ -256,9 +256,9 @@ GET {{base}}/api/matches/sse/2
 GET {{base}}/api/wallets
 
 ### Deposit
-POST {{base}}/api/wallets/2/deposit
+POST {{base}}/api/wallets/7/deposit
 Content-Type: application/json
-Authorization: Bearer {{tokenteste4}}
+Authorization: Bearer {{tokenteste5}}
 
 {
   "amount": 10
@@ -266,9 +266,9 @@ Authorization: Bearer {{tokenteste4}}
 }
 
 ### Withdraw
-POST {{base}}/api/wallets/2/withdraw
+POST {{base}}/api/wallets/6/withdraw
 Content-Type: application/json
-Authorization: Bearer {{tokenteste5}}
+Authorization: Bearer {{tokenteste1}}
 
 {
   "amount": 10
@@ -279,10 +279,10 @@ Authorization: Bearer {{tokenteste5}}
 GET {{base}}/api/statistics
 
 ### Get Statistics
-GET {{base}}/api/statistics/3
+GET {{base}}/api/statistics/6
 
 ### Inc games played
 GET {{base}}/api/statistics/1/inc_games_played
 
-### Inc
+### Inc games won
 GET {{base}}/api/statistics/1/inc_games_won

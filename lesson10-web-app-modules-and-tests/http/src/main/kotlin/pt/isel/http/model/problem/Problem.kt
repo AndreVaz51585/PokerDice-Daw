@@ -39,6 +39,8 @@ sealed class Problem(
 
     data object ErrorJoiningLobby : Problem(URI("$PROBLEM_URI_PATH/error-joining-lobby"))
 
+    data object ErrorCreatingLobby : Problem(URI("$PROBLEM_URI_PATH/error-creating-lobby"))
+
     data object ErrorLeavingLobby : Problem(URI("$PROBLEM_URI_PATH/error-leaving-lobby"))
 
     data object UserIsNotInLobby : Problem(URI("$PROBLEM_URI_PATH/user-is-not-in-lobby"))
@@ -78,4 +80,8 @@ sealed class Problem(
     data object NotEnoughMoney : Problem(URI("$PROBLEM_URI_PATH/not-enough-money"))
 
     data object StatisticsNotFound : Problem(URI("$PROBLEM_URI_PATH/statistics-not-found"))
+
+    data object InvalidAmount : Problem(URI("$PROBLEM_URI_PATH/invalid-amount"))
+
+    data object UserAlreadyInAnotherLobby : Problem(URI("$PROBLEM_URI_PATH/user-already-in-another-lobby"))
 }

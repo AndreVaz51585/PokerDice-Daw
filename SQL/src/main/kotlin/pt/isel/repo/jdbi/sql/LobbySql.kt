@@ -13,8 +13,8 @@ object LobbySql {
         UPDATE lobby
         SET name = :name,
             description = :description,
-            min_Players = :minPlayers,
-            max_Players = :maxPlayers,
+            min_players = :minPlayers,
+            max_players = :maxPlayers,
             rounds = :rounds,
             ante = :ante,
             state = CAST(:state AS lobby_state)
@@ -34,7 +34,7 @@ object LobbySql {
     """
 
     const val CREATE_LOBBY = """
-        INSERT INTO lobby (lobby_Host, name, description, min_Players, max_Players, rounds, ante, state) 
+        INSERT INTO lobby (lobby_Host, name, description, min_players, max_players, rounds, ante, state) 
         VALUES (:lobbyHostId, :name, :description, :minPlayers, :maxPlayers, :rounds, :ante, CAST(:state AS lobby_state))
         RETURNING id
     """

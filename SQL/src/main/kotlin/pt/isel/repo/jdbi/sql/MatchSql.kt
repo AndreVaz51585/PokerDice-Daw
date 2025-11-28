@@ -3,7 +3,7 @@ package pt.isel.repo.jdbi.sql
 object MatchSql {
     const val INSERT_MATCH = """
             INSERT INTO match (
-                lobby_id, total_rounds, ante, state, current_round_no, started_at, finished_at, max_Players
+                lobby_id, total_rounds, ante, state, current_round_no, started_at, finished_at, max_players
             ) VALUES (
                 :lobbyId, :totalRounds, :ante, CAST(:state AS match_state), :currentRoundNo, :startedAt, :finishedAt,:maxPlayers
             )
@@ -20,7 +20,7 @@ object MatchSql {
         """
 
     const val SELECT_MATCH = """
-            SELECT id, lobby_id, total_rounds, ante, state, current_round_no, started_at, finished_at, max_Players
+            SELECT id, lobby_id, total_rounds, ante, state, current_round_no, started_at, finished_at, max_players
             FROM match
             WHERE id = :id
         """
@@ -67,7 +67,7 @@ object MatchSql {
                 current_round_no = :currentRoundNo,
                 started_at = :startedAt,
                 finished_at = :finishedAt
-                max_Players = :maxPlayers
+                max_players = :maxPlayers
             WHERE id = :id
         """
 

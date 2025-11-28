@@ -15,10 +15,7 @@ import pt.isel.repo.RepositoryLobby
 import pt.isel.repo.RepositoryUser
 import pt.isel.repo.RepositoryWallet
 import pt.isel.repo.TransactionManager
-import pt.isel.service.Auxiliary.Either
-import pt.isel.service.Auxiliary.Success
-import pt.isel.service.Auxiliary.failure
-import pt.isel.service.Auxiliary.success
+import pt.isel.service.Auxiliary.*
 import pt.isel.service.match.BankedGameMatchEngine
 import pt.isel.service.matchService.MatchManager
 import pt.isel.service.statisticsService.StatisticsService
@@ -57,8 +54,23 @@ class LobbyServiceImpl(
 
         trxManager.run {
             // numa fase inicial, só vamos verificar se o host existe se sim continuamos caso contrártio retornamos o erro
-            if (repoUser.findById(hostId) == null) {
-                return@run failure(LobbyServiceError.UserNotFound)
+            val host = repoUser.findById(hostId) ?: return@run failure(LobbyServiceError.UserNotFound)
+
+            val hostAmount = walletService.getAmount(host.id)
+
+            if (hostAmount is Success && hostAmount.value < ante) {
+                return@run failure(LobbyServiceError.NotEnoughMoney)
+            }
+
+            val allLobbies = repoLobby.findAll()
+
+            val isInAnotherLobby =
+                allLobbies.any { lobby ->
+                    repoLobby.listPlayers(lobby.id).any { it.id == host.id }
+                }
+
+            if (isInAnotherLobby) {
+                return@run failure(LobbyServiceError.UserAlreadyInAnotherLobby)
             }
 
             val lobby = repoLobby.createLobby(
@@ -99,15 +111,13 @@ class LobbyServiceImpl(
             val user = repoUser.findById(userId)
                 ?: return@run failure(LobbyServiceError.UserNotFound)// verificação desnecessária porque o user já vem com autenticação feita caso contrário daria erro
 
+            val userAmount = walletService.getAmount(user.id)
+
             val lobby = repoLobby.findById(lobbyId) ?: return@run failure(LobbyServiceError.LobbyNotFound)
 
-            val wallet = walletService.getAmount(userId)
-            if (wallet is Success){
-                if (wallet.value < lobby.ante){
-                    return@run failure(LobbyServiceError.NotEnoughMoney)
-                }
+            if (userAmount is Success && userAmount.value < lobby.ante) {
+                return@run failure(LobbyServiceError.NotEnoughMoney)
             }
-
 
             if (lobby.state == LobbyState.FULL) {
                 return@run failure(LobbyServiceError.LobbyFull)
@@ -119,11 +129,21 @@ class LobbyServiceImpl(
                 return@run failure(LobbyServiceError.AlreadyInLobby)
             }
 
+            val allLobbies = repoLobby.findAll()
+
+            val isInAnotherLobby =
+                allLobbies.any { lobby ->
+                    repoLobby.listPlayers(lobby.id).any { it.id == user.id }
+                }
+
+            if (isInAnotherLobby) {
+                return@run failure(LobbyServiceError.UserAlreadyInAnotherLobby)
+            }
+
             val currentPlayers = repoLobby.countPlayers(lobbyId)
             val newPlayerCount = currentPlayers + 1
 
             val added = repoLobby.addPlayerToLobby(lobbyId, userId)
-            println(added)
 
             if (!added) {
                 return@run failure(LobbyServiceError.ErrorJoiningLobby)
@@ -132,8 +152,6 @@ class LobbyServiceImpl(
             val newState = updateLobbyStateIfNeeded(lobby, newPlayerCount)
 
             if (newState == LobbyState.FULL || newState == LobbyState.STARTED) return@run startMatch(lobbyId)
-
-
 
             return@run success(0) // retorna 0 se o jogador entrou mas o lobby não começou
         }
@@ -176,10 +194,15 @@ class LobbyServiceImpl(
         }
 
 
-    override fun listPlayers(lobbyId: Int): List<User> =
-        trxManager.run {
-            return@run repoLobby.listPlayers(lobbyId)
-        }
+        override fun listPlayers(lobbyId: Int): Either<LobbyServiceError, List<User>> =
+            trxManager.run {
+                val list = repoLobby.listPlayers(lobbyId)
+                if (list.isEmpty()) {
+                    return@run failure(LobbyServiceError.LobbyNotFound)
+                }
+                return@run success(list)
+            }
+
 
 
     override fun startMatch(lobbyId: Int): Either<LobbyServiceError, Int> =
@@ -199,12 +222,13 @@ class LobbyServiceImpl(
             // 2) Transfere jogadores do Lobby para a Match e constrói MatchPlayer com balanceAtStart
             val matchPlayers = mutableListOf<MatchPlayer>()
             for (user in players) {
-                // tenta obter wallet / escolha do user; fallback para ante ou 0
-                val balanceAtStart = 150  /* try {
-                    repoWallet.findByUserId(user.id)?.currentBalance ?: lobby.ante
-                } catch (_: Throwable) {
-                    lobby.ante
-                }*/
+
+                val amountOutcome = walletService.getAmount(user.id)
+
+                val balanceAtStart = when (amountOutcome) {
+                    is Failure -> return@run failure(LobbyServiceError.ErrorJoiningLobby)
+                    is Success -> amountOutcome.value
+                }
 
                 // persistir jogador na match (assume repoMatch.addPlayer retorna boolean)
                 val seatNo = repoMatch.getMaxSeatNo(matchResult.id) + 1

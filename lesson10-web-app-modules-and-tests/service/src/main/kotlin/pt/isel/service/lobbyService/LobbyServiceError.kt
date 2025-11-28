@@ -20,4 +20,6 @@ sealed class LobbyServiceError {
     data object ErrorCreatingMatch : LobbyServiceError()
 
     data object NotEnoughMoney : LobbyServiceError()
+
+    data object UserAlreadyInAnotherLobby : LobbyServiceError()
 }

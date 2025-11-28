@@ -15,7 +15,7 @@ import pt.isel.service.walletService.WalletServiceError
 @RestController
 class WalletController(
     private val walletService: WalletService,
-    ) {
+) {
     @GetMapping("/api/wallets")
     fun listAllWallets(): ResponseEntity<Any> {
         return when (val result = walletService.getAll()) {
@@ -51,13 +51,18 @@ class WalletController(
                 is WalletServiceError.NoPermission -> Problem.NoPermission.response(
                     HttpStatus.BAD_REQUEST,
                 )
+
                 WalletServiceError.UserNotFound -> Problem.UserNotFound.response(
                     HttpStatus.BAD_REQUEST,
                 )
+
                 WalletServiceError.WalletNotFound -> Problem.WalletNotFound.response(
                     HttpStatus.BAD_REQUEST,
                 )
 
+                WalletServiceError.InvalidAmount -> Problem.InvalidAmount.response(
+                    HttpStatus.BAD_REQUEST
+                )
             }
         }
     }
@@ -81,11 +86,17 @@ class WalletController(
                 is WalletServiceError.NoPermission -> Problem.NoPermission.response(
                     HttpStatus.BAD_REQUEST,
                 )
+
                 WalletServiceError.UserNotFound -> Problem.UserNotFound.response(
                     HttpStatus.BAD_REQUEST,
                 )
+
                 WalletServiceError.WalletNotFound -> Problem.WalletNotFound.response(
                     HttpStatus.BAD_REQUEST,
+                )
+
+                WalletServiceError.InvalidAmount -> Problem.InvalidAmount.response(
+                    HttpStatus.BAD_REQUEST
                 )
             }
         }
@@ -106,11 +117,17 @@ class WalletController(
                 is WalletServiceError.NoPermission -> Problem.NoPermission.response(
                     HttpStatus.BAD_REQUEST,
                 )
+
                 WalletServiceError.UserNotFound -> Problem.UserNotFound.response(
                     HttpStatus.BAD_REQUEST,
                 )
+
                 WalletServiceError.WalletNotFound -> Problem.WalletNotFound.response(
                     HttpStatus.BAD_REQUEST,
+                )
+
+                WalletServiceError.InvalidAmount -> Problem.InvalidAmount.response(
+                    HttpStatus.BAD_REQUEST
                 )
             }
         }

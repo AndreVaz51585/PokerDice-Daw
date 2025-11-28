@@ -133,7 +133,7 @@ CREATE TABLE match (
                        current_round_no  INTEGER NOT NULL DEFAULT 1,
                        started_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
                        finished_at       TIMESTAMPTZ, -- Renomeado de ended_at para manter consistência com o código
-                       max_Players       INTEGER NOT NULL
+                       max_players       INTEGER NOT NULL
 );
 
 -- Participantes na partida (com ordem/seat p/ rotação de turnos)

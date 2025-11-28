@@ -26,7 +26,7 @@ interface LobbyService {
 
     fun getLobbyHost(lobby: Lobby): Either<LobbyServiceError, User>
 
-    fun listPlayers(lobbyId: Int): List<User>
+    fun listPlayers(lobbyId: Int): Either<LobbyServiceError, List<User>>
 
     fun startMatch(lobbyId: Int): Either<LobbyServiceError, Int?>
 

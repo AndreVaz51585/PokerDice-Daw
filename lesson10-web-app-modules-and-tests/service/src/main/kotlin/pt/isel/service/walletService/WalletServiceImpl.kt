@@ -66,9 +66,14 @@ class WalletServiceImpl (
             val wallet = repoWallet.findById(userId)
                 ?: return@run failure(WalletServiceError.WalletNotFound)
 
-            val updated = wallet.deposit(amount)   // chama o domínio
+            try {
+                wallet.deposit(amount)
+            } catch (e: IllegalArgumentException) {
+                return@run failure(WalletServiceError.InvalidAmount)
+            }
+            val updated = wallet.deposit(amount)
 
-            repoWallet.save(updated)               // persiste
+            repoWallet.save(updated)
 
             success(updated)
         }
@@ -89,8 +94,14 @@ class WalletServiceImpl (
             val wallet = repoWallet.findById(userId)
                 ?: return@run failure(WalletServiceError.WalletNotFound)
 
-            val updated = wallet.withdraw(amount)   // domínio
-            repoWallet.save(updated)                // grava na BD
+            try {
+                wallet.withdraw(amount)
+            } catch (e: IllegalArgumentException) {
+                return@run failure(WalletServiceError.InvalidAmount)
+            }
+            val updated = wallet.withdraw(amount)
+
+            repoWallet.save(updated)
 
             success(updated)
         }
