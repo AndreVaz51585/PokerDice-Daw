@@ -58,7 +58,7 @@ class SseMatchController(
         listenersByMatch.forEach { (_, listeners) ->
             listeners.forEach { listener ->
                 try {
-                    listener(null, null, null) // Envia heartbeat (parâmetros nulos)
+                    listener(null, null, null) // Envia heartbeat (3parâmetros nulos)
                 } catch (ex: Exception) {
                 }
             }

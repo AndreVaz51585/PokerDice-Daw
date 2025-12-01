@@ -30,4 +30,6 @@ interface LobbyService {
 
     fun startMatch(lobbyId: Int): Either<LobbyServiceError, Int?>
 
+    fun getEventPublisher(): LobbyEventPublisher
+
 }

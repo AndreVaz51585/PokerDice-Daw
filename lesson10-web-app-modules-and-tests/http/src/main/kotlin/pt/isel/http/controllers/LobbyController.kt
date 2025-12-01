@@ -1,10 +1,21 @@
 package pt.isel.http.controllers
 
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
 import pt.isel.domain.Game.Lobby.Lobby
+import pt.isel.domain.Game.Lobby.LobbyEvent
+import pt.isel.domain.Game.Lobby.Event.lobbySnapshot
+import pt.isel.domain.Game.Lobby.Event.matchStarting
+import pt.isel.domain.Game.Lobby.Event.playerJoined
+import pt.isel.domain.Game.Lobby.Event.playerLeft
+import pt.isel.domain.Game.Lobby.responses.startedMatch
+import pt.isel.domain.Game.Lobby.responses.succesfullJoin
+import pt.isel.domain.Game.Lobby.responses.sucessfullLeave
 import pt.isel.domain.user.AuthenticatedUser
+import pt.isel.domain.user.Player
 import pt.isel.http.model.lobby.LobbyInput
 import pt.isel.http.model.problem.Problem
 import pt.isel.service.Auxiliary.Either
@@ -13,14 +24,17 @@ import pt.isel.service.Auxiliary.Success
 import pt.isel.service.lobbyService.LobbyService
 import pt.isel.service.lobbyService.LobbyServiceError
 import pt.isel.service.matchService.MatchService
+import java.util.concurrent.TimeUnit
+import kotlin.compareTo
 
 @RestController
+@RequestMapping("/api/lobbies")
 class LobbyController(
     private val lobbyService: LobbyService,
     private val matchService: MatchService
 ) {
 
-    @PostMapping("/api/lobbies")
+    @PostMapping
     fun createLobby(
         @RequestBody input: LobbyInput,
         authenticatedUser: AuthenticatedUser,
@@ -65,7 +79,7 @@ class LobbyController(
     }
 
 
-    @GetMapping("/api/lobbies")
+    @GetMapping
     fun getAllLobbies(): ResponseEntity<*> {
         val lobbies: List<Lobby> = lobbyService.listOpenLobbies(100, 0)
         return ResponseEntity
@@ -74,7 +88,7 @@ class LobbyController(
     }
 
 
-    @GetMapping("/api/lobbies/{id}")
+    @GetMapping("/{id}")
     fun getLobbyById(
         @PathVariable id: Int
     ): ResponseEntity<*> {
@@ -97,80 +111,216 @@ class LobbyController(
         }
     }
 
-    @PostMapping("/api/lobbies/{id}/join")
+
+    @GetMapping("/{id}/events", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
+    fun listenLobbyEvents(@PathVariable id: Int): SseEmitter {
+        val emitter = SseEmitter(TimeUnit.HOURS.toMillis(1))
+
+        // Obter snapshot inicial do lobby
+        when (val lobbyResult = lobbyService.getLobby(id)) {
+            is Success -> {
+                val lobby = lobbyResult.value
+                val players = when (val playersResult = lobbyService.listPlayers(id)) {
+                    is Success -> playersResult.value.map { player -> Player(player.id,player.name) }
+                    is Failure -> emptyList()
+                }
+
+                try {
+                    val snapshot = LobbyEvent.LobbySnapshot(lobby, players)
+                    emitter.send(
+                        SseEmitter.event()
+                            .name("lobby-snapshot")
+                            .data(
+                                lobbySnapshot(
+                                    lobby = snapshot.lobby,
+                                    players = snapshot.players,
+                                    currentCount = snapshot.players.size
+                                )
+                            )
+                    )
+                } catch (ex: Exception) {
+                    emitter.completeWithError(ex)
+                    return emitter
+                }
+            }
+
+            is Failure -> {
+                emitter.completeWithError(IllegalArgumentException("Lobby não encontrado"))
+                return emitter
+            }
+        }
+
+        // Subscrever eventos futuros
+        val unsubscribe = lobbyService.getEventPublisher().subscribe(id) { event ->
+            try {
+                when (event) {
+                    is LobbyEvent.PlayerJoined -> {
+                        emitter.send(
+                            SseEmitter.event()
+                                .name("player-joined")
+                                .data(
+                                    playerJoined(
+                                        player = event.player,
+                                        currentCount = event.currentCount,
+                                        maxPlayers = event.maxPlayers
+                                    )
+                                )
+                        )
+                    }
+
+                    is LobbyEvent.PlayerLeft -> {
+                        emitter.send(
+                            SseEmitter.event()
+                                .name("player-left")
+                                .data(
+                                    playerLeft(
+                                        player = event.player,
+                                        currentCount = event.currentCount
+                                    )
+                                )
+                        )
+                    }
+
+                    is LobbyEvent.MatchStarting -> {
+                        emitter.send(
+                            SseEmitter.event()
+                                .name("match-starting")
+                                .data(
+                                    matchStarting(
+                                        matchId = event.matchId
+                                    )
+                                )
+                        )
+                    }
+
+                    is LobbyEvent.LobbyClosed -> {
+                        emitter.send(
+                            SseEmitter.event()
+                                .name("lobby-closed")
+                                .data(mapOf("reason" to "Host saiu"))
+                        )
+                        emitter.complete()
+                    }
+
+                    is LobbyEvent.TimeoutUpdate -> {
+                        emitter.send(
+                            SseEmitter.event()
+                                .name("timeout-update")
+                                .data(mapOf("remainingSeconds" to event.remainingSeconds))
+                        )
+                    }
+
+                    else -> {}
+                }
+            } catch (ex: Exception) {
+                emitter.completeWithError(ex)
+            }
+        }
+
+        emitter.onCompletion { unsubscribe() }
+        emitter.onTimeout { unsubscribe() }
+        emitter.onError { unsubscribe() }
+
+        return emitter
+    }
+
+    @PostMapping("/{id}/join")
     fun joinLobby(
         @PathVariable id: Int,
-        authenticateUser: AuthenticatedUser
+        authenticatedUser: AuthenticatedUser
     ): ResponseEntity<*> {
-        val userId = authenticateUser.user.id
-        val result: Either<LobbyServiceError, Int> = lobbyService
-            .joinLobby(id, userId)
+        val userId = authenticatedUser.user.id
+        val result: Either<LobbyServiceError, Int> = lobbyService.joinLobby(id, userId)
+
         return when (result) {
-            is Success -> when (result.value) {
-                0 -> ResponseEntity.status(HttpStatus.OK)
-                    .body("Player Added to Lobby") // entrou no lobby mas o lobby não começou
-                else -> {
-                    val matchId = result.value
-                    // Registar engine / state inicial fora da transacção para começar a emitir SSE
-                    matchService.registerBankedMatchFromDb(matchId)
-                    ResponseEntity.status(HttpStatus.CREATED) // aqui não está a fazer o redirect como é suposto porque o status não pode ser da familia 200 mas sim 300 portanto podemos apenas enviar o id da partida....
-                        .header("Location", "/api/matches/$matchId")
-                        .body(mapOf("matchId" to matchId))
-                } // entrou no lobby e o lobby começou
+            is Success -> {
+                val matchId = result.value
+                if (matchId > 0) {
+                    // Match já começou
+                    ResponseEntity.status(HttpStatus.OK).body(
+                        startedMatch(
+                            lobbyId = id,
+                            matchId = matchId,
+                            message = "Partida iniciada com sucesso"
+                        )
+                    )
+                } else {
+                    // Apenas entrou no lobby
+                    ResponseEntity.status(HttpStatus.OK).body(
+                        succesfullJoin(
+                            lobbyId = id,
+                            message = "Entrou no lobby com sucesso"
+                        )
+                    )
+                }
             }
 
             is Failure -> when (result.value) {
-                LobbyServiceError.UserNotFound -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
-                LobbyServiceError.LobbyNotFound -> Problem.LobbyNotFound.response(HttpStatus.NOT_FOUND)
-                LobbyServiceError.LobbyClosed -> Problem.LobbyClosed.response(HttpStatus.BAD_REQUEST)
-                LobbyServiceError.LobbyFull -> Problem.LobbyFull.response(HttpStatus.BAD_REQUEST)
-                LobbyServiceError.ErrorJoiningLobby -> Problem.ErrorJoiningLobby.response(HttpStatus.BAD_REQUEST)
-                LobbyServiceError.AlreadyInLobby -> Problem.AlreadyInLobby.response(HttpStatus.BAD_REQUEST)
-                LobbyServiceError.NotEnoughMoney -> Problem.NotEnoughMoney.response(HttpStatus.BAD_REQUEST)
-                LobbyServiceError.UserAlreadyInAnotherLobby -> Problem.UserAlreadyInAnotherLobby.response((HttpStatus.BAD_REQUEST))
-                else -> Problem.ErrorJoiningLobby.response(HttpStatus.BAD_REQUEST)
+                LobbyServiceError.LobbyNotFound ->
+                    Problem.LobbyNotFound.response(HttpStatus.NOT_FOUND)
+
+                LobbyServiceError.LobbyFull ->
+                    Problem.LobbyFull.response(HttpStatus.BAD_REQUEST)
+
+                LobbyServiceError.AlreadyInLobby ->
+                    Problem.AlreadyInLobby.response(HttpStatus.BAD_REQUEST)
+
+                LobbyServiceError.UserAlreadyInAnotherLobby ->
+                    Problem.UserAlreadyInAnotherLobby.response(HttpStatus.BAD_REQUEST)
+
+                LobbyServiceError.NotEnoughMoney ->
+                    Problem.NotEnoughMoney.response(HttpStatus.BAD_REQUEST)
+
+                else -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
             }
         }
     }
-
-    @PostMapping("/api/lobbies/{id}/leave")
+    @PostMapping("/{id}/leave")
     fun leaveLobby(
         @PathVariable id: Int,
-        authenticateUser: AuthenticatedUser
+        authenticatedUser: AuthenticatedUser
     ): ResponseEntity<*> {
-        val userId = authenticateUser.user.id
-        val left: Either<LobbyServiceError, Boolean> = lobbyService.leaveLobby(id, userId)
+        val userId = authenticatedUser.user.id
+        val result: Either<LobbyServiceError, Boolean> = lobbyService.leaveLobby(id, userId)
 
-        return when (left) {
-            is Success ->
-                ResponseEntity.status(HttpStatus.OK).build<Unit>()
-
-
-            is Failure -> when (left.value) {
-                LobbyServiceError.LobbyNotFound -> Problem.LobbyNotFound.response(HttpStatus.NOT_FOUND)
-                LobbyServiceError.UserIsNotInLobby -> Problem.UserIsNotInLobby.response(HttpStatus.NOT_FOUND)
-                LobbyServiceError.ErrorLeavingLobby -> Problem.ErrorJoiningLobby.response(HttpStatus.BAD_REQUEST)
-
-                else -> Problem.ErrorLeavingLobby.response(HttpStatus.BAD_REQUEST)
+        return when (result) {
+            is Success -> {
+                ResponseEntity.status(HttpStatus.OK).body(
+                    sucessfullLeave(
+                        lobbyId = id,
+                        message = "Saiu do lobby com sucesso",
+                    )
+                )
             }
-
+            is Failure -> when (result.value) {
+                LobbyServiceError.LobbyNotFound ->
+                    Problem.LobbyNotFound.response(HttpStatus.NOT_FOUND)
+                LobbyServiceError.UserIsNotInLobby ->
+                    Problem.UserIsNotInLobby.response(HttpStatus.BAD_REQUEST)
+                else -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
+            }
         }
     }
 
+
     // Listar jogadores de um lobby
-    @GetMapping("/api/lobbies/{id}/players")
+    @GetMapping("/{id}/players")
     fun listPlayers(
         @PathVariable id: Int
     ): ResponseEntity<*> {
         val players = lobbyService.listPlayers(id)
         return when (players) {
-            is Success -> Problem.LobbyNotFound.response(HttpStatus.NOT_FOUND)
+            is Success -> {
+                ResponseEntity.status(HttpStatus.OK).body(
+                    players.value.map { player -> Player(player.id, player.name) }
+                )
+            }
 
             is Failure -> Problem.LobbyNotFound.response(HttpStatus.NOT_FOUND)
         }
     }
 
-    @GetMapping("/api/lobbies/{id}/host")
+    @GetMapping("/{id}/host")
     fun getLobbyHost(
         @PathVariable id: Int
     ): ResponseEntity<*> {

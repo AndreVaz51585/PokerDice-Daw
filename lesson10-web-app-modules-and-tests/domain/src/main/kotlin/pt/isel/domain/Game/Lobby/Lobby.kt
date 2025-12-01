@@ -11,7 +11,7 @@ data class Lobby(
     val minPlayers: Int,
     val maxPlayers: Int,
     val rounds: Int,
-    val ante: Int,                          // número inteiro de “moedas” por ronda
+    val ante: Int,
     var state: LobbyState = LobbyState.OPEN,
 ) {
     init {

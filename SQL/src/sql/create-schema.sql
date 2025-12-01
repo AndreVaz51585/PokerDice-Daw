@@ -56,6 +56,15 @@ CREATE TABLE invitation (
                             CONSTRAINT one_time_use CHECK ((used_by IS NULL) = (used_at IS NULL))
 );
 
+CREATE TABLE wallet (
+                          user_id           BIGINT PRIMARY KEY REFERENCES dbo.users(id) ON DELETE CASCADE,
+                           amount_coins      INTEGER NOT NULL DEFAULT 0,               -- débito < 0, crédito > 0
+                           CHECK (amount_coins >= 0)
+);
+
+CREATE INDEX ix_wallet_user ON wallet(user_id);
+
+
 -- Autenticação por token (header ou cookie é detalhe da app)
 CREATE TABLE auth_token (
                             id                BIGSERIAL PRIMARY KEY,
@@ -102,22 +111,9 @@ CREATE TABLE IF NOT EXISTS lobby_player (
 CREATE INDEX IF NOT EXISTS ix_lobby_player_lobby ON lobby_player(lobby_id);
 CREATE INDEX IF NOT EXISTS ix_lobby_player_user  ON lobby_player(user_id);
 
--- Trigger: ao criar um lobby, inserir automaticamente o host como player
-CREATE OR REPLACE FUNCTION trg_lobby_add_host() RETURNS trigger AS $$
-BEGIN
-  INSERT INTO lobby_player (lobby_id, user_id)
-  VALUES (NEW.id, NEW.lobby_host)
-  ON CONFLICT DO NOTHING;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS lobby_add_host ON lobby;
-CREATE TRIGGER lobby_add_host
-AFTER INSERT ON lobby
-FOR EACH ROW
-EXECUTE FUNCTION trg_lobby_add_host();
-
+-- ===========================
+-- Movimentos/Transações (saldo)
+-- ===========================
 
 
 -- ===========================
@@ -217,16 +213,6 @@ CREATE TABLE Hand (
 
 
 
--- ===========================
--- Movimentos/Transações (saldo)
--- ===========================
-CREATE TABLE wallet (
-                           user_id           BIGINT NOT NULL REFERENCES dbo.users(id) ON DELETE CASCADE,
-                           amount_coins      INTEGER NOT NULL DEFAULT 0,               -- débito < 0, crédito > 0
-                           CHECK (amount_coins >= 0)
-);
-
-CREATE INDEX ix_wallet_user ON wallet(user_id);
 
 -- Persistir snapshot do engine (BankedMatch) para reconstrução / debugging
 CREATE TABLE IF NOT EXISTS match_snapshot (
