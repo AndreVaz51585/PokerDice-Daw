@@ -4,17 +4,17 @@ import { AuthProvider } from "./AuthContext";
  import { Layout } from "./components/layout";
 import { Login } from "./components/login";
 
-/*
-import { Register } from "./components/Register";
-import { UserProfile } from "./components/UserProfile";
-import { LobbiesList } from "./components/LobbiesList";
-import { LobbyDetails } from "./components/LobbyDetails";
-import { CreateLobby } from "./components/CreateLobby";
-import { MatchView } from "./components/MatchView";
-import { WalletView } from "./components/WalletView";
-import { StatisticsView } from "./components/StatisticsView";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-*/
+
+import { Register } from "./components/resgister";
+import { UserProfile } from "./components/userProfile";
+import { LobbiesList } from "./components/lobbiesList";
+import { LobbyDetails } from "./components/lobbyDetails";
+import { CreateLobby } from "./components/createLobby";
+//import { MatchView } from "./components/MatchView";
+import { WalletView } from "./components/walletView";
+import { StatisticsView } from "./components/statisticsView";
+import { ProtectedRoute } from "./components/protectedRoute";
+
 
 const router = createBrowserRouter([
   {
@@ -25,16 +25,18 @@ const router = createBrowserRouter([
         path: "login",
         element: <Login />,
       },
-      /*
+      
       {
         index: true,
         element: <LobbiesList />,
       },
+      
 
       {
         path: "register",
         element: <Register />,
       },
+      
       {
         path: "me",
         element: (
@@ -43,6 +45,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+        
       {
         path: "create-lobby",
         element: (
@@ -51,10 +54,12 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+    
       {
         path: "lobbies/:lobbyId",
         element: <LobbyDetails />,
       },
+        /*
       {
         path: "matches/:matchId",
         element: (
@@ -63,6 +68,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      */
       {
         path: "wallet/:userId",
         element: (
@@ -71,11 +77,12 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+
       {
         path: "statistics/:userId",
         element: <StatisticsView />,
       },
-        */
+        
     ],
   },
 ]);

@@ -15,7 +15,7 @@ export function Layout() {
     <div className="layout-container">
       <nav className="layout-nav">
         <div className="layout-nav-left">
-          <h1 className="layout-nav-title">🎲 Poker Dice</h1>
+          <h1 className="layout-nav-title">🎲 Chelas Poker Dice</h1>
           <div className="layout-nav-links">
             <Link to="/" className="layout-nav-link">
               Lobbies

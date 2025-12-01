@@ -54,7 +54,7 @@ export interface Lobby {
   name: string;
   description: string;
   hostUserId: number;
-  players: number[];
+  players?: number[];
   minPlayers: number;
   maxPlayers: number;
   rounds: number;
@@ -62,7 +62,7 @@ export interface Lobby {
   state: LobbyState;
 }
 
-export type LobbyState = "OPEN" | "CLOSED" | "IN_GAME";
+export type LobbyState = "OPEN" | "FULL" | "STARTED";
 
 export interface LobbyInput {
   name: string;
@@ -125,7 +125,7 @@ export interface Combination {
 }
 
 // Round types
-export type RoundState = "BETTING" | "PLAYING" | "SHOWDOWN" | "COMPLETED";
+export type RoundState = "OPEN" | "SCORING" | "CLOSED";
 
 export interface Round {
   id: number;
@@ -135,7 +135,7 @@ export interface Round {
 }
 
 // Game phase types
-export type GamePhase = "WAITING" | "IN_PROGRESS" | "FINISHED";
+export type GamePhase = "LOBBY" | "ROLLING" | "FINISHED";
 
 // SSE Match Event types
 export interface MatchSnapshot {
