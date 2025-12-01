@@ -1,19 +1,19 @@
 @base = http://localhost:8080
-@tokenteste1 = EmTJar9XmpGpwx3e1Hbi4njmSNR5RyK9vgvsLuZtk8U=
-@tokenteste2 = cDR15SIt_cFTsCuCQE1rXWr0bFJeYaqC7xLoqN0gDdY=
-@tokenteste3 = Fep2vJnSn152fklxa6--HX73_iJlgQy0NbUv2wZl9dI=
-@tokenteste4 = aSwAsJmkvSeUq0mNrT4BqUXhqA7dVww9SVgBYBrfpkg=
-@tokenteste5 = eTpnlbiQZJ6qufsMES7KEeb7iYxFRNzpCcXrmYBaigM=
+@tokenteste1 = m5-l5zOA15T4wlSm5-yqZ4r7WK8c6XBcTjD_yAxTzBk=
+@tokenteste2 = IUbHPphWSGovl4Rr86d7d-uxgdAFvwKEG9RIaJWeMDk=
+@tokenteste3 = lAORqSPEJbWLe2qg6GaLEM7kbXyFnV1UkIDGvv1VUyQ=
+@tokenteste4 = xljXJAXzdsn98-cfi_M6lYm-t05LIW2RmGEQ30GR654=
+@tokenteste5 = WeS1to8r9T6i2W0_DMTWnQhzzdDIfxYUe558MzY0aD0=
 
-@invitatioCode = qx4CH1fcdB0
+@invitatioCode = d8_4j57YPbA
 
 ### Registar um novo utilizador sem código de convite
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste2",
-  "email": "test2@gmail.com",
+  "name": "teste1",
+  "email": "test1@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -27,10 +27,10 @@ POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste4",
-  "email": "test4@gmail.com",
+  "name": "teste3",
+  "email": "test3@gmail.com",
   "password": "minhaSenhaSegura",
-  "invitationCode": "{{invitatioCode}}"
+  "invitationCode": "bRgubx1LbFs"
 }
 
 ### Obter token de autenticação
@@ -38,17 +38,17 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test4@gmail.com",
+  "email": "test3@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
 ### Obter User
 GET http://localhost:8080/api/me
 content-type: application/json
-Authorization: bearer {{tokenteste2}}
+Authorization: bearer {{tokenteste4}}
 
 ### Apagar User
-DELETE http://localhost:8080/api/users/2
+DELETE http://localhost:8080/api/users/3
 content-type: application/json
 
 ### Listar todos os users
@@ -58,40 +58,37 @@ content-type: application/json
 ### Criar um lobby
 POST http://localhost:8080/api/lobbies
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{tokenteste3}}
 
 {
-  "name": "teste Jogo",
+  "name": "teste Jogo web",
   "description": "Descrição do lobby",
   "minPlayers": 2,
-  "maxPlayers": 3,
+  "maxPlayers": 2,
   "rounds": 3,
-  "ante": 5
+  "ante": 10
 }
 
 ### Listar todos os lobbies
 GET http://localhost:8080/api/lobbies
 
 ### Obter lobby por ID
-GET http://localhost:8080/api/lobbies/9
+GET http://localhost:8080/api/lobbies/6
 
-###  Abrir ligação SSE (mantém stream)
-GET {{base}}/api/lobbies/1/events
-Accept: text/event-stream
 
 ### Juntar-se a um lobby
-POST http://localhost:8080/api/lobbies/1/join
-Content-Type: application/json
-Authorization: Bearer {{tokenteste4}}
-
-
-### Sair de um lobby
-POST http://localhost:8080/api/lobbies/9/leave
+POST http://localhost:8080/api/lobbies/6/join
 Content-Type: application/json
 Authorization: Bearer {{tokenteste3}}
 
+
+### Sair de um lobby
+POST http://localhost:8080/api/lobbies/6/leave
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
 ### Listar jogadores de um lobby
-GET http://localhost:8080/api/lobbies/7/players
+GET http://localhost:8080/api/lobbies/6/players
 
 ### Obter host do lobby
 GET http://localhost:8080/api/lobbies/4/host
@@ -261,17 +258,17 @@ GET {{base}}/api/wallets
 ### Deposit
 POST {{base}}/api/wallets/5/deposit
 Content-Type: application/json
-Authorization: Bearer {{tokenteste4}}
+Authorization: Bearer {{tokenteste3}}
 
 {
-  "amount": 20
+  "amount": 10
 
 }
 
 ### Withdraw
-POST {{base}}/api/wallets/2/withdraw
+POST {{base}}/api/wallets/6/withdraw
 Content-Type: application/json
-Authorization: Bearer {{tokenteste5}}
+Authorization: Bearer {{tokenteste1}}
 
 {
   "amount": 10
@@ -282,10 +279,10 @@ Authorization: Bearer {{tokenteste5}}
 GET {{base}}/api/statistics
 
 ### Get Statistics
-GET {{base}}/api/statistics/3
+GET {{base}}/api/statistics/6
 
 ### Inc games played
 GET {{base}}/api/statistics/1/inc_games_played
 
-### Inc
+### Inc games won
 GET {{base}}/api/statistics/1/inc_games_won
