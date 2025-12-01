@@ -38,7 +38,7 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test5@gmail.com",
+  "email": "test2@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
