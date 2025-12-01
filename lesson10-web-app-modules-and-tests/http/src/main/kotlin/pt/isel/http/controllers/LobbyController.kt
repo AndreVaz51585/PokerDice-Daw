@@ -31,7 +31,6 @@ import kotlin.compareTo
 @RequestMapping("/api/lobbies")
 class LobbyController(
     private val lobbyService: LobbyService,
-    private val matchService: MatchService
 ) {
 
     @PostMapping

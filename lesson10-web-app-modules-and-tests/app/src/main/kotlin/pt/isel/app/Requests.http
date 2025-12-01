@@ -76,19 +76,19 @@ GET http://localhost:8080/api/lobbies
 GET http://localhost:8080/api/lobbies/9
 
 ###  Abrir ligação SSE (mantém stream)
-GET {{base}}/api/lobbies/1/events
+GET {{base}}/api/lobbies/3/events
 Accept: text/event-stream
 
 ### Juntar-se a um lobby
-POST http://localhost:8080/api/lobbies/1/join
+POST http://localhost:8080/api/lobbies/4/join
 Content-Type: application/json
 Authorization: Bearer {{tokenteste4}}
 
 
 ### Sair de um lobby
-POST http://localhost:8080/api/lobbies/9/leave
+POST http://localhost:8080/api/lobbies/3/leave
 Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{tokenteste4}}
 
 ### Listar jogadores de um lobby
 GET http://localhost:8080/api/lobbies/7/players
@@ -103,23 +103,70 @@ GET http://localhost:8080/api/matches/1/players
 GET http://localhost:8080/api/matches
 
 ### Obter detalhes de uma partida
-GET http://localhost:8080/api/matches/1
+GET http://localhost:8080/api/matches/4
 
 ### 7) Abrir ligação SSE (mantém stream)
-GET {{base}}/api/matches/sse/1/events
+GET {{base}}/api/matches/4/events
 Accept: text/event-stream
 
-### 8) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/1/events
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/4/commands
 Content-Type: application/json
-Authorization: Bearer {{tokenteste5}}
+Authorization: Bearer {{tokenteste2}}
 
 {
   "action": "roll"
 }
 
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/4/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+{
+  "action": "finish-turn"
+}
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/4/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste3}}
+
+{
+  "action": "roll"
+}
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/4/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste3}}
+
+{
+  "action": "finish-turn"
+}
+
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/4/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste4}}
+
+{
+  "action": "roll"
+}
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/4/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste4}}
+
+{
+  "action": "finish-turn"
+}
+
+
 ### 9) Enviar um comando para a partida (gera evento)
-POST {{base}}/api/matches/sse/1/events
+POST {{base}}/api/matches/1/commands
 Content-Type: application/json
 Authorization: Bearer {{tokenteste5}}
 

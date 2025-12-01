@@ -1,131 +1,130 @@
 package pt.isel.http.controllers
 
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import pt.isel.domain.Game.Match.Match
-import pt.isel.domain.Game.Match.MatchState
-import pt.isel.http.model.match.MatchInput
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import pt.isel.domain.Game.Hand
+import pt.isel.domain.Game.Hand.Companion.getCombination
+import pt.isel.domain.Game.Match.MatchEvent
+import pt.isel.domain.Game.Match.responses.DiceHold
+import pt.isel.domain.Game.Match.responses.DiceRoll
+import pt.isel.domain.Game.pokerDice.Command
+import pt.isel.domain.user.AuthenticatedUser
 import pt.isel.http.model.problem.Problem
-import pt.isel.service.Auxiliary.Either
-import pt.isel.service.Auxiliary.Failure
-import pt.isel.service.Auxiliary.Success
-import pt.isel.service.matchService.MatchService
-import pt.isel.service.matchService.MatchServiceError
+import pt.isel.service.Auxiliary.*
+import pt.isel.service.matchService.*
+import java.util.concurrent.TimeUnit
 
 @RestController
+@RequestMapping("/api/matches")
 class MatchController(
-    private val matchService: MatchService
+    private val matchService: MatchService,
+    private val matchManager: MatchManager,
+    private val sseMatchService: sseMatchService
 ) {
-    @PostMapping("/api/matches")
-    fun createMatch(
-        @RequestBody input: MatchInput
+
+
+    @GetMapping("/{matchId}/events", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
+    fun listenMatch(@PathVariable matchId: Int): SseEmitter {
+        val emitter = SseEmitter(TimeUnit.HOURS.toMillis(1))
+
+        // Enviar snapshot inicial
+        matchManager.get(matchId)?.snapshot()?.let { banked ->
+            try {
+                val snapshot = MatchEvent.MatchSnapshot(
+                    matchId = banked.matchId,
+                    currentRoundNumber = banked.game.rounds.size,
+                    playerOrder = banked.game.playerOrder,
+                    currentPlayer = banked.game.players[banked.game.currentPlayerIndex]?.userId!!
+                )
+                emitter.send(SseEmitter.event()
+                    .name("match-snapshot")
+                    .id("$matchId")
+                    .data(snapshot))
+            } catch (_: Exception) {}
+        }
+
+        // Subscrever eventos
+        val unsubscribe = matchService.getEventPublisher().subscribe(matchId) { event ->
+            try {
+                val eventType = when (event) {
+                    is MatchEvent.TurnChange -> "turn-change"
+                    is MatchEvent.RoundSummary -> "round-complete"
+                    is MatchEvent.GameEndPayload -> "game-end"
+                    is MatchEvent.MatchSnapshot -> "match-snapshot"
+                    else -> return@subscribe
+                }
+                emitter.send(SseEmitter.event().name(eventType).data(event))
+            } catch (ex: Exception) {
+                emitter.completeWithError(ex)
+            }
+        }
+
+        emitter.onCompletion { unsubscribe() }
+        emitter.onTimeout { unsubscribe() }
+
+        return emitter
+    }
+
+
+    @PostMapping("/{matchId}/commands", consumes = [MediaType.APPLICATION_JSON_VALUE])
+    fun executeCommand(
+        @PathVariable matchId: Int,
+        authenticatedUser: AuthenticatedUser,
+        @RequestBody body: Map<String, String>
     ): ResponseEntity<*> {
-        val result: Either<MatchServiceError, Match> = matchService.createMatch(
-            lobbyId = input.lobbyId,
-            totalRounds = input.totalRounds,
-            ante = input.ante,
-        )
+        val rawType = sseMatchService.getRawTypeFromBody(body)
+            ?: return Problem.InvalidBodyParameters.response(HttpStatus.BAD_REQUEST)
 
-        return when (result) {
-            is Success ->
-                ResponseEntity
-                    .status(HttpStatus.CREATED)
-                    .header(
-                        "Location",
-                        "/api/matches/${result.value.id}",
-                    ).build<Unit>()
+        val indices = sseMatchService.getIndicesFromBody(body)
+        val userId = authenticatedUser.user.id
 
+
+        val cmdResult = sseMatchService.executeComand(rawType, userId, indices)
+        if (cmdResult is Failure) {
+            return when (cmdResult.value) {
+                MatchServiceError.CommandUnknown -> Problem.CommandUnknown.response(HttpStatus.BAD_REQUEST)
+                MatchServiceError.CommandInvalidIndices -> Problem.InvalidIndices.response(HttpStatus.BAD_REQUEST)
+                else -> Problem.Unknown.response(HttpStatus.BAD_REQUEST)
+            }
+        }
+
+        val cmd = (cmdResult as Success).value
+
+
+        return when (val result = matchService.applyCommand(matchId, cmd)) {
+            is Success -> {
+                val banked = result.value
+                val player = banked.game.players[userId]
+
+                ResponseEntity.ok(when (cmd) {
+                    is Command.Roll -> DiceRoll(
+                        dices = player?.dice,
+                        rerollsLeft = player!!.rerollsLeft,
+                        hand = Hand(player.dice).getCombination().first.toString()
+                    )
+                    is Command.Hold -> DiceHold(
+                        dices = player?.dice,
+                        heldIndices = player!!.held,
+                        rerollsLeft = player.rerollsLeft,
+                    )
+                    else -> mapOf("status" to "command executed successfully")
+                })
+            }
             is Failure -> when (result.value) {
-                MatchServiceError.PlayerNotFound -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
-                MatchServiceError.InvalidState -> Problem.InvalidRequest.response(HttpStatus.BAD_REQUEST)
-                MatchServiceError.PlayerAlreadyInMatch -> Problem.AlreadyInMatch.response(HttpStatus.BAD_REQUEST)
-                MatchServiceError.MatchFull -> Problem.MatchFull.response(HttpStatus.BAD_REQUEST)
-                MatchServiceError.Unknown -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
-                else -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
+                MatchServiceError.NotYourTurn -> Problem.NotYourTurn.response(HttpStatus.BAD_REQUEST)
+                else -> Problem.Unknown.response(HttpStatus.BAD_REQUEST)
             }
         }
     }
 
-    @GetMapping("/api/matches/{id}")
-    fun getMatchById(
-        @PathVariable id: Int
-    ): ResponseEntity<*> {
-        val result: Either<MatchServiceError, Match> = matchService.getMatch(id)
-
-        return when (result) {
-            is Success ->
-                ResponseEntity
-                    .status(HttpStatus.OK)
-                    .body(result.value)
-
+    @GetMapping("/{matchId}")
+    fun getMatch(@PathVariable matchId: Int): ResponseEntity<*> {
+        return when (val result = matchService.getMatch(matchId)) {
+            is Success -> ResponseEntity.ok(result.value)
             is Failure -> Problem.MatchNotFound.response(HttpStatus.NOT_FOUND)
-        }
-    }
-
-    @GetMapping("/api/matches")
-    fun getMatches(): ResponseEntity<*> {
-        // Como não há um método específico para listar todas as partidas,
-        // você pode precisar implementar isso no MatchService
-        return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(emptyList<Match>()) // Implementação temporária
-    }
-
-    @GetMapping("/api/matches/{id}/players")
-    fun getMatchPlayers(
-        @PathVariable id: Int
-    ): ResponseEntity<*> {
-        val matchResult = matchService.getMatch(id)
-        if (matchResult is Failure) {
-            return Problem.MatchNotFound.response(HttpStatus.NOT_FOUND)
-        }
-
-        val players = matchService.listPlayers(id)
-        return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(players)
-    }
-
-    @PostMapping("/api/matches/{id}/start")
-    fun startMatch(
-        @PathVariable id: Int
-    ): ResponseEntity<*> {
-        val matchResult = matchService.getMatch(id)
-        if (matchResult is Failure) {
-            return Problem.MatchNotFound.response(HttpStatus.NOT_FOUND)
-        }
-
-        val result = matchService.updateState(id, MatchState.RUNNING)
-
-        return when (result) {
-            is Success -> ResponseEntity.status(HttpStatus.OK).build<Unit>()
-            is Failure -> when (result.value) {
-                MatchServiceError.InvalidState -> Problem.InvalidRequest.response(HttpStatus.BAD_REQUEST)
-                is MatchServiceError.Unknown -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
-                else -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
-            }
-        }
-    }
-
-    @PostMapping("/api/matches/{id}/end")
-    fun endMatch(
-        @PathVariable id: Int
-    ): ResponseEntity<*> {
-        val matchResult = matchService.getMatch(id)
-        if (matchResult is Failure) {
-            return Problem.MatchNotFound.response(HttpStatus.NOT_FOUND)
-        }
-
-        val result = matchService.updateState(id, MatchState.FINISHED)
-
-        return when (result) {
-            is Success -> ResponseEntity.status(HttpStatus.OK).build<Unit>()
-            is Failure -> when (result.value) {
-                MatchServiceError.InvalidState -> Problem.InvalidRequest.response(HttpStatus.BAD_REQUEST)
-                is MatchServiceError.Unknown -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
-                else -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
-            }
         }
     }
 }

@@ -49,7 +49,6 @@ class sseMatchService {
                 "roll" -> Command.Roll(userId)
                 "hold" -> Command.Hold(userId, indices)
                 "finish-turn" -> Command.FinishTurn(userId)
-                "next-round" -> Command.NextRound(userId)
                 else -> return failure(MatchServiceError.CommandUnknown)
             }
 

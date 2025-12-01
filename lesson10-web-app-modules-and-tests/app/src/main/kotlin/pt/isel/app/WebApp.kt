@@ -21,6 +21,8 @@ import pt.isel.mapper.PasswordValidationInfoMapper
 import pt.isel.mapper.TokenValidationInfoMapper
 import pt.isel.repo.*
 import pt.isel.repo.jdbi.*
+import pt.isel.service.matchService.MatchEventPublisher
+import pt.isel.service.matchService.MatchEventPublisherImp
 import pt.isel.service.matchService.MatchManager
 import pt.isel.service.matchService.MatchService
 import pt.isel.service.statisticsService.StatisticsService
@@ -90,15 +92,25 @@ class WebApp {
     fun matchManager(): MatchManager = MatchManager()
 
     @Bean
+    fun eventPublisher(): MatchEventPublisher = MatchEventPublisherImp()
+
+    @Bean
     fun matchService(
+        repoLobby: RepositoryLobby,
         repoMatch: RepositoryMatch,
+        walletService: WalletService,
         trxManager: TransactionManager,
         matchManager: MatchManager,
-        repoLobby: RepositoryLobby,
-        walletService: WalletService
-    ): MatchService {
-        return MatchServiceImpl(repoLobby,repoMatch, walletService ,trxManager, matchManager)
-    }
+        eventPublisher: MatchEventPublisher
+    ): MatchService = MatchServiceImpl(
+        repoLobby,
+        repoMatch,
+        walletService,
+        trxManager,
+        matchManager,
+        eventPublisher
+    )
+
 
     @Bean
     fun usersDomainConfig() =

@@ -15,6 +15,7 @@ repositories {
 
 dependencies {
     api(project(":lesson10-web-app-modules-and-tests:service"))
+    api(project(":lesson10-web-app-modules-and-tests:domain"))
 
     // To use Spring MVC
     implementation("org.springframework:spring-webmvc:6.2.11")
