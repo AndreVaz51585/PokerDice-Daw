@@ -105,11 +105,11 @@ export function Register() {
   return (
     <div className="register-container">
       <div className="register-card">
-        <h2>Registar</h2>
+        <h2>Register</h2>
         <form onSubmit={handleSubmit}>
           <div className="register-form-group">
             <label className="register-form-label">
-              Nome:
+              Name:
               <input
                 type="text"
                 value={state.name}
@@ -169,7 +169,7 @@ export function Register() {
           </div>
           <div className="register-form-group">
             <label className="register-form-label">
-              Código de Convite:
+              Invitation Code:
               <input
                 type="text"
                 value={state.invitationCode}
@@ -192,7 +192,7 @@ export function Register() {
             disabled={state.stage === "posting"}
             className="register-submit-btn"
           >
-            {state.stage === "posting" ? "A registar..." : "Registar"}
+            {state.stage === "posting" ? "Registering..." : "Register"}
           </button>
         </form>
       </div>

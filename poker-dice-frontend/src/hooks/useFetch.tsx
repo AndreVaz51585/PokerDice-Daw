@@ -1,14 +1,14 @@
 import { useEffect, useReducer } from "react";
 import { fetchApi } from "../api";
 
-// Generic State type
+// State type
 type State<T> =
   | { type: "begin" }
   | { type: "loading"; url: string }
   | { type: "loaded"; payload: T; url: string }
   | { type: "error"; error: Error; url: string };
 
-// Generic Action type
+// Action type
 type Action<T> =
   | { type: "load"; url: string }
   | { type: "success"; payload: T; url: string }
@@ -20,7 +20,7 @@ function unexpectedAction<T>(action: Action<T>, state: State<T>) {
   return state;
 }
 
-// Generic reducer
+// reducer
 function reducer<T>(state: State<T>, action: Action<T>): State<T> {
   switch (action.type) {
     case "reset":

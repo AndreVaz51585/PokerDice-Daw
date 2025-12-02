@@ -137,7 +137,7 @@ export interface Round {
 // Game phase types
 export type GamePhase = "LOBBY" | "ROLLING" | "FINISHED";
 
-// SSE Match Event types
+// SSE Event types
 export interface MatchSnapshot {
   matchId: number;
   game: GameState;
@@ -146,6 +146,16 @@ export interface MatchSnapshot {
   eventType: string;
   eventId: string;
 }
+
+export interface LobbySnapshot {
+  matchId: number;
+  game: GameState;
+  wallets: { [userId: number]: Wallet };
+  currentPlayerId: number | null;
+  eventType: string;
+  eventId: string;
+}
+
 
 export interface GameState {
   phase: GamePhase;

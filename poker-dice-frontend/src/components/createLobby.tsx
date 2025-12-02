@@ -117,11 +117,11 @@ export function CreateLobby() {
   return (
     <div className="create-lobby-container">
       <div className="create-lobby-card">
-        <h2>Criar Novo Lobby</h2>
+        <h2>Create New Lobby</h2>
         <form onSubmit={handleSubmit}>
           <div className="create-lobby-form-group">
             <label className="create-lobby-form-label">
-              Nome do Lobby:
+              Lobby Name:
               <input
                 type="text"
                 value={state.name}
@@ -138,14 +138,14 @@ export function CreateLobby() {
                 }
                 required
                 className="create-lobby-form-input"
-                placeholder="Ex: Sala de Poker #1"
+                placeholder="Ex: Poker Room #1"
               />
             </label>
           </div>
 
           <div className="create-lobby-form-group">
             <label className="create-lobby-form-label">
-              Descrição:
+               Description:
               <textarea
                 value={state.description}
                 onChange={(e) =>
@@ -160,7 +160,7 @@ export function CreateLobby() {
                   })
                 }
                 className="create-lobby-form-textarea"
-                placeholder="Descreva o seu lobby..."
+                placeholder="Describe your lobby..."
               />
             </label>
           </div>
@@ -168,7 +168,7 @@ export function CreateLobby() {
           <div className="create-lobby-form-row">
             <div className="create-lobby-form-group">
               <label className="create-lobby-form-label">
-                Mínimo de Jogadores:
+                Minimum Players:
                 <input
                   type="number"
                   value={state.minPlayers}
@@ -193,7 +193,7 @@ export function CreateLobby() {
 
             <div className="create-lobby-form-group">
               <label className="create-lobby-form-label">
-                Máximo de Jogadores:
+                Maximum Players:
                 <input
                   type="number"
                   value={state.maxPlayers}
@@ -220,7 +220,7 @@ export function CreateLobby() {
           <div className="create-lobby-form-row">
             <div className="create-lobby-form-group">
               <label className="create-lobby-form-label">
-                Número de Rondas:
+                Number of Rounds:
                 <input
                   type="number"
                   value={state.rounds}

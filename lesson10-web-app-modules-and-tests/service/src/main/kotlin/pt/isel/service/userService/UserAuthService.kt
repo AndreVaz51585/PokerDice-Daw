@@ -100,6 +100,10 @@ class UserAuthService(
         // Logic for the first user (no invitation needed)
         val passwordValidationInfo = createPasswordValidationInformation(password)
         val user = repoUsers.createUser(name, email, passwordValidationInfo, null)
+
+        walletService.createWallet(user.id)
+        statisticService.createStatistics(user.id)
+
         return success(user)
     }
 

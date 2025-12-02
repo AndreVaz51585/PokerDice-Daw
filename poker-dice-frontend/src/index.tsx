@@ -1,7 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { AuthProvider } from "./AuthContext";
- import { Layout } from "./components/layout";
+import { Layout } from "./components/layout";
 import { Login } from "./components/login";
 
 
@@ -10,7 +10,7 @@ import { UserProfile } from "./components/userProfile";
 import { LobbiesList } from "./components/lobbiesList";
 import { LobbyDetails } from "./components/lobbyDetails";
 import { CreateLobby } from "./components/createLobby";
-//import { MatchView } from "./components/MatchView";
+import { MatchView } from "./components/matchView";
 import { WalletView } from "./components/walletView";
 import { StatisticsView } from "./components/statisticsView";
 import { ProtectedRoute } from "./components/protectedRoute";
@@ -59,7 +59,7 @@ const router = createBrowserRouter([
         path: "lobbies/:lobbyId",
         element: <LobbyDetails />,
       },
-        /*
+        
       {
         path: "matches/:matchId",
         element: (
@@ -68,7 +68,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      */
+      
       {
         path: "wallet/:userId",
         element: (
