@@ -1,8 +1,8 @@
 @base = http://localhost:8080
 @tokenteste1 = EmTJar9XmpGpwx3e1Hbi4njmSNR5RyK9vgvsLuZtk8U=
-@tokenteste2 = s4F6VUkk8OxJQP9ndcf3dzy1KQ8AeCepUxE1pO1cVY4=
-@tokenteste3 = ftty4jtGhdN71VR_nCikjUI04vb-8IKDqG0vDr3HvKM=
-@tokenteste4 = 2nJkVBxwrUSGaSeEnYlUQTm55sQxlfvbi3Q696qxAOQ=
+@tokenteste2 = JpSLKm3KNx9ARPObSQScqmj9ddhxCSzT4CrYyhrZMts=
+@tokenteste3 = wBFfpC6qEhlq4S5MLJELW_v4onCRi8_zu7rDQH4Bfl4=
+@tokenteste4 = bkfuboshN67TLGPyCb2HRwcwh5k4hAtBtV1PYR7L-TQ=
 @tokenteste5 = rD0UeK6R68CnwQettuKuw7OHKg3PHEKOybwdvhivYdQ=
 
 @invitatioCode = ugk7pgOjG1c
@@ -38,7 +38,7 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test5@gmail.com",
+  "email": "test4@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -55,10 +55,15 @@ content-type: application/json
 GET http://localhost:8080/api/users
 content-type: application/json
 
+### ficar à escuta no stream de eventos SSE (todos os lobbies)
+GET {{base}}/api/lobbies/events
+Accept: text/event-stream
+
+
 ### Criar um lobby
 POST http://localhost:8080/api/lobbies
 Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{tokenteste4}}
 
 {
   "name": "teste Jogo",
@@ -76,19 +81,19 @@ GET http://localhost:8080/api/lobbies
 GET http://localhost:8080/api/lobbies/9
 
 ###  Abrir ligação SSE (mantém stream)
-GET {{base}}/api/lobbies/1/events
+GET {{base}}/api/lobbies/6/events
 Accept: text/event-stream
 
 ### Juntar-se a um lobby
-POST http://localhost:8080/api/lobbies/1/join
+POST http://localhost:8080/api/lobbies/6/join
 Content-Type: application/json
-Authorization: Bearer {{tokenteste5}}
+Authorization: Bearer {{tokenteste2}}
 
 
 ### Sair de um lobby
-POST http://localhost:8080/api/lobbies/3/leave
+POST http://localhost:8080/api/lobbies/5/leave
 Content-Type: application/json
-Authorization: Bearer {{tokenteste4}}
+Authorization: Bearer {{tokenteste3}}
 
 ### Listar jogadores de um lobby
 GET http://localhost:8080/api/lobbies/7/players

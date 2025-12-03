@@ -5,6 +5,8 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter
+import pt.isel.domain.Game.GlobalLobby.GlobalLobbyEvent
+import pt.isel.domain.Game.GlobalLobby.responses.lobbyDeleted
 import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.Game.Lobby.LobbyEvent
 import pt.isel.domain.Game.Lobby.Event.lobbySnapshot
@@ -23,15 +25,74 @@ import pt.isel.service.Auxiliary.Failure
 import pt.isel.service.Auxiliary.Success
 import pt.isel.service.lobbyService.LobbyService
 import pt.isel.service.lobbyService.LobbyServiceError
-import pt.isel.service.matchService.MatchService
 import java.util.concurrent.TimeUnit
-import kotlin.compareTo
 
 @RestController
 @RequestMapping("/api/lobbies")
 class LobbyController(
     private val lobbyService: LobbyService,
 ) {
+
+    @GetMapping("/events", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
+    fun listenGlobalLobbyEvents(): SseEmitter {
+        val emitter = SseEmitter(TimeUnit.HOURS.toMillis(1))
+
+        val unsubscribe = lobbyService.getGlobalLobbyEventPublisher().subscribe { event ->
+            try {
+                when (event) {
+                    is GlobalLobbyEvent.lobbyCreated -> {
+                        emitter.send(
+                            SseEmitter.event()
+                                .name("lobby-created")
+                                .data(
+                                    Lobby(
+                                        id = event.lobby.id,
+                                        name = event.lobby.name,
+                                        description = event.lobby.description,
+                                        lobbyHost = event.lobby.lobbyHost,
+                                        minPlayers = event.lobby.minPlayers,
+                                        maxPlayers = event.lobby.maxPlayers,
+                                        rounds = event.lobby.rounds,
+                                        ante = event.lobby.ante,
+                                        state = event.lobby.state
+                                    )
+                                )
+                        )
+                    }
+
+                    is GlobalLobbyEvent.lobbyRemoved -> {
+                        emitter.send(
+                            SseEmitter.event()
+                                .name("lobby-deleted")
+                                .data(lobbyDeleted(
+                                    lobbyId = event.lobbyId,
+                                    message = "Lobby foi removido"
+                                ))
+                        )
+                    }
+                }
+            } catch (ex: Exception) {
+                emitter.completeWithError(ex)
+            }
+        }
+        val heartBeat = setupHeartbeat(emitter)
+
+        emitter.onCompletion {
+            unsubscribe()
+            heartBeat.shutdown()
+        }
+        emitter.onTimeout {
+            unsubscribe()
+            heartBeat.shutdown()
+        }
+        emitter.onError {
+            unsubscribe()
+            heartBeat.shutdown()
+        }
+
+        return emitter
+    }
+
 
     @PostMapping
     fun createLobby(
@@ -150,7 +211,7 @@ class LobbyController(
         }
 
         // Subscrever eventos futuros
-        val unsubscribe = lobbyService.getEventPublisher().subscribe(id) { event ->
+        val unsubscribe = lobbyService.getLobbyEventPublisher().subscribe(id) { event ->
             try {
                 when (event) {
                     is LobbyEvent.PlayerJoined -> {
@@ -214,11 +275,25 @@ class LobbyController(
             } catch (ex: Exception) {
                 emitter.completeWithError(ex)
             }
+
+
+
         }
 
-        emitter.onCompletion { unsubscribe() }
-        emitter.onTimeout { unsubscribe() }
-        emitter.onError { unsubscribe() }
+        val heartBeat = setupHeartbeat(emitter)
+
+        emitter.onCompletion {
+            unsubscribe()
+            heartBeat.shutdown()
+        }
+        emitter.onTimeout {
+            unsubscribe()
+            heartBeat.shutdown()
+        }
+        emitter.onError {
+            unsubscribe()
+            heartBeat.shutdown()
+        }
 
         return emitter
     }

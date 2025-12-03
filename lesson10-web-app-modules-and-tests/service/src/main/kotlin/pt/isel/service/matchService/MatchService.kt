@@ -6,7 +6,6 @@ import pt.isel.domain.Game.Match.MatchState
 import pt.isel.domain.Game.money.BankedMatch
 import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.service.Auxiliary.Either
-import pt.isel.service.lobbyService.LobbyEventPublisher
 import pt.isel.service.match.BankedGameMatchEngine
 
 interface MatchService {

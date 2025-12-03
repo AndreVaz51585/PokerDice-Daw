@@ -1,4 +1,4 @@
-package pt.isel.service.lobbyService
+package pt.isel.service.lobbyService.Lobby
 
 import org.springframework.stereotype.Service
 import pt.isel.domain.Game.Lobby.LobbyEvent

@@ -3,6 +3,8 @@ package pt.isel.service.lobbyService
 import pt.isel.domain.Game.Lobby.Lobby
 import pt.isel.domain.user.User
 import pt.isel.service.Auxiliary.Either
+import pt.isel.service.lobbyService.GlobalLobby.GlobalLobbyEventPublisher
+import pt.isel.service.lobbyService.Lobby.LobbyEventPublisher
 
 interface LobbyService {
 
@@ -30,6 +32,8 @@ interface LobbyService {
 
     fun startMatch(lobbyId: Int): Either<LobbyServiceError, Int?>
 
-    fun getEventPublisher(): LobbyEventPublisher
+    fun getLobbyEventPublisher(): LobbyEventPublisher
+
+    fun getGlobalLobbyEventPublisher(): GlobalLobbyEventPublisher
 
 }
