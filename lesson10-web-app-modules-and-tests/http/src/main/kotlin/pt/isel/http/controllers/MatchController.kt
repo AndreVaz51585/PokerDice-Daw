@@ -25,7 +25,6 @@ class MatchController(
     private val sseMatchService: sseMatchService
 ) {
 
-
     @GetMapping("/{matchId}/events", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun listenMatch(@PathVariable matchId: Int): SseEmitter {
         val emitter = SseEmitter(TimeUnit.HOURS.toMillis(1))
@@ -37,14 +36,20 @@ class MatchController(
                     matchId = banked.matchId,
                     currentRoundNumber = banked.game.rounds.size,
                     playerOrder = banked.game.playerOrder,
-                    currentPlayer = banked.game.players[banked.game.currentPlayerIndex]?.userId!!
+                    currentPlayer = banked.game.playerOrder[banked.game.currentPlayerIndex],
                 )
                 emitter.send(SseEmitter.event()
                     .name("match-snapshot")
                     .id("$matchId")
                     .data(snapshot))
-            } catch (_: Exception) {}
+            } catch (ex: Exception) {
+                println("Error in listenMatch: ${ex.message}")
+                ex.printStackTrace()
+                emitter.completeWithError(ex)
+            }
+
         }
+
 
         // Subscrever eventos
         val unsubscribe = matchService.getEventPublisher().subscribe(matchId) { event ->
