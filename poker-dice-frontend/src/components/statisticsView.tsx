@@ -55,7 +55,7 @@ export function StatisticsView() {
         if (err instanceof ApiError) {
           dispatch({ type: "error", error: err.message });
         } else {
-          dispatch({ type: "error", error: "Erro ao carregar estatísticas" });
+          dispatch({ type: "error", error: "Error loading statistics" });
         }
       }
     }
@@ -64,13 +64,13 @@ export function StatisticsView() {
   }, [userId]);
 
   if (state.isLoading) {
-    return <div className="statistics-loading">A carregar estatísticas...</div>;
+    return <div className="statistics-loading">Loading statistics...</div>;
   }
 
   if (state.error || !state.statistics) {
     return (
       <div className="statistics-error">
-        {state.error || "Estatísticas não encontradas"}
+        {state.error || "Statistics not found"}
       </div>
     );
   }
@@ -84,55 +84,55 @@ export function StatisticsView() {
   return (
     <div className="statistics-container">
       <div className="statistics-card">
-        <h2>📊 Estatísticas</h2>
+        <h2> Statistics</h2>
 
         <div className="statistics-overview">
           <div className="statistics-overview-item">
-            <span className="statistics-label">Jogos Jogados</span>
+            <span className="statistics-label">Games Played</span>
             <span className="statistics-value">{statistics.gamesPlayed}</span>
           </div>
           <div className="statistics-overview-item">
-            <span className="statistics-label">Jogos Ganhos</span>
+            <span className="statistics-label">Games Won</span>
             <span className="statistics-value">{statistics.gamesWon}</span>
           </div>
           <div className="statistics-overview-item">
-            <span className="statistics-label">Taxa de Vitória</span>
+            <span className="statistics-label">Win Rate</span>
             <span className="statistics-value">{winRate}%</span>
           </div>
         </div>
 
-        <h3>Combinações Obtidas</h3>
+        <h3>Combinations Obtained</h3>
         <div className="statistics-combinations">
           <div className="statistics-combination">
-            <span className="combination-name">🎰 Five of a Kind</span>
+            <span className="combination-name"> Five of a Kind</span>
             <span className="combination-count">{statistics.fiveOfAKind}</span>
           </div>
           <div className="statistics-combination">
-            <span className="combination-name">🎲 Four of a Kind</span>
+            <span className="combination-name"> Four of a Kind</span>
             <span className="combination-count">{statistics.fourOfAKind}</span>
           </div>
           <div className="statistics-combination">
-            <span className="combination-name">🏠 Full House</span>
+            <span className="combination-name"> Full House</span>
             <span className="combination-count">{statistics.fullHouse}</span>
           </div>
           <div className="statistics-combination">
-            <span className="combination-name">📈 Straight</span>
+            <span className="combination-name"> Straight</span>
             <span className="combination-count">{statistics.straight}</span>
           </div>
           <div className="statistics-combination">
-            <span className="combination-name">🎯 Three of a Kind</span>
+            <span className="combination-name"> Three of a Kind</span>
             <span className="combination-count">{statistics.threeOfAKind}</span>
           </div>
           <div className="statistics-combination">
-            <span className="combination-name">👥 Two Pair</span>
+            <span className="combination-name"> Two Pair</span>
             <span className="combination-count">{statistics.twoPair}</span>
           </div>
           <div className="statistics-combination">
-            <span className="combination-name">👤 One Pair</span>
+            <span className="combination-name"> One Pair</span>
             <span className="combination-count">{statistics.onePair}</span>
           </div>
           <div className="statistics-combination">
-            <span className="combination-name">💔 Bust</span>
+            <span className="combination-name"> Bust</span>
             <span className="combination-count">{statistics.bust}</span>
           </div>
         </div>

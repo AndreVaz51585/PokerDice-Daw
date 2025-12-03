@@ -15,7 +15,7 @@ export function Layout() {
     <div className="layout-container">
       <nav className="layout-nav">
         <div className="layout-nav-left">
-          <h1 className="layout-nav-title">🎲 Chelas Poker Dice</h1>
+          <h1 className="layout-nav-title"> Chelas Poker Dice</h1>
           <div className="layout-nav-links">
             <Link to="/" className="layout-nav-link">
               Lobbies
@@ -23,13 +23,13 @@ export function Layout() {
             {user && (
               <>
                 <Link to="/create-lobby" className="layout-nav-link">
-                  Criar Lobby
+                  Create Lobby
                 </Link>
                 <Link to={`/wallet/${user.id}`} className="layout-nav-link">
-                  Carteira
+                  Wallet
                 </Link>
                 <Link to={`/statistics/${user.id}`} className="layout-nav-link">
-                  Estatísticas
+                  Statistics
                 </Link>
               </>
             )}
@@ -39,19 +39,19 @@ export function Layout() {
           {user ? (
             <>
               <Link to="/me" className="layout-nav-link">
-                {user.name}
+                Welcome, {user.name} !
               </Link>
               <button onClick={handleLogout} className="layout-logout-btn">
-                Sair
+                Logout
               </button>
             </>
           ) : (
             <>
               <Link to="/login" className="layout-nav-link">
-                Entrar
+                Login
               </Link>
               <Link to="/register" className="layout-nav-link">
-                Registar
+                Register
               </Link>
             </>
           )}

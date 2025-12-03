@@ -4,19 +4,6 @@ import pt.isel.domain.Game.Hand
 import pt.isel.domain.Game.money.Wallet
 
 sealed class MatchEvent {
-    data class DiceRolled(
-        val userId: Int,
-        val dice: List<Any>,
-        val combination: String,
-        val rerollsLeft: Int
-    ) : MatchEvent()
-
-    data class DiceHold(
-        val userId: Int,
-        val dice: List<Any>,
-        val heldIndices: List<Int>,
-        ) : MatchEvent()
-
     data class TurnChange(
         val previousPlayer: Int,
         val currentPlayer: Int

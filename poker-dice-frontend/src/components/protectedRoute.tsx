@@ -7,7 +7,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div style={{ textAlign: "center", padding: "2rem" }}>A carregar...</div>
+      <div style={{ textAlign: "center", padding: "2rem" }}>Loading...</div>
     );
   }
 

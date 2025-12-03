@@ -1,5 +1,6 @@
 import { useAuth } from "../AuthContext";
 import "../styles/App.css";
+import { InvitationCard } from "./invitation";
 
 export function UserProfile() {
   const { user } = useAuth();
@@ -23,6 +24,7 @@ export function UserProfile() {
             <strong>Email:</strong> {user.email}
           </div>
         </div>
+        <InvitationCard />
       </div>
     </div>
   );

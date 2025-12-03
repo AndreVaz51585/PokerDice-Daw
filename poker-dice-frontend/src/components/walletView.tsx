@@ -160,18 +160,18 @@ export function WalletView() {
   if (!canView) {
     return (
       <div className="wallet-error">
-        Não tem permissão para ver esta carteira.
+        You do not have permission to view this wallet.
       </div>
     );
   }
 
   if (state.isLoading) {
-    return <div className="wallet-loading">A carregar carteira...</div>;
+    return <div className="wallet-loading">Loading wallet...</div>;
   }
 
   if (state.error || !state.wallet) {
     return (
-      <div className="wallet-error">{state.error || "Carteira não encontrada"}</div>
+      <div className="wallet-error">{state.error || "Wallet not found"}</div>
     );
   }
 
@@ -180,9 +180,9 @@ export function WalletView() {
   return (
     <div className="wallet-container">
       <div className="wallet-card">
-        <h2>💰 A Minha Carteira</h2>
+        <h2> My Wallet</h2>
         <div className="wallet-balance">
-          <span className="wallet-balance-label">Saldo Atual:</span>
+          <span className="wallet-balance-label">Current Balance:</span>
           <span className="wallet-balance-value">{wallet.currentBalance}€</span>
         </div>
 
@@ -192,7 +192,7 @@ export function WalletView() {
 
         <div className="wallet-actions">
           <div className="wallet-action-section">
-            <h3>Depositar</h3>
+            <h3>Deposit</h3>
             <form onSubmit={handleDeposit} className="wallet-form">
               <input
                 type="number"
@@ -200,7 +200,7 @@ export function WalletView() {
                 onChange={(e) =>
                   dispatch({ type: "set-deposit-amount", amount: e.target.value })
                 }
-                placeholder="Montante"
+                placeholder="Amount"
                 min="1"
                 step="0.01"
                 className="wallet-input"
@@ -210,13 +210,13 @@ export function WalletView() {
                 disabled={state.isDepositing}
                 className="wallet-deposit-btn"
               >
-                {state.isDepositing ? "A depositar..." : "Depositar"}
+                {state.isDepositing ? "Depositing..." : "Deposit"}
               </button>
             </form>
           </div>
 
           <div className="wallet-action-section">
-            <h3>Levantar</h3>
+            <h3>Withdraw</h3>
             <form onSubmit={handleWithdraw} className="wallet-form">
               <input
                 type="number"
@@ -224,7 +224,7 @@ export function WalletView() {
                 onChange={(e) =>
                   dispatch({ type: "set-withdraw-amount", amount: e.target.value })
                 }
-                placeholder="Montante"
+                placeholder="Amount"
                 min="1"
                 step="0.01"
                 max={wallet.currentBalance}
@@ -235,7 +235,7 @@ export function WalletView() {
                 disabled={state.isWithdrawing}
                 className="wallet-withdraw-btn"
               >
-                {state.isWithdrawing ? "A levantar..." : "Levantar"}
+                {state.isWithdrawing ? "Withdrawing..." : "Withdraw"}
               </button>
             </form>
           </div>

@@ -83,7 +83,7 @@ export function Login() {
       } else {
         dispatch({
           type: "error",
-          message: "Ocorreu um erro durante o login",
+          message: "An error occurred during login",
         });
       }
     }
@@ -92,7 +92,7 @@ export function Login() {
   return (
     <div className="login-container">
       <div className="login-card">
-        <h2>Entrar</h2>
+        <h2>Login</h2>
         <form onSubmit={handleSubmit}>
           <div className="login-form-group">
             <label className="login-form-label">
@@ -140,7 +140,7 @@ export function Login() {
             disabled={state.stage === "posting"}
             className="login-submit-btn"
           >
-            {state.stage === "posting" ? "A entrar..." : "Entrar"}
+            {state.stage === "posting" ? "Logging in..." : "Login"}
           </button>
         </form>
       </div>

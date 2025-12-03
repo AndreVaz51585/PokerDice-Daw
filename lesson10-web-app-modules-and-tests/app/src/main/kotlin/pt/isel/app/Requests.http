@@ -1,11 +1,11 @@
 @base = http://localhost:8080
 @tokenteste1 = EmTJar9XmpGpwx3e1Hbi4njmSNR5RyK9vgvsLuZtk8U=
-@tokenteste2 = cDR15SIt_cFTsCuCQE1rXWr0bFJeYaqC7xLoqN0gDdY=
-@tokenteste3 = Fep2vJnSn152fklxa6--HX73_iJlgQy0NbUv2wZl9dI=
-@tokenteste4 = aSwAsJmkvSeUq0mNrT4BqUXhqA7dVww9SVgBYBrfpkg=
-@tokenteste5 = eTpnlbiQZJ6qufsMES7KEeb7iYxFRNzpCcXrmYBaigM=
+@tokenteste2 = s4F6VUkk8OxJQP9ndcf3dzy1KQ8AeCepUxE1pO1cVY4=
+@tokenteste3 = ftty4jtGhdN71VR_nCikjUI04vb-8IKDqG0vDr3HvKM=
+@tokenteste4 = 2nJkVBxwrUSGaSeEnYlUQTm55sQxlfvbi3Q696qxAOQ=
+@tokenteste5 = rD0UeK6R68CnwQettuKuw7OHKg3PHEKOybwdvhivYdQ=
 
-@invitatioCode = qx4CH1fcdB0
+@invitatioCode = ugk7pgOjG1c
 
 ### Registar um novo utilizador sem código de convite
 POST http://localhost:8080/api/users
@@ -20,15 +20,15 @@ Content-Type: application/json
 ### Código de Convite
 POST http://localhost:8080/api/invitations
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{tokenteste5}}
 
 ### Registar um novo utilizador com código de convite
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste4",
-  "email": "test4@gmail.com",
+  "name": "teste6",
+  "email": "test6@gmail.com",
   "password": "minhaSenhaSegura",
   "invitationCode": "{{invitatioCode}}"
 }
@@ -38,7 +38,7 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test4@gmail.com",
+  "email": "test5@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -58,7 +58,7 @@ content-type: application/json
 ### Criar um lobby
 POST http://localhost:8080/api/lobbies
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{tokenteste3}}
 
 {
   "name": "teste Jogo",
@@ -76,13 +76,13 @@ GET http://localhost:8080/api/lobbies
 GET http://localhost:8080/api/lobbies/9
 
 ###  Abrir ligação SSE (mantém stream)
-GET {{base}}/api/lobbies/3/events
+GET {{base}}/api/lobbies/1/events
 Accept: text/event-stream
 
 ### Juntar-se a um lobby
-POST http://localhost:8080/api/lobbies/4/join
+POST http://localhost:8080/api/lobbies/1/join
 Content-Type: application/json
-Authorization: Bearer {{tokenteste4}}
+Authorization: Bearer {{tokenteste5}}
 
 
 ### Sair de um lobby
@@ -94,7 +94,7 @@ Authorization: Bearer {{tokenteste4}}
 GET http://localhost:8080/api/lobbies/7/players
 
 ### Obter host do lobby
-GET http://localhost:8080/api/lobbies/4/host
+GET http://localhost:8080/api/lobbies/1/host
 
 ### Obter players de uma partida
 GET http://localhost:8080/api/matches/1/players
@@ -103,10 +103,10 @@ GET http://localhost:8080/api/matches/1/players
 GET http://localhost:8080/api/matches
 
 ### Obter detalhes de uma partida
-GET http://localhost:8080/api/matches/4
+GET http://localhost:8080/api/matches/1
 
 ### 7) Abrir ligação SSE (mantém stream)
-GET {{base}}/api/matches/4/events
+GET {{base}}/api/matches/1/events
 Accept: text/event-stream
 
 ### 8) Enviar um comando para a partida
@@ -308,7 +308,7 @@ GET {{base}}/api/wallets
 ### Deposit
 POST {{base}}/api/wallets/5/deposit
 Content-Type: application/json
-Authorization: Bearer {{tokenteste4}}
+Authorization: Bearer {{tokenteste5}}
 
 {
   "amount": 20
