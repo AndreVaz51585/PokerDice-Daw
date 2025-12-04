@@ -4,6 +4,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import pt.isel.domain.Game.money.AmountPayload
+import pt.isel.domain.Game.money.walletDTO.DepositSucess
+import pt.isel.domain.Game.money.walletDTO.WithdrawSucess
 import pt.isel.domain.user.AuthenticatedUser
 import pt.isel.http.model.problem.Problem
 import pt.isel.service.Auxiliary.Failure
@@ -76,11 +78,13 @@ class WalletController(
     ): ResponseEntity<Any> {
 
 
-        val result = walletService.deposit(user.user.id, userId, payload.amount)
+        return when (val result = walletService.deposit(user.user.id, userId, payload.amount)) {
 
-        return when (result) {
-
-            is Success -> ResponseEntity.ok(result.value.currentBalance)
+            is Success -> ResponseEntity.ok(DepositSucess(
+                deposited = payload.amount,
+                currentBalance = result.value.currentBalance,
+                message = "Deposit successful"
+            ))
 
             is Failure -> when (result.value) {
                 is WalletServiceError.NoPermission -> Problem.NoPermission.response(
@@ -111,7 +115,12 @@ class WalletController(
 
         return when (val result = walletService.withdraw(user.user.id, userId, amount.amount)) {
 
-            is Success -> ResponseEntity.ok(result.value.currentBalance)
+            is Success -> ResponseEntity.ok(WithdrawSucess(
+                amountWidrwawn = amount.amount,
+                currentBalance = result.value.currentBalance,
+                message = "Withdraw successful"
+            )
+            )
 
             is Failure -> when (result.value) {
                 is WalletServiceError.NoPermission -> Problem.NoPermission.response(

@@ -1,34 +1,34 @@
 @base = http://localhost:8080
 @tokenteste1 = EmTJar9XmpGpwx3e1Hbi4njmSNR5RyK9vgvsLuZtk8U=
-@tokenteste2 = JpSLKm3KNx9ARPObSQScqmj9ddhxCSzT4CrYyhrZMts=
-@tokenteste3 = wBFfpC6qEhlq4S5MLJELW_v4onCRi8_zu7rDQH4Bfl4=
-@tokenteste4 = bkfuboshN67TLGPyCb2HRwcwh5k4hAtBtV1PYR7L-TQ=
+@tokenteste2 = XhbTOpC_-FwA2tsyuhLqqDQF-eCjScn1_akYamel45I=
+@tokenteste3 = -0Yo8YNj2EKYEOwp3K01BYtY9zjQAQ5OpucV-0uQWds=
+@tokenteste4 = OTsP_ufhZ_xyRZYqiScplQwM5n_BaHCT7XPZd_BVi0E=
 @tokenteste5 = rD0UeK6R68CnwQettuKuw7OHKg3PHEKOybwdvhivYdQ=
 
-@invitatioCode = ugk7pgOjG1c
+@invitatioCode = hLT33u3DKiI
 
 ### Registar um novo utilizador sem código de convite
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste2",
-  "email": "test2@gmail.com",
+  "name": "teste3",
+  "email": "test3@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
 ### Código de Convite
 POST http://localhost:8080/api/invitations
 Content-Type: application/json
-Authorization: Bearer {{tokenteste5}}
+Authorization: Bearer {{tokenteste2}}
 
 ### Registar um novo utilizador com código de convite
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste6",
-  "email": "test6@gmail.com",
+  "name": "teste4",
+  "email": "test4@gmail.com",
   "password": "minhaSenhaSegura",
   "invitationCode": "{{invitatioCode}}"
 }
@@ -38,7 +38,7 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test4@gmail.com",
+  "email": "test2@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -63,10 +63,10 @@ Accept: text/event-stream
 ### Criar um lobby
 POST http://localhost:8080/api/lobbies
 Content-Type: application/json
-Authorization: Bearer {{tokenteste4}}
+Authorization: Bearer {{tokenteste3}}
 
 {
-  "name": "teste Jogo",
+  "name": "teste Jogo4",
   "description": "Descrição do lobby",
   "minPlayers": 2,
   "maxPlayers": 3,
@@ -91,12 +91,12 @@ Authorization: Bearer {{tokenteste2}}
 
 
 ### Sair de um lobby
-POST http://localhost:8080/api/lobbies/5/leave
+POST http://localhost:8080/api/lobbies/7/leave
 Content-Type: application/json
 Authorization: Bearer {{tokenteste3}}
 
 ### Listar jogadores de um lobby
-GET http://localhost:8080/api/lobbies/7/players
+GET http://localhost:8080/api/lobbies/3/players
 
 ### Obter host do lobby
 GET http://localhost:8080/api/lobbies/1/host
@@ -311,9 +311,9 @@ GET {{base}}/api/matches/sse/2
 GET {{base}}/api/wallets
 
 ### Deposit
-POST {{base}}/api/wallets/5/deposit
+POST {{base}}/api/wallets/4/deposit
 Content-Type: application/json
-Authorization: Bearer {{tokenteste5}}
+Authorization: Bearer {{tokenteste4}}
 
 {
   "amount": 20
