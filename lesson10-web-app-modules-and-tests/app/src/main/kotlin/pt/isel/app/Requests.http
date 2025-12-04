@@ -78,7 +78,7 @@ Authorization: Bearer {{tokenteste3}}
 GET http://localhost:8080/api/lobbies
 
 ### Obter lobby por ID
-GET http://localhost:8080/api/lobbies/9
+GET http://localhost:8080/api/lobbies/
 
 ###  Abrir ligação SSE (mantém stream)
 GET {{base}}/api/lobbies/6/events
@@ -96,7 +96,7 @@ Content-Type: application/json
 Authorization: Bearer {{tokenteste3}}
 
 ### Listar jogadores de um lobby
-GET http://localhost:8080/api/lobbies/3/players
+GET http://localhost:8080/api/lobbies/6/players
 
 ### Obter host do lobby
 GET http://localhost:8080/api/lobbies/1/host
