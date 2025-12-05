@@ -54,6 +54,9 @@ export interface Lobby {
   name: string;
   description: string;
   hostUserId: number;
+  // NOTE: backend originally doesn't include players inside Lobby response.
+  // When available (e.g. after calling /lobbies/{id}/players) this can be set
+  // to an array of user IDs.
   players?: number[];
   minPlayers: number;
   maxPlayers: number;
@@ -137,7 +140,49 @@ export interface Round {
 // Game phase types
 export type GamePhase = "LOBBY" | "ROLLING" | "FINISHED";
 
-// SSE Event types
+// SSE / Lobby event types (frontend)
+export interface LobbySnapshot {
+  lobby: Lobby;
+  players: User[]; // full user objects for the players in the lobby snapshot
+  currentCount: number;
+}
+
+export interface PlayerJoinedData {
+  player: { id: number; name: string };
+  currentCount: number;
+  maxPlayers: number;
+}
+
+export interface PlayerLeftData {
+  player: { id: number; name: string };
+  currentCount: number;
+}
+
+export interface MatchStartingData {
+  matchId: number;
+}
+
+export interface TimeoutUpdateData {
+  remainingSeconds: number;
+}
+
+export interface LobbyClosedData {
+  reason?: string;
+}
+
+/**
+ * Normalized SSE message object used by the hooks (useMatchEvents / useLobbyEvents)
+ */
+export interface LobbySSEMessage {
+  eventType: string;
+  eventId: string;
+  data: LobbySnapshot | PlayerJoinedData | PlayerLeftData | MatchStartingData | TimeoutUpdateData | LobbyClosedData | any;
+}
+
+/**
+ * Reuse / keep MatchSnapshot type for match SSEs (already present in your project).
+ * Keep it compatible with existing useMatchEvents.
+ */
 export interface MatchSnapshot {
   matchId: number;
   game: GameState;
@@ -146,16 +191,6 @@ export interface MatchSnapshot {
   eventType: string;
   eventId: string;
 }
-
-export interface LobbySnapshot {
-  matchId: number;
-  game: GameState;
-  wallets: { [userId: number]: Wallet };
-  currentPlayerId: number | null;
-  eventType: string;
-  eventId: string;
-}
-
 
 export interface GameState {
   phase: GamePhase;

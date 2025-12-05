@@ -1,10 +1,9 @@
 import { useEffect, useRef } from "react";
-import { MatchSnapshot } from "../types";
 
 export interface SSEMessage {
   eventType: string;
   eventId: string;
-  data: MatchSnapshot;
+  data: any;
 }
 
 export function useMatchEvents(
@@ -16,41 +15,63 @@ export function useMatchEvents(
   useEffect(() => {
     if (!matchId) return;
 
-    const url = `/api/matches/sse/${matchId}/events`;
+    // Note: backend exposes /api/matches/{matchId}/events (no "sse" path)
+    const url = `/api/matches/${matchId}/events`;
     const eventSource = new EventSource(url);
     eventSourceRef.current = eventSource;
 
-    // Handle different event types
     const eventTypes = [
       "match-snapshot",
-      "dice-rolled",
-      "dice-held",
       "turn-change",
       "round-complete",
       "game-end",
     ];
 
-    eventTypes.forEach((eventType) => {
-      eventSource.addEventListener(eventType, (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          onMessage({
-            eventType,
-            eventId: event.lastEventId || "",
-            data,
-          });
-        } catch (err) {
-          console.error(`Error parsing SSE message for ${eventType}:`, err);
-        }
-      });
+    const listeners: { type: string; handler: (ev: MessageEvent) => void }[] = [];
+
+    const makeHandler = (eventType: string) => (ev: MessageEvent) => {
+      try {
+        const parsed = JSON.parse(ev.data);
+        onMessage({
+          eventType,
+          eventId: ev.lastEventId || "",
+          data: parsed,
+        });
+      } catch (err) {
+        // If parsing fails, forward raw string as data
+        onMessage({
+          eventType,
+          eventId: ev.lastEventId || "",
+          data: ev.data,
+        });
+      }
+    };
+
+    eventTypes.forEach((et) => {
+      const h = makeHandler(et);
+      eventSource.addEventListener(et, h as EventListener);
+      listeners.push({ type: et, handler: h });
     });
 
-    eventSource.onerror = (error) => {
-      console.error("SSE connection error:", error);
-      // Reconnection is handled automatically by EventSource
+    // also listen generic `message` frames
+    const genericHandler = (ev: MessageEvent) => {
+      try {
+        const payload = JSON.parse(ev.data);
+        onMessage({ eventType: "message", eventId: ev.lastEventId || "", data: payload });
+      } catch {
+        onMessage({ eventType: "message", eventId: ev.lastEventId || "", data: ev.data });
+      }
+    };
+
+    eventSource.addEventListener("message", genericHandler as EventListener);
+
+    eventSource.onerror = (err) => {
+      console.error("SSE connection error (match):", err);
     };
 
     return () => {
+      listeners.forEach((l) => eventSource.removeEventListener(l.type, l.handler as EventListener));
+      eventSource.removeEventListener("message", genericHandler as EventListener);
       eventSource.close();
       eventSourceRef.current = null;
     };
