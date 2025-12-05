@@ -1,16 +1,16 @@
 import {
-  UserInput,
-  UserCreateTokenInputModel,
-  UserCreateTokenOutputModel,
-  User,
-  Lobby,
-  LobbyInput,
-  Match,
-  Wallet,
-  AmountPayload,
-  Statistics,
-  CommandInput,
-  InvitationId,
+    UserInput,
+    UserCreateTokenInputModel,
+    UserCreateTokenOutputModel,
+    User,
+    Lobby,
+    LobbyInput,
+    Match,
+    Wallet,
+    AmountPayload,
+    Statistics,
+    CommandInput,
+    InvitationId, DepositSucess, WithdrawSucess,
 } from "./types";
 import { getErrorDescription } from "./errorDescriptions";
 
@@ -219,18 +219,18 @@ export const api = {
     });
   },
 
-  async deposit(userId: number, amount: number): Promise<number> {
+  async deposit(userId: number, amount: number): Promise<DepositSucess> {
     const payload: AmountPayload = { amount };
-    return fetchApi<number>(`/wallets/${userId}/deposit`, {
+    return fetchApi<DepositSucess>(`/wallets/${userId}/deposit`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     });
   },
 
-  async withdraw(userId: number, amount: number): Promise<number> {
+  async withdraw(userId: number, amount: number): Promise<WithdrawSucess> {
     const payload: AmountPayload = { amount };
-    return fetchApi<number>(`/wallets/${userId}/withdraw`, {
+    return fetchApi<WithdrawSucess>(`/wallets/${userId}/withdraw`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(payload),

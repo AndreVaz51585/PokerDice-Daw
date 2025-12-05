@@ -256,8 +256,8 @@ class LobbyController(
                     is LobbyEvent.LobbyClosed -> {
                         emitter.send(
                             SseEmitter.event()
-                                .name("lobby-closed")
-                                .data(mapOf("reason" to "Host saiu"))
+                                .name("lobby-full")
+                                .data(mapOf("lobbyInfo" to "Lobby está cheio e fechado") )
                         )
                         emitter.complete()
                     }

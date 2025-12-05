@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import pt.isel.domain.token.TokenExternalInfo
 import pt.isel.domain.user.AuthenticatedUser
 import pt.isel.domain.user.User
 import pt.isel.http.model.problem.Problem
@@ -99,10 +100,22 @@ class UserController(
     fun token(
         @RequestBody input: UserCreateTokenInputModel,
     ): ResponseEntity<*> {
-        val tokenInfo = userService.createToken(input.email, input.password)
-        return ResponseEntity
-            .status(HttpStatus.OK)
-            .body(UserCreateTokenOutputModel(tokenInfo.tokenValue))
+        val tokenInfo : Either<UserError, TokenExternalInfo> = userService.createToken(input.email, input.password)
+
+        return when(tokenInfo) {
+           is Success -> { ResponseEntity
+                    .status(HttpStatus.OK)
+                    .body(UserCreateTokenOutputModel(tokenInfo.value.tokenValue))}
+
+
+           is Failure ->  {
+                    Problem.InvalidCredentials.response(
+                        HttpStatus.UNAUTHORIZED,
+                    )
+
+            }
+
+        }
     }
 
     /**

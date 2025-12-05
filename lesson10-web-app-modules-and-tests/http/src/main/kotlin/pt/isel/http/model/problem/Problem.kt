@@ -25,6 +25,8 @@ sealed class Problem(
 
     data object EmailAlreadyInUse : Problem(URI("$PROBLEM_URI_PATH/email-already-in-use"))
 
+    data object InvalidCredentials : Problem(URI("$PROBLEM_URI_PATH/invalid-credentials"))
+
     data object InsecurePassword : Problem(URI("$PROBLEM_URI_PATH/insecure-password"))
 
     data object UserNotFound : Problem(URI( "$PROBLEM_URI_PATH/user-not-found"))

@@ -20,7 +20,7 @@ export interface UserCreateTokenInputModel {
 export interface UserCreateTokenOutputModel {
   token: string;
 }
-
+// ---------------------------------------------- WALLETS ---------------------------------------------- //
 // Wallet types
 export interface Wallet {
   id: number;
@@ -31,6 +31,23 @@ export interface Wallet {
 export interface AmountPayload {
   amount: number;
 }
+
+export interface DepositSucess {
+    deposited: number,
+    currentBalance: number,
+    message: String
+}
+
+export interface WithdrawSucess {
+    amountWithdrawn: number,
+    currentBalance: number,
+    message: String
+}
+
+
+
+
+//---------------------------------------------- STATISTICS --------------------------------------------- //
 
 // Statistics types
 export interface Statistics {
@@ -54,7 +71,6 @@ export interface Lobby {
   name: string;
   description: string;
   hostUserId: number;
-  players?: number[];
   minPlayers: number;
   maxPlayers: number;
   rounds: number;

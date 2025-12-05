@@ -116,7 +116,7 @@ class WalletController(
         return when (val result = walletService.withdraw(user.user.id, userId, amount.amount)) {
 
             is Success -> ResponseEntity.ok(WithdrawSucess(
-                amountWidrwawn = amount.amount,
+                amountWithdrawn = amount.amount,
                 currentBalance = result.value.currentBalance,
                 message = "Withdraw successful"
             )

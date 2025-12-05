@@ -1,5 +1,4 @@
-/*
-import { useEffect } from "react";
+/*import { useEffect } from "react";
 import { LobbyEvent, LobbyEventType,  } from "../types";
 
 
@@ -8,5 +7,5 @@ export interface SSEMessage {
   eventId: string;
   data: MatchSnapshot;
 }
-  */
 
+*/

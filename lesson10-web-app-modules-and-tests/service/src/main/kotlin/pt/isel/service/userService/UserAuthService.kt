@@ -119,7 +119,7 @@ class UserAuthService(
     fun createToken(
         email: String,
         password: String,
-    ): TokenExternalInfo { // TO DO: Replace by Either
+    ): Either<UserError,TokenExternalInfo> { // TO DO: Replace by Either
         require(email.isNotBlank()) { "Email cannot be blank" } // Replace by Either.Failure
         require(password.isNotBlank()) { "Password cannot be blank" } // Replace by Either.Failure
 
@@ -127,7 +127,7 @@ class UserAuthService(
         requireNotNull(user) // Replace by Either.Failure
 
         if (!validatePassword(password, user.passwordValidation)) {
-            throw IllegalArgumentException("Passwords do not match") // Replace by Either.Failure
+           return failure(UserError.InvalidCredentials) // Replace by Either.Failure
         }
         val tokenValue = generateTokenValue()
         val now = clock.instant()
@@ -139,10 +139,10 @@ class UserAuthService(
                 lastUsedAt = now,
             )
         repoUsers.createToken(newToken, config.maxTokensPerUser)
-        return TokenExternalInfo(
+        return success(TokenExternalInfo(
             tokenValue,
             getTokenExpiration(newToken),
-        )
+        ))
     }
 
     fun revokeToken(token: String): Boolean {

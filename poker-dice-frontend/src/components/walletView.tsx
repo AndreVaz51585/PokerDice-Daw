@@ -123,8 +123,8 @@ export function WalletView() {
 
     dispatch({ type: "depositing" });
     try {
-      const newBalance = await api.deposit(Number(userId), amount);
-      dispatch({ type: "action-complete", newBalance });
+      const depositSucess = await api.deposit(Number(userId), amount);
+      dispatch({ type: "action-complete", newBalance: depositSucess.currentBalance });
     } catch (err) {
       if (err instanceof ApiError) {
         dispatch({ type: "action-error", error: err.message });
@@ -146,8 +146,8 @@ export function WalletView() {
 
     dispatch({ type: "withdrawing" });
     try {
-      const newBalance = await api.withdraw(Number(userId), amount);
-      dispatch({ type: "action-complete", newBalance });
+      const withdrawSucess = await api.withdraw(Number(userId), amount);
+      dispatch({ type: "action-complete", newBalance : withdrawSucess.currentBalance });
     } catch (err) {
       if (err instanceof ApiError) {
         dispatch({ type: "action-error", error: err.message });

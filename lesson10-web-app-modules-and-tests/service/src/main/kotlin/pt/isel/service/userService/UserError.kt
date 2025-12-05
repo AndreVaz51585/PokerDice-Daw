@@ -14,6 +14,8 @@ sealed class UserError {
     data object InvalidInvitationCode : UserError()
 
     data object InvitationCodeAlreadyUsed : UserError()
+
+    data object InvalidCredentials : UserError()
 }
 
 sealed class TokenCreationError {
