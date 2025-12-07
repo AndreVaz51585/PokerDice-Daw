@@ -1,144 +1,132 @@
 import { Link } from "react-router";
 import { Lobby } from "../types";
 import { api, ApiError } from "../api";
-import { useGlobalLobbyEvents, LobbySSEMessage, LobbyCreatedData, LobbyDeletedData } from "../hooks/useGlobalLobbyEvents";
-import { useState, useEffect } from "react";
+import { useGlobalLobbiesListener, LobbySSEMessage, LobbyCreatedData, LobbyDeletedData } from "../hooks/useGlobalLobbyEvents";
+import {useCallback, useEffect, useReducer} from "react";
 import "../styles/App.css";
 
-// Estado inicial
-const initialState = {
-    lobbies: [] as Lobby[],
-    lobbyPlayersCount: {} as { [lobbyId: number]: number },
-    isLoading: true,
-    error: null as string | null,
+
+type State = {
+    lobbies: Lobby[];
+    isLoading: boolean;
+    error: String | null;
 };
 
-// Função auxiliar para lidar com lobby criado
-function handleLobbyCreated(
-    lobbies: Lobby[],
-    lobbyPlayersCount: { [lobbyId: number]: number },
-    data: LobbyCreatedData
-): { lobbies: Lobby[]; lobbyPlayersCount: { [lobbyId: number]: number } } {
-    return {
-        lobbies: [...lobbies, data.Lobby],
-        lobbyPlayersCount: { ...lobbyPlayersCount, [data.Lobby.id]: 0 },
-    };
-}
 
-// Função auxiliar para lidar com lobby apagado
-function handleLobbyDeleted(
-    lobbies: Lobby[],
-    lobbyPlayersCount: { [lobbyId: number]: number },
-    data: LobbyDeletedData
-): { lobbies: Lobby[]; lobbyPlayersCount: { [lobbyId: number]: number } } {
-    const updatedPlayersCount = { ...lobbyPlayersCount };
-    delete updatedPlayersCount[data.LobbyId];
+type Action =
+    | { type: "set-lobbies"; lobbies: Lobby[] }
+    | { type: "add-lobby"; lobby: Lobby }
+    | { type: "delete-lobby"; lobbyId: number }
+    | { type: "load"; isLoading: boolean }
+    | { type: "error"; error: string | null };
 
-    return {
-        lobbies: lobbies.filter((lobby) => lobby.id !== data.LobbyId),
-        lobbyPlayersCount: updatedPlayersCount,
-    };
-}
 
-// Função para carregar lobbies e número de jogadores
-async function loadLobbiesData(
-    setLobbies: (lobbies: Lobby[]) => void,
-    setLobbyPlayersCount: (count: { [lobbyId: number]: number }) => void,
-    setIsLoading: (loading: boolean) => void,
-    setError: (error: string | null) => void
-) {
-    setIsLoading(true);
-    try {
-        const fetchedLobbies = await api.getAllLobbies();
-        setLobbies(fetchedLobbies);
-
-        // Fetch número de jogadores para cada lobby
-        const playersCountPromises = fetchedLobbies.map(async (lobby) => {
-            try {
-                const players = await api.getLobbyPlayers(lobby.id);
-                return { lobbyId: lobby.id, count: players.length };
-            } catch (err) {
-                console.error(`Failed to fetch players for lobby ${lobby.id}`, err);
-                return { lobbyId: lobby.id, count: 0 };
-            }
-        });
-
-        const playersCountResults = await Promise.all(playersCountPromises);
-        const playersCountMap = playersCountResults.reduce(
-            (acc, { lobbyId, count }) => {
-                acc[lobbyId] = count;
-                return acc;
-            },
-            {} as { [lobbyId: number]: number }
-        );
-
-        setLobbyPlayersCount(playersCountMap);
-        setError(null);
-    } catch (err) {
-        if (err instanceof ApiError) {
-            setError(err.message);
-        } else {
-            setError("Failed to load lobbies");
-        }
-    } finally {
-        setIsLoading(false);
+function reducer(state: State, action: Action): State {
+    switch (action.type) {
+        case "set-lobbies":
+            return {
+                ...state,
+                lobbies: action.lobbies,
+                isLoading: false,
+                error: null,
+            };
+        case "add-lobby":
+            return {
+                ...state,
+                lobbies: [...state.lobbies, action.lobby],
+            };
+        case "delete-lobby":
+            return {
+                ...state,
+                lobbies: state.lobbies.filter((lobby) => lobby.id !== action.lobbyId),
+            };
+        case "load":
+            return { ...state, isLoading: action.isLoading };
+        case "error":
+            return { ...state, error: action.error, isLoading: false };
+        default:
+            return state;
     }
 }
 
+// Initial state
+const initialState: State = {
+    lobbies: [],
+    isLoading: true,
+    error: null,
+};
+
+
+async function loadLobbiesData(
+    dispatch: React.Dispatch<Action>
+) {
+    dispatch({ type: "load", isLoading: true });
+    try {
+        const data: Lobby[] = await api.getAllLobbies();
+        dispatch({
+            type: "set-lobbies",
+            lobbies: data,
+        });
+    } catch (err) {
+        if (err instanceof ApiError) {
+            dispatch({ type: "error", error: err.message });
+        } else {
+            dispatch({ type: "error", error: "Failed to load Lobbies" });
+        }
+    }
+}
+
+
+
 export function LobbiesList() {
-    const [lobbies, setLobbies] = useState<Lobby[]>(initialState.lobbies);
-    const [lobbyPlayersCount, setLobbyPlayersCount] = useState<{
-        [lobbyId: number]: number;
-    }>(initialState.lobbyPlayersCount);
-    const [isLoading, setIsLoading] = useState(initialState.isLoading);
-    const [error, setError] = useState<string | null>(initialState.error);
+    const [state, dispatch] = useReducer(reducer, initialState);
 
     // Carrega dados iniciais
     useEffect(() => {
-        loadLobbiesData(setLobbies, setLobbyPlayersCount, setIsLoading, setError);
+        loadLobbiesData(dispatch);
     }, []);
 
-    // SSE setup
-    useGlobalLobbyEvents((message: LobbySSEMessage) => {
+    const handleSSEMessage = useCallback((message: LobbySSEMessage) => {
         console.log("SSE Message received:", message);
 
         switch (message.action) {
             case "lobby-created": {
                 const data = message.data as LobbyCreatedData;
-                const updated = handleLobbyCreated(lobbies, lobbyPlayersCount, data);
-                setLobbies(updated.lobbies);
-                setLobbyPlayersCount(updated.lobbyPlayersCount);
+                dispatch({ type: "add-lobby", lobby: data });
                 break;
             }
             case "lobby-deleted": {
                 const data = message.data as LobbyDeletedData;
-                const updated = handleLobbyDeleted(lobbies, lobbyPlayersCount, data);
-                setLobbies(updated.lobbies);
-                setLobbyPlayersCount(updated.lobbyPlayersCount);
+                dispatch({ type: "delete-lobby", lobbyId: data.LobbyId });
                 break;
             }
         }
-    });
+    }, []);
 
-    if (isLoading) {
+
+
+    // SSE setup
+    useGlobalLobbiesListener(handleSSEMessage);
+
+
+    if (state.isLoading) {
         return <div className="lobbies-list-loading">Loading lobbies...</div>;
     }
 
-    if (error) {
-        return <div className="lobbies-list-error">{error}</div>;
+    if (state.error) {
+        return <div className="lobbies-list-error">{state.error}</div>;
     }
 
     return (
         <div className="lobbies-list-container">
             <h2>Available Lobbies</h2>
-            {lobbies.length === 0 ? (
+            {state.lobbies.length === 0 ? (
                 <p className="lobbies-list-empty">
                     No lobbies found. Create one to get started!
                 </p>
             ) : (
                 <div className="lobbies-list-grid">
-                    {lobbies.map((lobby) => {
-                        const playersCount = lobbyPlayersCount[lobby.id] ?? 0;
+                    {state.lobbies.map((lobby) => {
                         return (
                             <Link
                                 key={lobby.id}
@@ -150,7 +138,6 @@ export function LobbiesList() {
                                     <p>{lobby.description}</p>
                                     <div className="lobbies-list-card-meta">
                     <span>
-                      Players: {playersCount}/{lobby.maxPlayers}
                     </span>
                                         <span>Rounds: {lobby.rounds}</span>
                                         <span>Ante: {lobby.ante}€</span>

@@ -1,6 +1,6 @@
 @base = http://localhost:8080
 @tokenteste1 = EmTJar9XmpGpwx3e1Hbi4njmSNR5RyK9vgvsLuZtk8U=
-@tokenteste2 = Ntb1HviCXzjJWMTAWXycMLy92k63SJyVl5C9UiO9OvI=
+@tokenteste2 = wY6TqsxFTSzqMZXMw2fI7WgDkxj0X8SD_l3t9GQ0OFA=
 @tokenteste3 = _4aKVjNQO11Iq-7VPYvhODRpOryvln03xOSToVGoLBc=
 @tokenteste4 = unAw5G-U9NCNXqGHD4a5uNK0431YgYxi3qADiLwD8KY=
 @tokenteste5 = rD0UeK6R68CnwQettuKuw7OHKg3PHEKOybwdvhivYdQ=
@@ -91,9 +91,9 @@ Authorization: Bearer {{tokenteste3}}
 
 
 ### Sair de um lobby
-POST http://localhost:8080/api/lobbies/15/leave
+POST http://localhost:8080/api/lobbies/24/leave
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{tokenteste3}}
 
 ### Listar jogadores de um lobby
 GET http://localhost:8080/api/lobbies/6/players

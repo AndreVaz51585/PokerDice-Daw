@@ -1,11 +1,10 @@
-import { useEffect } from "react";
+import {useEffect, useRef} from "react";
 import {Lobby} from "../types.ts";
 
 type LobbiesUpdateAction = "lobby-created" | "lobby-deleted";
 
-export interface LobbyCreatedData {
-    Lobby: Lobby;
-}
+export type LobbyCreatedData = Lobby
+
 
 export interface LobbyDeletedData {
     LobbyId: number;
@@ -17,35 +16,51 @@ export interface LobbySSEMessage {
     data: LobbyCreatedData | LobbyDeletedData;
 }
 
-export function useGlobalLobbyEvents(
+export function useGlobalLobbiesListener(
     onMessage: (message: LobbySSEMessage) => void
 ) {
+    const onMessageRef = useRef(onMessage);
+
+    useEffect(() => {
+        onMessageRef.current = onMessage;
+    }, [onMessage]);
+
     useEffect(() => {
         const eventSource = new EventSource(`/api/lobbies/events`);
 
-        eventSource.addEventListener('lobby-created', (event: MessageEvent) => {
-            const message: LobbySSEMessage = {
-                action: 'lobby-created',
-                data: JSON.parse(event.data),
-            };
-            onMessage(message);
+        eventSource.addEventListener("lobby-created", (event) => {
+            try {
+                const lobby = JSON.parse(event.data);
+                const message: LobbySSEMessage = {
+                    action: "lobby-created",
+                    data: lobby
+                };
+                onMessageRef.current(message);
+            } catch (error) {
+
+            }
         });
 
-        eventSource.addEventListener('lobby-deleted', (event: MessageEvent) => {
-            const message: LobbySSEMessage = {
-                action: 'lobby-deleted',
-                data: JSON.parse(event.data),
-            };
-            onMessage(message);
+        eventSource.addEventListener("lobby-deleted", (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                const message: LobbySSEMessage = {
+                    action: "lobby-deleted",
+                    data: {LobbyId: data.lobbyId, message: data.message || ""}
+                };
+                onMessageRef.current(message);
+            } catch (error) {
+                console.error("Error parsing lobby-deleted:", error);
+            }
         });
 
         eventSource.onerror = (error) => {
             console.error("SSE Error:", error);
-            eventSource.close();
+            console.error("readyState:", eventSource.readyState);
         };
 
         return () => {
             eventSource.close();
         };
-    }, [onMessage]);
+    }, []);
 }

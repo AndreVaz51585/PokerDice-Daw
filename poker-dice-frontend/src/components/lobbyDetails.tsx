@@ -156,7 +156,6 @@ export function LobbyDetails() {
   }
 
   const { lobby, host } = state;
-  const players = lobby.players ?? [];
   const isInLobby = user && players.includes(user.id);
   const canJoin = user && lobby.state === "OPEN" && !isInLobby && players.length < lobby.maxPlayers;
   const canLeave = user && isInLobby && lobby.state === "OPEN";
