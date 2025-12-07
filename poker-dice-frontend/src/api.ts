@@ -10,7 +10,7 @@ import {
     AmountPayload,
     Statistics,
     CommandInput,
-    InvitationId, DepositSucess, WithdrawSucess,
+    InvitationId, DepositSucess, WithdrawSucess, Player,
 } from "./types";
 import { getErrorDescription } from "./errorDescriptions";
 
@@ -164,8 +164,8 @@ export const api = {
     });
   },
 
-  async getLobbyPlayers(lobbyId: number): Promise<User[]> {
-    return fetchApi<User[]>(`/lobbies/${lobbyId}/players`);
+  async getLobbyPlayers(lobbyId: number): Promise<Player[]> {
+    return fetchApi<Player[]>(`/lobbies/${lobbyId}/players`);
   },
 
   async getLobbyHost(lobbyId: number): Promise<User> {

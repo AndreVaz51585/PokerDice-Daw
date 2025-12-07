@@ -208,3 +208,9 @@ export interface Problem {
   status: number;
   detail?: string;
 }
+
+
+export interface Player{
+     id : number,
+     nickname : String,
+}
