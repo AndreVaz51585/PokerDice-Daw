@@ -29,7 +29,10 @@ class MatchController(
     fun listenMatch(@PathVariable matchId: Int): SseEmitter {
         val emitter = SseEmitter(TimeUnit.HOURS.toMillis(1))
 
-        // Enviar snapshot inicial
+        // Heartbeat como no LobbyController
+        val heartBeat = setupHeartbeat(emitter)
+
+        // Snapshot inicial, se já houver engine
         matchManager.get(matchId)?.snapshot()?.let { banked ->
             try {
                 val snapshot = MatchEvent.MatchSnapshot(
@@ -38,41 +41,35 @@ class MatchController(
                     playerOrder = banked.game.playerOrder,
                     currentPlayer = banked.game.playerOrder[banked.game.currentPlayerIndex],
                 )
-                emitter.send(SseEmitter.event()
-                    .name("match-snapshot")
-                    .id("$matchId")
-                    .data(snapshot))
+                emitter.send(SseEmitter.event().name("match-snapshot").id("$matchId").data(snapshot))
             } catch (ex: Exception) {
-                println("Error in listenMatch: ${ex.message}")
-                ex.printStackTrace()
                 emitter.completeWithError(ex)
             }
-
         }
 
-
-        // Subscrever eventos
+        // Reencaminhar TODOS os eventos relevantes, incluindo dados
         val unsubscribe = matchService.getEventPublisher().subscribe(matchId) { event ->
             try {
-                val eventType = when (event) {
-                    is MatchEvent.TurnChange -> "turn-change"
-                    is MatchEvent.RoundSummary -> "round-complete"
-                    is MatchEvent.GameEndPayload -> "game-end"
-                    is MatchEvent.MatchSnapshot -> "match-snapshot"
-                    else -> return@subscribe
+                when (event) {
+                    is MatchEvent.MatchSnapshot -> emitter.send(SseEmitter.event().name("match-snapshot").data(event))
+                    is MatchEvent.TurnChange     -> emitter.send(SseEmitter.event().name("turn-change").data(event))
+                    is MatchEvent.RoundSummary   -> emitter.send(SseEmitter.event().name("round-complete").data(event))
+                    is MatchEvent.GameEndPayload -> emitter.send(SseEmitter.event().name("game-end").data(event))
+                    is MatchEvent.DiceRolled     -> emitter.send(SseEmitter.event().name("dice-rolled").data(event))
+                    is MatchEvent.DiceHeld       -> emitter.send(SseEmitter.event().name("dice-held").data(event))
+                    else -> { /* ignore */ }
                 }
-                emitter.send(SseEmitter.event().name(eventType).data(event))
             } catch (ex: Exception) {
                 emitter.completeWithError(ex)
             }
         }
 
-        emitter.onCompletion { unsubscribe() }
-        emitter.onTimeout { unsubscribe() }
+        emitter.onCompletion { unsubscribe(); heartBeat.shutdown() }
+        emitter.onTimeout    { unsubscribe(); heartBeat.shutdown() }
+        emitter.onError      { unsubscribe(); heartBeat.shutdown() }
 
         return emitter
     }
-
 
     @PostMapping("/{matchId}/commands", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun executeCommand(
@@ -86,7 +83,6 @@ class MatchController(
         val indices = sseMatchService.getIndicesFromBody(body)
         val userId = authenticatedUser.user.id
 
-
         val cmdResult = sseMatchService.executeComand(rawType, userId, indices)
         if (cmdResult is Failure) {
             return when (cmdResult.value) {
@@ -98,25 +94,26 @@ class MatchController(
 
         val cmd = (cmdResult as Success).value
 
-
         return when (val result = matchService.applyCommand(matchId, cmd)) {
             is Success -> {
                 val banked = result.value
                 val player = banked.game.players[userId]
-
-                ResponseEntity.ok(when (cmd) {
-                    is Command.Roll -> DiceRoll(
-                        dices = player?.dice,
-                        rerollsLeft = player!!.rerollsLeft,
-                        hand = Hand(player.dice).getCombination().first.toString()
-                    )
-                    is Command.Hold -> DiceHold(
-                        dices = player?.dice,
-                        heldIndices = player!!.held,
-                        rerollsLeft = player.rerollsLeft,
-                    )
-                    else -> mapOf("status" to "command executed successfully")
-                })
+                ResponseEntity.ok(
+                    when (cmd) {
+                        is Command.Roll -> DiceRoll(
+                            dices = player?.dice,
+                            rerollsLeft = player!!.rerollsLeft,
+                            hand = Hand(player.dice).getCombination().first.toString()
+                        )
+                        is Command.Hold -> DiceHold(
+                            dices = player?.dice,
+                            heldIndices = player!!.held,
+                            rerollsLeft = player.rerollsLeft,
+                        )
+                        is Command.FinishTurn -> mapOf("status" to "command executed successfully")
+                        else -> mapOf("status" to "ok")
+                    }
+                )
             }
             is Failure -> when (result.value) {
                 MatchServiceError.NotYourTurn -> Problem.NotYourTurn.response(HttpStatus.BAD_REQUEST)

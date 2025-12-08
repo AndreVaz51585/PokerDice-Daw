@@ -29,4 +29,17 @@ sealed class MatchEvent {
         val prize: Int,
         val wallets: Map<Int, Wallet>
     ): MatchEvent()
+
+
+    data class DiceRolled(
+        val userId: Int,
+        val dice: List<String>,
+        val rerollsLeft: Int,
+        val combination: String
+    ) : MatchEvent()
+
+    data class DiceHeld(
+        val userId: Int,
+        val heldIndices: List<Int>
+    ) : MatchEvent()
 }

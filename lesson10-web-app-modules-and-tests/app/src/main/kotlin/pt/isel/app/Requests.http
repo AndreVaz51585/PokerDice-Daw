@@ -1,36 +1,36 @@
 @base = http://localhost:8080
-@tokenteste1 = EmTJar9XmpGpwx3e1Hbi4njmSNR5RyK9vgvsLuZtk8U=
-@tokenteste2 = wY6TqsxFTSzqMZXMw2fI7WgDkxj0X8SD_l3t9GQ0OFA=
-@tokenteste3 = _4aKVjNQO11Iq-7VPYvhODRpOryvln03xOSToVGoLBc=
-@tokenteste4 = unAw5G-U9NCNXqGHD4a5uNK0431YgYxi3qADiLwD8KY=
-@tokenteste5 = rD0UeK6R68CnwQettuKuw7OHKg3PHEKOybwdvhivYdQ=
+@tokenteste1 = RmR2QldDFRPif_Sji6OmBym9UOxCCMAOrLpt7cfTMw0=
+@tokenteste2 = p5P4SSyzS7BV7oYAZm9cwbskpC3Mnyvwkd2WKT8q2TQ=
+@tokenteste3 = HaMTfD7QDvf2VeHP_AMyrCOGqUAwbXRLhemqTikr5yQ=
+@tokenteste4 = DbPX3KruMf5kJQHhKWqSMI1-7EnXBwCvjBnCsXyKT8g=
+@tokenteste5 = Sxc3xF5z39cntlQMPrlFqwFaH-Db-Kgxf4MM2hP8Tes=
 
-@invitatioCode = hLT33u3DKiI
+@invitatioCode = YgOCOLJXcAM
 
 ### Registar um novo utilizador sem código de convite
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste3",
-  "email": "test3@gmail.com",
+  "name": "teste1",
+  "email": "test1@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
 ### Código de Convite
 POST http://localhost:8080/api/invitations
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{tokenteste1}}
 
 ### Registar um novo utilizador com código de convite
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste4",
-  "email": "test4@gmail.com",
+  "name": "teste20",
+  "email": "test20@gmail.com",
   "password": "minhaSenhaSegura",
-  "invitationCode": "{{invitatioCode}}"
+  "invitationCode": "VsfHDIyX1fY"
 }
 
 ### Obter token de autenticação
@@ -38,7 +38,7 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test2@gmail.com",
+  "email": "test1@gmail.com",
   "password": "minhaSenhaSegura"
 }
 
@@ -91,12 +91,12 @@ Authorization: Bearer {{tokenteste3}}
 
 
 ### Sair de um lobby
-POST http://localhost:8080/api/lobbies/24/leave
+POST http://localhost:8080/api/lobbies/3/leave
 Content-Type: application/json
-Authorization: Bearer {{tokenteste3}}
+Authorization: Bearer {{tokenteste1}}
 
 ### Listar jogadores de um lobby
-GET http://localhost:8080/api/lobbies/6/players
+GET http://localhost:8080/api/lobbies/5/players
 
 ### Obter host do lobby
 GET http://localhost:8080/api/lobbies/1/host
