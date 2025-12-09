@@ -184,7 +184,7 @@ export function LobbyDetails() {
 
             if (result.matchId) {
                 dispatch({ type: "match-starting", data: { matchId: result.matchId } });
-                navigate(`/matches/${result.matchId}/events`);
+                navigate(`/matches/${result.matchId}`);
             }
         } catch (err) {
             if (err instanceof ApiError) {

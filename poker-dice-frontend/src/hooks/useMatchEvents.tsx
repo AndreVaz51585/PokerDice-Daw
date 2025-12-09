@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
-import {Hand, Wallet} from "../types.ts";
+import {Face, Hand, Wallet} from "../types.ts";
 
 //{}
 
-type gameActions = "match-snapshot" | "turn-change" | "round-complete" | "game-end" ;
+type gameActions = "match-snapshot" | "turn-change" | "round-complete" | "game-end" | "dice-rolled" | "dice-held";
 
 export interface TurnChangeEvent {
   previousPlayer: number;
@@ -31,10 +31,22 @@ export interface GameEndEvent {
     wallets: Record<number, Wallet>; // Replace 'any' with actual Wallet type
 }
 
+export interface DiceRolledData {
+  userId: number;
+  dice: Face[];
+  rerollsLeft: number;
+  combination: string;
+}
+
+export interface DiceHeldData {
+  userId: number;
+  heldIndices: number[];
+}
+
 
 export interface MatchSSEMessage {
   action: gameActions;
-  data: TurnChangeEvent | RoundSummaryEvent | MatchSnapshotEvent | GameEndEvent;
+  data: TurnChangeEvent | RoundSummaryEvent | MatchSnapshotEvent | GameEndEvent | DiceRolledData | DiceHeldData;
 }
 
 export function useMatchEvents(
@@ -98,6 +110,30 @@ export function useMatchEvents(
         });
       } catch (error) {
         console.error("Parse error (game-end):", error);
+      }
+    });
+
+    eventSource.addEventListener("dice-rolled", (event) => {
+      try {
+        const data = JSON.parse(event.data) as DiceRolledData;
+        onMessageRef.current({
+          action: "dice-rolled",
+          data
+        });
+      } catch (error) {
+        console.error("Parse error (dice-rolled):", error);
+      }
+    });
+
+    eventSource.addEventListener("dice-held", (event) => {
+      try {
+        const data = JSON.parse(event.data) as DiceHeldData;
+        onMessageRef.current({
+          action: "dice-held",
+          data
+        });
+      } catch (error) {
+        console.error("Parse error (dice-held):", error);
       }
     });
 

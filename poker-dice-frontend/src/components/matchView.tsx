@@ -9,16 +9,12 @@ import {
   TurnChangeEvent,
   RoundSummaryEvent,
   MatchSnapshotEvent,
-  GameEndEvent
+  GameEndEvent,
+  DiceRolledData,
+  DiceHeldData
 } from "../hooks/useMatchEvents";
 
 
-import {
-  useMatchDiceEvents,
-  DiceSSEMessage,
-  DiceRolledData,
-  DiceHeldData
-} from "../hooks/useMatchDiceEvents";
 import "../styles/App.css";
 
 // State types
@@ -258,12 +254,6 @@ export function MatchView() {
       case "game-end":
         dispatch({ type: "game-end", data: message.data as GameEndEvent });
         break;
-    }
-  }, []);
-
-  // Handler para eventos de dados
-  const handleDiceMessage = useCallback((message: DiceSSEMessage) => {
-    switch (message.action) {
       case "dice-rolled":
         dispatch({ type: "dice-rolled", data: message.data as DiceRolledData });
         break;
@@ -273,9 +263,9 @@ export function MatchView() {
     }
   }, []);
 
+
   // Subscrever eventos
   useMatchEvents(matchId, handleMatchMessage);
-  useMatchDiceEvents(matchId ? Number(matchId) : undefined, handleDiceMessage);
 
   // Ações do jogo
   const handleRoll = async () => {
@@ -283,7 +273,7 @@ export function MatchView() {
 
     dispatch({ type: "rolling" });
     try {
-      await api.sendCommand(Number(matchId), { type: "ROLL" });
+      await api.sendCommand(Number(matchId), { type: "roll" });
       dispatch({ type: "action-complete" });
     } catch (err) {
       if (err instanceof ApiError) {
@@ -300,7 +290,7 @@ export function MatchView() {
     dispatch({ type: "holding" });
     try {
       await api.sendCommand(Number(matchId), {
-        type: "HOLD",
+        type: "hold",
         indices: Array.from(state.selectedDice)
       });
       dispatch({ type: "action-complete" });
@@ -318,7 +308,7 @@ export function MatchView() {
 
     dispatch({ type: "finishing" });
     try {
-      await api.sendCommand(Number(matchId), { type: "FINISH_TURN" });
+      await api.sendCommand(Number(matchId), { type: "finish-turn" });
       dispatch({ type: "action-complete" });
     } catch (err) {
       if (err instanceof ApiError) {

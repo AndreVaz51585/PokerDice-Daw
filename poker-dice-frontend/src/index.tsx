@@ -63,9 +63,9 @@ const router = createBrowserRouter([
       {
         path: "matches/:matchId",
         element: (
-          <ProtectedRoute>
+         // <ProtectedRoute>
             <MatchView />
-          </ProtectedRoute>
+         // </ProtectedRoute>
         ),
       },
       

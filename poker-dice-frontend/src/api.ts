@@ -200,7 +200,7 @@ export const api = {
     matchId: number,
     command: CommandInput
   ): Promise<unknown> {
-    return fetchApi(`/matches/${matchId}/events`, {
+    return fetchApi(`/matches/${matchId}/commands`, {
       method: "POST",
       headers: getAuthHeaders(),
       body: JSON.stringify(command),

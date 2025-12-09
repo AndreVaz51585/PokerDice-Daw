@@ -41,7 +41,7 @@ class WalletController(
         @PathVariable userId: Int
     ): ResponseEntity<Any> {
 
-        val result = walletService.getWallet(user.user.id, userId)
+        val result = walletService.getWallet(user.user.id,)
 
         return when (result) {
 

@@ -192,7 +192,7 @@ export interface PlayerState {
 
 // Command types for SSE
 export interface CommandInput {
-  type: "ROLL" | "HOLD" | "FINISH_TURN" | "NEXT_ROUND";
+  type: "roll" | "finish-turn" | "hold";
   indices?: number[];
 }
 
