@@ -1,68 +1,191 @@
-import { useCallback, useReducer, useEffect } from "react";
-import { useParams } from "react-router";
+import { useCallback, useReducer } from "react";
+import { useParams, useNavigate } from "react-router";
 import { api, ApiError } from "../api";
-import { MatchSnapshot, Face, PlayerState } from "../types";
+import { Face } from "../types";
 import { useAuth } from "../AuthContext";
-import { useMatchEvents, SSEMessage } from "../hooks/useMatchEvents";
+import {
+  useMatchEvents,
+  MatchSSEMessage,
+  TurnChangeEvent,
+  RoundSummaryEvent,
+  MatchSnapshotEvent,
+  GameEndEvent
+} from "../hooks/useMatchEvents";
+
+
+import {
+  useMatchDiceEvents,
+  DiceSSEMessage,
+  DiceRolledData,
+  DiceHeldData
+} from "../hooks/useMatchDiceEvents";
 import "../styles/App.css";
 
-// State type
+// State types
+type PlayerState = {
+  userId: number;
+  dice: Face[];
+  heldIndices: number[];
+  rerollsLeft: number;
+  combination: string | null;
+};
+
 type State = {
-  matchState: MatchSnapshot | null;
+  matchId: number | null;
+  currentRoundNumber: number;
+  playerOrder: number[];
+  currentPlayer: number | null;
+  players: Map<number, PlayerState>;
   selectedDice: Set<number>;
-  error: string | null;
   isLoading: boolean;
   isRolling: boolean;
   isHolding: boolean;
   isFinishing: boolean;
+  error: string | null;
+  gameEnded: boolean;
+  winner: number | null;
 };
 
 // Action types
 type Action =
-  | { type: "set-match-state"; state: MatchSnapshot }
-  | { type: "toggle-dice"; index: number }
-  | { type: "clear-selection" }
-  | { type: "error"; error: string }
-  | { type: "rolling" }
-  | { type: "holding" }
-  | { type: "finishing" }
-  | { type: "action-complete" }
-  | { type: "set-loading"; isLoading: boolean };
+    | { type: "set-snapshot"; data: MatchSnapshotEvent }
+    | { type: "turn-change"; data: TurnChangeEvent }
+    | { type: "round-complete"; data: RoundSummaryEvent }
+    | { type: "game-end"; data: GameEndEvent }
+    | { type: "dice-rolled"; data: DiceRolledData }
+    | { type: "dice-held"; data: DiceHeldData }
+    | { type: "toggle-dice"; index: number }
+    | { type: "clear-selection" }
+    | { type: "rolling" }
+    | { type: "holding" }
+    | { type: "finishing" }
+    | { type: "action-complete" }
+    | { type: "error"; error: string };
 
-// Reducer function
+// Reducer
 function reducer(state: State, action: Action): State {
   switch (action.type) {
-    case "set-match-state":
+    case "set-snapshot":
       return {
         ...state,
-        matchState: action.state,
+        matchId: action.data.matchId,
+        currentRoundNumber: action.data.currentRoundNumber,
+        playerOrder: action.data.playerOrder,
+        currentPlayer: action.data.currentPlayer,
+        players: new Map(
+            action.data.playerOrder.map(userId => [
+              userId,
+              state.players.get(userId) || {
+                userId,
+                dice: [],
+                heldIndices: [],
+                rerollsLeft: 3,
+                combination: null
+              }
+            ])
+        ),
         isLoading: false,
-        isRolling: false,
-        isHolding: false,
-        isFinishing: false,
+        error: null
       };
+
+    case "turn-change":
+      return {
+        ...state,
+        currentPlayer: action.data.currentPlayer,
+        selectedDice: new Set()
+      };
+
+    case "round-complete":
+      return {
+        ...state,
+        currentRoundNumber: action.data.roundNumber + 1,
+        players: new Map(
+            state.playerOrder.map(userId => [
+              userId,
+              {
+                userId,
+                dice: [],
+                heldIndices: [],
+                rerollsLeft: 3,
+                combination: null
+              }
+            ])
+        ),
+        selectedDice: new Set()
+      };
+
+    case "game-end":
+      return {
+        ...state,
+        gameEnded: true,
+        winner: action.data.winner,
+        currentPlayer: null
+      };
+
+    case "dice-rolled": {
+      const player = state.players.get(action.data.userId);
+      if (!player) return state;
+
+      const updatedPlayer: PlayerState = {
+        ...player,
+        dice: action.data.dice,
+        rerollsLeft: action.data.rerollsLeft,
+        combination: action.data.combination
+      };
+
+      const newPlayers = new Map(state.players);
+      newPlayers.set(action.data.userId, updatedPlayer);
+
+      return {
+        ...state,
+        players: newPlayers,
+        isRolling: false,
+        selectedDice: new Set()
+      };
+    }
+
+    case "dice-held": {
+      const player = state.players.get(action.data.userId);
+      if (!player) return state;
+
+      const updatedPlayer: PlayerState = {
+        ...player,
+        heldIndices: action.data.heldIndices
+      };
+
+      const newPlayers = new Map(state.players);
+      newPlayers.set(action.data.userId, updatedPlayer);
+
+      return {
+        ...state,
+        players: newPlayers,
+        isHolding: false,
+        selectedDice: new Set()
+      };
+    }
+
     case "toggle-dice": {
       const newSelected = new Set(state.selectedDice);
-      if (newSelected.has(action.index)) newSelected.delete(action.index);
-      else newSelected.add(action.index);
+      if (newSelected.has(action.index)) {
+        newSelected.delete(action.index);
+      } else {
+        newSelected.add(action.index);
+      }
       return { ...state, selectedDice: newSelected };
     }
+
     case "clear-selection":
       return { ...state, selectedDice: new Set() };
-    case "error":
-      return {
-        ...state,
-        error: action.error,
-        isRolling: false,
-        isHolding: false,
-        isFinishing: false,
-      };
+
     case "rolling":
       return { ...state, isRolling: true, error: null };
+
     case "holding":
       return { ...state, isHolding: true, error: null };
+
     case "finishing":
       return { ...state, isFinishing: true, error: null };
+
     case "action-complete":
       return {
         ...state,
@@ -70,9 +193,18 @@ function reducer(state: State, action: Action): State {
         isHolding: false,
         isFinishing: false,
         selectedDice: new Set(),
+        error: null
       };
-    case "set-loading":
-      return { ...state, isLoading: action.isLoading };
+
+    case "error":
+      return {
+        ...state,
+        isRolling: false,
+        isHolding: false,
+        isFinishing: false,
+        error: action.error
+      };
+
     default:
       return state;
   }
@@ -80,404 +212,282 @@ function reducer(state: State, action: Action): State {
 
 // Initial state
 const initialState: State = {
-  matchState: null,
+  matchId: null,
+  currentRoundNumber: 1,
+  playerOrder: [],
+  currentPlayer: null,
+  players: new Map(),
   selectedDice: new Set(),
-  error: null,
   isLoading: true,
   isRolling: false,
   isHolding: false,
   isFinishing: false,
+  error: null,
+  gameEnded: false,
+  winner: null
 };
 
-// Dice face emoji mapping
+// Face emoji mapping
 const faceEmoji: Record<Face, string> = {
   NINE: "9️⃣",
   TEN: "🔟",
   JACK: "🃏",
   QUEEN: "👸",
   KING: "🤴",
-  ACE: "🅰️",
+  ACE: "🅰️"
 };
-
-// Combination name mapping
-const combinationNames: Record<string, string> = {
-  FIVE_OF_A_KIND: "Five of a Kind",
-  FOUR_OF_A_KIND: "Four of a Kind",
-  FULL_HOUSE: "Full House",
-  STRAIGHT: "Straight",
-  THREE_OF_A_KIND: "Three of a Kind",
-  TWO_PAIR: "Two Pair",
-  ONE_PAIR: "One Pair",
-  BUST: "Bust",
-};
-
-function normalizeMatchSnapshot(raw: any): MatchSnapshot | null {
-  if (!raw || typeof raw !== "object") return null;
-
-  // If already matches frontend MatchSnapshot shape (has game + wallets)
-  if (raw.matchId !== undefined && raw.game && raw.wallets !== undefined) {
-    return raw as MatchSnapshot;
-  }
-
-  // Backend short snapshot published in controller: { matchId, currentRoundNumber, playerOrder, currentPlayer }
-  if (raw.matchId !== undefined && Array.isArray(raw.playerOrder)) {
-    const matchId = Number(raw.matchId);
-    const playerOrder: number[] = raw.playerOrder.map((p: any) => Number(p));
-    const currentPlayer =
-      raw.currentPlayer !== undefined ? Number(raw.currentPlayer) : playerOrder[0] ?? null;
-    const currentRoundNumber = Number(raw.currentRoundNumber ?? 1);
-
-    // Build minimal players array with default player state so UI can render
-    const players: PlayerState[] = playerOrder.map((uid) => ({
-      userId: uid,
-      hand: null,
-      combination: null,
-      hasRolled: false,
-      rollsRemaining: 3,
-      heldIndices: [],
-    }));
-
-    const game = {
-      phase: "ROLLING" as any, // match has started
-      rounds: Array(Math.max(0, currentRoundNumber)).fill("OPEN" as any),
-      currentRoundIndex: Math.max(0, currentRoundNumber - 1),
-      ante: raw.ante ?? 0,
-      players,
-    };
-
-    const snapshot: MatchSnapshot = {
-      matchId,
-      game,
-      wallets: {}, // server didn't send wallets in this brief snapshot
-      currentPlayerId: currentPlayer,
-      eventType: raw.eventType ?? "match-snapshot",
-      eventId: raw.eventId ?? "",
-    };
-    return snapshot;
-  }
-
-  // If backend returns an object with .game and matchId, adapt directly
-  if (raw.game && raw.matchId !== undefined) {
-    return {
-      matchId: Number(raw.matchId),
-      game: raw.game,
-      wallets: raw.wallets ?? {},
-      currentPlayerId: raw.currentPlayerId ?? null,
-      eventType: raw.eventType ?? "",
-      eventId: raw.eventId ?? "",
-    } as MatchSnapshot;
-  }
-
-  // If raw contains a data envelope (e.g. { data: {...} }) try recursively
-  if (raw.data) {
-    return normalizeMatchSnapshot(raw.data);
-  }
-
-  return null;
-}
 
 export function MatchView() {
   const { matchId } = useParams<{ matchId: string }>();
   const [state, dispatch] = useReducer(reducer, initialState);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
-  // Load initial snapshot via API so UI doesn't depend only on SSE timing
-  useEffect(() => {
-    if (!matchId) return;
-    let mounted = true;
-
-    async function loadInitial() {
-      dispatch({ type: "set-loading", isLoading: true });
-      try {
-        const raw = await api.getMatchById(Number(matchId));
-        if (!mounted) return;
-        // Debug: inspect server payload (remove later)
-        // eslint-disable-next-line no-console
-        console.debug("GET /api/matches/:id response:", raw);
-        const normalized = normalizeMatchSnapshot(raw);
-        if (normalized) dispatch({ type: "set-match-state", state: normalized });
-        else dispatch({ type: "error", error: "Snapshot inválido recebido do servidor" });
-      } catch (err: any) {
-        if (!mounted) return;
-        if (err instanceof ApiError) dispatch({ type: "error", error: err.message });
-        else dispatch({ type: "error", error: "Erro ao carregar a partida" });
-      }
+  // Handler para eventos gerais do match
+  const handleMatchMessage = useCallback((message: MatchSSEMessage) => {
+    switch (message.action) {
+      case "match-snapshot":
+        dispatch({ type: "set-snapshot", data: message.data as MatchSnapshotEvent });
+        break;
+      case "turn-change":
+        dispatch({ type: "turn-change", data: message.data as TurnChangeEvent });
+        break;
+      case "round-complete":
+        dispatch({ type: "round-complete", data: message.data as RoundSummaryEvent });
+        break;
+      case "game-end":
+        dispatch({ type: "game-end", data: message.data as GameEndEvent });
+        break;
     }
+  }, []);
 
-    loadInitial();
-    return () => {
-      mounted = false;
-    };
-  }, [matchId]);
+  // Handler para eventos de dados
+  const handleDiceMessage = useCallback((message: DiceSSEMessage) => {
+    switch (message.action) {
+      case "dice-rolled":
+        dispatch({ type: "dice-rolled", data: message.data as DiceRolledData });
+        break;
+      case "dice-held":
+        dispatch({ type: "dice-held", data: message.data as DiceHeldData });
+        break;
+    }
+  }, []);
 
-  // SSE message handler
-  const handleMessage = useCallback(
-    (message: SSEMessage) => {
-      // eslint-disable-next-line no-console
-      console.debug("SSE frame:", message.eventType, message.data);
+  // Subscrever eventos
+  useMatchEvents(matchId, handleMatchMessage);
+  useMatchDiceEvents(matchId ? Number(matchId) : undefined, handleDiceMessage);
 
-      let payload: any = message.data;
-      if (typeof payload === "string") {
-        try {
-          payload = JSON.parse(payload);
-        } catch {
-          // keep raw string
-        }
-      }
-
-      // Some servers wrap the event in { data: ... }
-      const raw = payload && payload.data ? payload.data : payload;
-
-      const normalized = normalizeMatchSnapshot(raw);
-      if (normalized) {
-        dispatch({ type: "set-match-state", state: normalized });
-        return;
-      }
-
-      // Handle explicit game-end event: mark finished snapshot
-      if (message.eventType === "game-end") {
-        const ms: MatchSnapshot = {
-          matchId: raw.matchId ?? Number(matchId),
-          game: {
-            phase: "FINISHED" as any,
-            rounds: [],
-            currentRoundIndex: 0,
-            ante: 0,
-            players: [],
-          },
-          wallets: {},
-          currentPlayerId: null,
-          eventType: "game-end",
-          eventId: message.eventId || "",
-        };
-        dispatch({ type: "set-match-state", state: ms });
-        return;
-      }
-
-      // Optionally, handle turn-change / round-complete to update small parts of state
-      // (left out for simplicity — we rely on match-snapshot messages)
-    },
-    [matchId]
-  );
-
-  // Subscribe to SSE events (backend endpoint: /api/matches/{id}/events)
-  useMatchEvents(matchId, handleMessage);
-
+  // Ações do jogo
   const handleRoll = async () => {
     if (!matchId) return;
+
     dispatch({ type: "rolling" });
     try {
       await api.sendCommand(Number(matchId), { type: "ROLL" });
       dispatch({ type: "action-complete" });
-    } catch (err: any) {
-      if (err instanceof ApiError) dispatch({ type: "error", error: err.message });
-      else dispatch({ type: "error", error: "Erro ao lançar os dados" });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        dispatch({ type: "error", error: err.message });
+      } else {
+        dispatch({ type: "error", error: "Erro ao lançar dados" });
+      }
     }
   };
 
   const handleHold = async () => {
-    if (!matchId) return;
+    if (!matchId || state.selectedDice.size === 0) return;
+
     dispatch({ type: "holding" });
     try {
       await api.sendCommand(Number(matchId), {
         type: "HOLD",
-        indices: Array.from(state.selectedDice),
+        indices: Array.from(state.selectedDice)
       });
       dispatch({ type: "action-complete" });
-    } catch (err: any) {
-      if (err instanceof ApiError) dispatch({ type: "error", error: err.message });
-      else dispatch({ type: "error", error: "Erro ao guardar os dados" });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        dispatch({ type: "error", error: err.message });
+      } else {
+        dispatch({ type: "error", error: "Erro ao segurar dados" });
+      }
     }
   };
 
   const handleFinishTurn = async () => {
     if (!matchId) return;
+
     dispatch({ type: "finishing" });
     try {
       await api.sendCommand(Number(matchId), { type: "FINISH_TURN" });
       dispatch({ type: "action-complete" });
-    } catch (err: any) {
-      if (err instanceof ApiError) dispatch({ type: "error", error: err.message });
-      else dispatch({ type: "error", error: "Erro ao terminar a jogada" });
+    } catch (err) {
+      if (err instanceof ApiError) {
+        dispatch({ type: "error", error: err.message });
+      } else {
+        dispatch({ type: "error", error: "Erro ao terminar turno" });
+      }
     }
   };
 
-  if (state.isLoading && !state.matchState) {
+  // UI
+  if (state.isLoading) {
     return <div className="match-loading">A carregar partida...</div>;
   }
 
-  if (!state.matchState) {
+  if (!state.matchId) {
     return <div className="match-error">Partida não encontrada</div>;
   }
 
-  // Defensive defaults for nested structures
-  const matchState = state.matchState;
-  const game =
-    matchState.game ??
-    ({
-      phase: "FINISHED",
-      rounds: [],
-      currentRoundIndex: 0,
-      ante: 0,
-      players: [],
-    } as typeof matchState.game);
-  const players = Array.isArray(game.players) ? game.players : ([] as PlayerState[]);
-  const wallets = matchState.wallets ?? ({} as Record<number, any>);
+  const isMyTurn = user && state.currentPlayer === user.id;
+  const myPlayer = user ? state.players.get(user.id) : null;
 
-  const currentPlayer = players.find(
-    (p: PlayerState) => p.userId === matchState.currentPlayerId
-  );
-  const myPlayer = user ? players.find((p: PlayerState) => p.userId === user.id) : null;
-  const isMyTurn = user && matchState.currentPlayerId === user.id;
-  const myWallet = user ? wallets[user.id] : null;
-  const gameFinished = game.phase === "FINISHED";
+  if (state.gameEnded) {
+    const winnerName = state.winner === user?.id ? "Você" : `Jogador ${state.winner}`;
+    return (
+        <div className="match-container">
+          <div className="match-finished">
+            <h2>🎉 Jogo Terminado!</h2>
+            <p>Vencedor: {winnerName}</p>
+            <button onClick={() => navigate("/lobbies")}>Voltar aos Lobbies</button>
+          </div>
+        </div>
+    );
+  }
 
   return (
-    <div className="match-container">
-      <div className="match-header">
-        <h2> Partida #{matchId}</h2>
-        <div className="match-info">
-          <span>Ronda: {(game.currentRoundIndex ?? 0) + 1}</span>
-          <span>Ante: {game.ante ?? 0}€</span>
-          <span
-            className={`match-phase match-phase-${(game.phase ?? "FINISHED").toLowerCase()}`}
-          >
-            {game.phase === "LOBBY"
-              ? "A esperar"
-              : game.phase === "ROLLING"
-              ? "Em progresso"
-              : "Terminado"}
+      <div className="match-container">
+        <div className="match-header">
+          <h2>Partida #{state.matchId}</h2>
+          <div className="match-info">
+            <span>Ronda: {state.currentRoundNumber}</span>
+            <span className={isMyTurn ? "your-turn" : ""}>
+            {isMyTurn ? "É a sua vez!" : `Vez do Jogador ${state.currentPlayer}`}
           </span>
+          </div>
         </div>
-      </div>
 
-      {state.error && <div className="match-error-message">{state.error}</div>}
+        {state.error && (
+            <div className="match-error-message">{state.error}</div>
+        )}
 
-      {/* Game finished message */}
-      {gameFinished && (
-        <div className="match-finished">
-          <h3> Jogo Terminado!</h3>
-          <p>Obrigado por jogar.</p>
-        </div>
-      )}
+        {/* Minha mão */}
+        {myPlayer && (
+            <div className="match-my-hand">
+              <h3>A Sua Mão</h3>
 
-      {/* Current turn indicator */}
-      {!gameFinished && currentPlayer && (
-        <div className={`match-turn-indicator ${isMyTurn ? "my-turn" : ""}`}>
-          {isMyTurn ? <span> É a sua vez de jogar!</span> : <span>A esperar por Jogador #{currentPlayer.userId}...</span>}
-        </div>
-      )}
-
-      {/* My hand and controls */}
-      {myPlayer && !gameFinished && (
-        <div className="match-my-hand">
-          <h3>A Sua Mão</h3>
-          {myWallet && <div className="match-my-balance">Saldo: {myWallet.currentBalance}€</div>}
-
-          <div className="match-dice-container">
-            {(myPlayer.hand?.dices ?? []).map((dice, index) => (
-              <div
-                key={index}
-                className={`match-dice ${state.selectedDice.has(index) ? "selected" : ""} ${
-                  (myPlayer.heldIndices ?? []).includes(index) ? "held" : ""
-                }`}
-                onClick={() => {
-                  if (isMyTurn && !(myPlayer.heldIndices ?? []).includes(index)) {
-                    dispatch({ type: "toggle-dice", index });
-                  }
-                }}
-              >
-                <span className="dice-face">{faceEmoji[dice.value]}</span>
-                <span className="dice-value">{dice.value}</span>
+              <div className="match-dice-container">
+                {myPlayer.dice.map((face, index) => (
+                    <div
+                        key={index}
+                        className={`match-dice ${
+                            state.selectedDice.has(index) ? "selected" : ""
+                        } ${
+                            myPlayer.heldIndices.includes(index) ? "held" : ""
+                        }`}
+                        onClick={() => {
+                          if (isMyTurn && !myPlayer.heldIndices.includes(index)) {
+                            dispatch({ type: "toggle-dice", index });
+                          }
+                        }}
+                    >
+                      <span className="dice-face">{faceEmoji[face]}</span>
+                    </div>
+                ))}
               </div>
-            ))}
-            {(myPlayer.hand?.dices ?? []).length === 0 && <div className="match-no-dice">Clique em "Lançar Dados" para começar</div>}
-          </div>
 
-          {myPlayer.combination && (
-            <div className="match-combination">
-              <strong>Combinação:</strong> {combinationNames[myPlayer.combination.type] || myPlayer.combination.type}
-            </div>
-          )}
-
-          <div className="match-roll-info">
-            <span>Lançamentos restantes: {myPlayer.rollsRemaining}</span>
-          </div>
-
-          {/* Game controls */}
-          {isMyTurn && (
-            <div className="match-controls">
-              {!myPlayer.hasRolled && myPlayer.rollsRemaining > 0 && (
-                <button onClick={handleRoll} disabled={state.isRolling} className="match-roll-btn">
-                  {state.isRolling ? "A lançar..." : " Lançar Dados"}
-                </button>
-              )}
-
-              {myPlayer.hasRolled && myPlayer.rollsRemaining > 0 && (
-                <>
-                  <button onClick={handleHold} disabled={state.isHolding || state.selectedDice.size === 0} className="match-hold-btn">
-                    {state.isHolding ? "A guardar..." : ` Guardar (${state.selectedDice.size})`}
-                  </button>
-                  <button onClick={handleRoll} disabled={state.isRolling} className="match-roll-btn">
-                    {state.isRolling ? "A lançar..." : " Lançar Novamente"}
-                  </button>
-                </>
-              )}
-
-              {myPlayer.hasRolled && (
-                <button onClick={handleFinishTurn} disabled={state.isFinishing} className="match-finish-btn">
-                  {state.isFinishing ? "A terminar..." : " Terminar Jogada"}
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* All players */}
-      <div className="match-players">
-        <h3>Jogadores</h3>
-        <div className="match-players-grid">
-          {players.map((player: PlayerState) => {
-            const wallet = wallets[player.userId];
-            const isCurrentTurn = player.userId === matchState.currentPlayerId;
-            const isMe = user && player.userId === user.id;
-
-            return (
-              <div
-                key={player.userId}
-                className={`match-player-card ${isCurrentTurn ? "current-turn" : ""} ${isMe ? "is-me" : ""}`}
-              >
-                <div className="match-player-header">
-                  <span className="match-player-name">
-                    Jogador #{player.userId}
-                    {isMe && " (Você)"}
-                  </span>
-                  {wallet && <span className="match-player-balance">{wallet.currentBalance}€</span>}
-                </div>
-
-                {player.hand && !isMe && (
-                  <div className="match-player-dice">
-                    {(player.hand.dices ?? []).map((dice, index) => (
-                      <span key={index} className={`match-player-dice-item ${(player.heldIndices ?? []).includes(index) ? "held" : ""}`}>
-                        {faceEmoji[dice.value]}
-                      </span>
-                    ))}
+              {myPlayer.combination && (
+                  <div className="match-combination">
+                    <strong>Combinação:</strong> {myPlayer.combination}
                   </div>
-                )}
+              )}
 
-                {player.combination && <div className="match-player-combination">{combinationNames[player.combination.type] || player.combination.type}</div>}
-
-                <div className="match-player-status">
-                  {player.hasRolled ? <span className="status-rolled">Jogou</span> : <span className="status-waiting">A esperar</span>}
-                  <span className="rolls-remaining">Rolls: {player.rollsRemaining}</span>
-                </div>
+              <div className="match-roll-info">
+                <span>Lançamentos restantes: {myPlayer.rerollsLeft}</span>
               </div>
-            );
-          })}
+
+              {/* Controlos */}
+              {isMyTurn && (
+                  <div className="match-controls">
+                    <button
+                        onClick={handleRoll}
+                        disabled={state.isRolling || myPlayer.rerollsLeft === 0}
+                        className="match-roll-btn"
+                    >
+                      {state.isRolling ? "A lançar..." : "Lançar Dados"}
+                    </button>
+
+                    {myPlayer.dice.length > 0 && (
+                        <>
+                          <button
+                              onClick={handleHold}
+                              disabled={state.isHolding || state.selectedDice.size === 0}
+                              className="match-hold-btn"
+                          >
+                            {state.isHolding ? "A segurar..." : `Segurar (${state.selectedDice.size})`}
+                          </button>
+
+                          <button
+                              onClick={handleFinishTurn}
+                              disabled={state.isFinishing}
+                              className="match-finish-btn"
+                          >
+                            {state.isFinishing ? "A terminar..." : "Terminar Jogada"}
+                          </button>
+                        </>
+                    )}
+                  </div>
+              )}
+            </div>
+        )}
+
+        {/* Todos os jogadores */}
+        <div className="match-players">
+          <h3>Jogadores</h3>
+          <div className="match-players-grid">
+            {state.playerOrder.map(userId => {
+              const player = state.players.get(userId);
+              if (!player) return null;
+
+              const isCurrentTurn = userId === state.currentPlayer;
+              const isMe = user && userId === user.id;
+
+              return (
+                  <div
+                      key={userId}
+                      className={`match-player-card ${isCurrentTurn ? "current-turn" : ""} ${isMe ? "is-me" : ""}`}
+                  >
+                    <div className="match-player-header">
+                      <span>Jogador #{userId} {isMe && "(Você)"}</span>
+                    </div>
+
+                    {player.dice.length > 0 && !isMe && (
+                        <div className="match-player-dice">
+                          {player.dice.map((face, idx) => (
+                              <span
+                                  key={idx}
+                                  className={player.heldIndices.includes(idx) ? "held" : ""}
+                              >
+                        {faceEmoji[face]}
+                      </span>
+                          ))}
+                        </div>
+                    )}
+
+                    {player.combination && (
+                        <div className="match-player-combination">
+                          {player.combination}
+                        </div>
+                    )}
+
+                    <div className="match-player-status">
+                      <span>Lançamentos: {player.rerollsLeft}</span>
+                    </div>
+                  </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-    </div>
   );
 }
 

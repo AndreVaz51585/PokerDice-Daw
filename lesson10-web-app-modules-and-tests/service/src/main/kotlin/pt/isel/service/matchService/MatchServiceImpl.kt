@@ -212,7 +212,7 @@ class MatchServiceImpl(
             val game = createNewGame(lobby, match, matchPlayers)
 
             val wallets = matchPlayers.associate { p ->
-                val wallet = when (val walletResult = walletService.getWallet(p.userId, p.userId)) {
+                val wallet = when (val walletResult = walletService.getWallet(p.userId)) {
                     is Success -> walletResult.value
                     is Failure -> return failure(MatchServiceError.PlayerNotFound)
                 }

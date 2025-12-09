@@ -1,81 +1,112 @@
 import { useEffect, useRef } from "react";
+import {Hand, Wallet} from "../types.ts";
 
-export interface SSEMessage {
-  eventType: string;
-  eventId: string;
-  data: any;
+//{}
+
+type gameActions = "match-snapshot" | "turn-change" | "round-complete" | "game-end" ;
+
+export interface TurnChangeEvent {
+  previousPlayer: number;
+  currentPlayer: number;
+}
+
+export interface RoundSummaryEvent {
+    roundNumber: number;
+    winners: number[] | null;
+    prize: number;
+    wallets: Record<number, Wallet>; // Replace 'any' with actual Wallet type
+    playersAndCombinations: Record<number, Hand> | null; // Replace 'any' with actual Hand type
+}
+
+export interface MatchSnapshotEvent {
+    matchId: number;
+    currentRoundNumber: number;
+    playerOrder: number[];
+    currentPlayer: number;
+}
+
+export interface GameEndEvent {
+    winner: number;
+    prize: number;
+    wallets: Record<number, Wallet>; // Replace 'any' with actual Wallet type
+}
+
+
+export interface MatchSSEMessage {
+  action: gameActions;
+  data: TurnChangeEvent | RoundSummaryEvent | MatchSnapshotEvent | GameEndEvent;
 }
 
 export function useMatchEvents(
   matchId: string | undefined,
-  onMessage: (message: SSEMessage) => void
+  onMessage: (message: MatchSSEMessage) => void
 ) {
-  const eventSourceRef = useRef<EventSource | null>(null);
+  const onMessageRef = useRef(onMessage);
+
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
 
   useEffect(() => {
     if (!matchId) return;
 
-    // Note: backend exposes /api/matches/{matchId}/events (no "sse" path)
-    const url = `/api/matches/${matchId}/events`;
-    const eventSource = new EventSource(url);
-    eventSourceRef.current = eventSource;
+    const eventSource = new EventSource(`/api/matches/${matchId}/events`);
 
-    const eventTypes = [
-      "match-snapshot",
-      "turn-change",
-      "round-complete",
-      "game-end",
-    ];
-
-    const listeners: { type: string; handler: (ev: MessageEvent) => void }[] = [];
-
-    const makeHandler = (eventType: string) => (ev: MessageEvent) => {
+    // Ouve eventos nomeados
+    eventSource.addEventListener("match-snapshot", (event) => {
       try {
-        const parsed = JSON.parse(ev.data);
-        onMessage({
-          eventType,
-          eventId: ev.lastEventId || "",
-          data: parsed,
+        const data = JSON.parse(event.data) as MatchSnapshotEvent;
+        onMessageRef.current({
+          action: "match-snapshot",
+          data
         });
-      } catch (err) {
-        // If parsing fails, forward raw string as data
-        onMessage({
-          eventType,
-          eventId: ev.lastEventId || "",
-          data: ev.data,
-        });
+      } catch (error) {
+        console.error("Parse error (match-snapshot):", error);
       }
-    };
-
-    eventTypes.forEach((et) => {
-      const h = makeHandler(et);
-      eventSource.addEventListener(et, h as EventListener);
-      listeners.push({ type: et, handler: h });
     });
 
-    // also listen generic `message` frames
-    const genericHandler = (ev: MessageEvent) => {
+    eventSource.addEventListener("turn-change", (event) => {
       try {
-        const payload = JSON.parse(ev.data);
-        onMessage({ eventType: "message", eventId: ev.lastEventId || "", data: payload });
-      } catch {
-        onMessage({ eventType: "message", eventId: ev.lastEventId || "", data: ev.data });
+        const data = JSON.parse(event.data) as TurnChangeEvent;
+        onMessageRef.current({
+          action: "turn-change",
+          data
+        });
+      } catch (error) {
+        console.error("Parse error (turn-change):", error);
       }
-    };
+    });
 
-    eventSource.addEventListener("message", genericHandler as EventListener);
+    eventSource.addEventListener("round-complete", (event) => {
+      try {
+        const data = JSON.parse(event.data) as RoundSummaryEvent;
+        onMessageRef.current({
+          action: "round-complete",
+          data
+        });
+      } catch (error) {
+        console.error("Parse error (round-complete):", error);
+      }
+    });
 
-    eventSource.onerror = (err) => {
-      console.error("SSE connection error (match):", err);
+    eventSource.addEventListener("game-end", (event) => {
+      try {
+        const data = JSON.parse(event.data) as GameEndEvent;
+        onMessageRef.current({
+          action: "game-end",
+          data
+        });
+      } catch (error) {
+        console.error("Parse error (game-end):", error);
+      }
+    });
+
+    eventSource.onerror = (error) => {
+      console.error("SSE Error:", error);
     };
 
     return () => {
-      listeners.forEach((l) => eventSource.removeEventListener(l.type, l.handler as EventListener));
-      eventSource.removeEventListener("message", genericHandler as EventListener);
       eventSource.close();
-      eventSourceRef.current = null;
     };
-  }, [matchId, onMessage]);
-
-  return eventSourceRef;
+  }, [matchId]);
 }

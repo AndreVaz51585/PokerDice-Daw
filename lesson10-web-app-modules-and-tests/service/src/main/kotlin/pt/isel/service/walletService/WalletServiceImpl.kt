@@ -27,19 +27,21 @@ class WalletServiceImpl (
             success(wallet)
         }
 
-    override fun getWallet(userId: Int, pathId: Int): Either<WalletServiceError, Wallet> =
+    override fun getWallet(userId: Int): Either<WalletServiceError, Wallet> =
+        trxManager.run {
+
+
+            val wallet = repoWallet.findById(userId) ?: return@run failure(WalletServiceError.WalletNotFound)
+            success(wallet)
+        }
+
+    override fun getAmount(userId: Int,pathId: Int): Either<WalletServiceError, Int> =
         trxManager.run {
 
             if (userId != pathId) {
                 return@run failure(WalletServiceError.NoPermission)
             }
 
-            val wallet = repoWallet.findById(userId) ?: return@run failure(WalletServiceError.WalletNotFound)
-            success(wallet)
-        }
-
-    override fun getAmount(userId: Int): Either<WalletServiceError, Int> =
-        trxManager.run {
             val amount = repoWallet.getBalance(userId)?: return@run failure(WalletServiceError.WalletNotFound)
             success(amount)
         }

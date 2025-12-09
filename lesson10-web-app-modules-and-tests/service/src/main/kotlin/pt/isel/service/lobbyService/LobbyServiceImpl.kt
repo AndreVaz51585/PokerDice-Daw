@@ -61,7 +61,7 @@ class LobbyServiceImpl(
             // numa fase inicial, só vamos verificar se o host existe se sim continuamos caso contrártio retornamos o erro
             val host = repoUser.findById(hostId) ?: return@run failure(LobbyServiceError.UserNotFound)
 
-            val hostAmount = walletService.getAmount(host.id)
+            val hostAmount = walletService.getAmount(host.id,host.id)
 
             if (hostAmount is Success && hostAmount.value < ante) {
                 return@run failure(LobbyServiceError.NotEnoughMoney)
@@ -122,7 +122,7 @@ class LobbyServiceImpl(
             val user = repoUser.findById(userId)
                 ?: return@run failure(LobbyServiceError.UserNotFound)// verificação desnecessária porque o user já vem com autenticação feita caso contrário daria erro
 
-            val userAmount = walletService.getAmount(user.id)
+            val userAmount = walletService.getAmount(userId,user.id)
 
             val lobby = repoLobby.findById(lobbyId) ?: return@run failure(LobbyServiceError.LobbyNotFound)
 
@@ -262,7 +262,7 @@ class LobbyServiceImpl(
             val matchPlayers = mutableListOf<MatchPlayer>()
             for (user in players) {
 
-                val amountOutcome = walletService.getAmount(user.id)
+                val amountOutcome = walletService.getAmount(user.id,user.id)
 
                 val balanceAtStart = when (amountOutcome) {
                     is Failure -> return@run failure(LobbyServiceError.ErrorJoiningLobby)
