@@ -34,7 +34,7 @@ type Action =
     | { type: "player-left"; data: playerLeftData }
     | { type: "match-starting"; data: matchStartingData }
     | { type: "joining" }
-    | { type: "leaving" }
+    | { type: "leaving", isHost : boolean }
     | { type: "startingMatch" }
     | { type: "action-complete" }
     | { type: "action-error"; error: string };
@@ -62,6 +62,17 @@ function reducer(state: State, action: Action): State {
         case "joining":
             return { ...state, isJoining: true, error: null };
         case "leaving":
+
+            if (action.isHost) {
+                return {
+                    ...state,
+                    lobby: null,
+                    host: null,
+                    players: [],
+                    isLeaving: true,
+                    error: null
+                };
+            }
             return { ...state, isLeaving: true, error: null};
         case "match-starting":
             return { ...state, matchId: action.data.matchId, isStartingMatch: true };
@@ -108,6 +119,16 @@ function handlePlayerJoin(state: State, action: { type: "player-join"; data: pla
 }
 
 function handlePlayerLeft(state: State, action: { type: "player-left"; data: playerLeftData }): State {
+
+
+    if (state.host && state.host.id === action.data.player.id) {
+        return {
+            ...state,
+            lobby: null,
+            host: null,
+            players: [],
+        };
+    }
 
 
     // Remove o jogador da lista
@@ -213,7 +234,9 @@ export function LobbyDetails() {
     const handleLeave = async () => {
         if (!lobbyId) return;
 
-        dispatch({ type: "leaving" });
+        const isHost = user?.id === host?.id;
+
+        dispatch({ type: "leaving", isHost });
         try {
             await api.leaveLobby(Number(lobbyId));
             dispatch({ type: "action-complete" });

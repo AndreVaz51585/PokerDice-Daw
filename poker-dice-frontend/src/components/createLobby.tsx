@@ -86,7 +86,7 @@ export function CreateLobby() {
     dispatch({ type: "post" });
 
     try {
-      const location = await api.createLobby({
+      const lobby = await api.createLobby({
         name: state.name,
         description: state.description,
         minPlayers: state.minPlayers,
@@ -95,10 +95,8 @@ export function CreateLobby() {
         ante: state.ante,
       });
       dispatch({ type: "success" });
-      // Extract lobby ID from location header
-      const lobbyId = location.split("/").pop();
-      if (lobbyId) {
-        navigate(`/lobbies/${lobbyId}`);
+      if (lobby.id) {
+        navigate(`/lobbies/${lobby.id}`);
       } else {
         navigate("/");
       }
