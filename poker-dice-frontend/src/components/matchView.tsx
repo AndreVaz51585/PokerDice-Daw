@@ -1,7 +1,7 @@
 import { useCallback, useReducer } from "react";
 import { useParams, useNavigate } from "react-router";
 import { api, ApiError } from "../api";
-import { Face } from "../types";
+import { DiceHoldResponse, DiceRollResponse, Face } from "../types";
 import { useAuth } from "../AuthContext";
 import {
   useMatchEvents,
@@ -50,6 +50,8 @@ type Action =
     | { type: "game-end"; data: GameEndEvent }
     | { type: "dice-rolled"; data: DiceRolledData }
     | { type: "dice-held"; data: DiceHeldData }
+    | { type: "update-my-roll"; userId: number; data: { dices: Face[]; rerollsLeft: number; hand: string } }  
+    | { type: "update-my-hold"; userId: number; data: { heldIndices: number[] } } 
     | { type: "toggle-dice"; index: number }
     | { type: "clear-selection" }
     | { type: "rolling" }
@@ -160,6 +162,51 @@ function reducer(state: State, action: Action): State {
       };
     }
 
+    case "update-my-roll": {
+      const player = state.players.get(action.userId);
+      if (!player) return state;
+
+      const updatedPlayer: PlayerState = {
+        ...player,
+        dice: action.data.dices,
+        rerollsLeft: action.data.rerollsLeft,
+        combination: action.data.hand
+      };
+
+      const newPlayers = new Map(state.players);
+      newPlayers.set(action.userId, updatedPlayer);
+
+      return {
+        ...state,
+        players: newPlayers,
+        isRolling: false,
+        selectedDice: new Set(),
+        error: null
+      };
+    }
+
+    case "update-my-hold": {
+      const player = state.players.get(action.userId);
+      if (!player) return state;
+
+      const updatedPlayer: PlayerState = {
+        ...player,
+        heldIndices: action.data.heldIndices
+      };
+
+      const newPlayers = new Map(state.players);
+      newPlayers.set(action.userId, updatedPlayer);
+
+      return {
+        ...state,
+        players: newPlayers,
+        isHolding: false,
+        selectedDice: new Set(),
+        error: null
+      };
+    }
+
+
     case "toggle-dice": {
       const newSelected = new Set(state.selectedDice);
       if (newSelected.has(action.index)) {
@@ -225,12 +272,12 @@ const initialState: State = {
 
 // Face emoji mapping
 const faceEmoji: Record<Face, string> = {
-  NINE: "9️⃣",
-  TEN: "🔟",
-  JACK: "🃏",
-  QUEEN: "👸",
-  KING: "🤴",
-  ACE: "🅰️"
+  NINE: "9",
+  TEN: "10",
+  JACK: "J",
+  QUEEN: "Q",
+  KING: "K",
+  ACE: "A"
 };
 
 export function MatchView() {
@@ -269,12 +316,21 @@ export function MatchView() {
 
   // Ações do jogo
   const handleRoll = async () => {
-    if (!matchId) return;
+    if (!matchId || !user) return;
 
     dispatch({ type: "rolling" });
     try {
-        await api.sendCommand(Number(matchId), { type: "roll" });
-      dispatch({ type: "action-complete" });
+      const response = await api.sendCommand(Number(matchId), { type: "roll" }) as DiceRollResponse;
+      
+      dispatch({ 
+        type: "update-my-roll", 
+        userId: user.id,
+        data: {
+          dices: response.dices,
+          rerollsLeft: response.rerollsLeft,
+          hand: response.hand
+        }
+      });
     } catch (err) {
       if (err instanceof ApiError) {
         dispatch({ type: "error", error: err.message });
@@ -285,15 +341,22 @@ export function MatchView() {
   };
 
   const handleHold = async () => {
-    if (!matchId || state.selectedDice.size === 0) return;
+    if (!matchId || !user || state.selectedDice.size === 0) return;
 
     dispatch({ type: "holding" });
-    try {
-      await api.sendCommand(Number(matchId), {
+      try {
+      const response = await api.sendCommand(Number(matchId), {
         type: "hold",
         indices: Array.from(state.selectedDice)
+      }) as DiceHoldResponse;
+      
+      dispatch({ 
+        type: "update-my-hold", 
+        userId: user.id,
+        data: {
+          heldIndices: response.heldIndices
+        }
       });
-      dispatch({ type: "action-complete" });
     } catch (err) {
       if (err instanceof ApiError) {
         dispatch({ type: "error", error: err.message });
@@ -336,9 +399,9 @@ export function MatchView() {
     return (
         <div className="match-container">
           <div className="match-finished">
-            <h2>🎉 Jogo Terminado!</h2>
+            <h2> Jogo Terminado!</h2>
             <p>Vencedor: {winnerName}</p>
-            <button onClick={() => navigate("/lobbies")}>Voltar aos Lobbies</button>
+            <button onClick={() => navigate("/")}>Voltar aos Lobbies</button>
           </div>
         </div>
     );

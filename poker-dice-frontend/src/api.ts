@@ -11,6 +11,9 @@ import {
     Statistics,
     CommandInput,
     InvitationId, DepositSucess, WithdrawSucess, Player,
+    DiceRollResponse,
+    DiceHoldResponse,
+    FinishTurnResponse,
 } from "./types";
 import { getErrorDescription } from "./errorDescriptions";
 
@@ -199,7 +202,7 @@ export const api = {
   async sendCommand(
     matchId: number,
     command: CommandInput
-  ): Promise<unknown> {
+  ): Promise<DiceRollResponse | DiceHoldResponse | FinishTurnResponse> {
     return fetchApi(`/matches/${matchId}/commands`, {
       method: "POST",
       headers: getAuthHeaders(),

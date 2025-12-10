@@ -214,3 +214,22 @@ export interface Player{
      id : number,
      nickname : String,
 }
+
+
+//--------------COMMANDS RESPONSES TYPES-----------------//
+
+export interface DiceRollResponse {
+  dices: Face[];
+  rerollsLeft: number;
+  hand: string;
+}
+
+export interface DiceHoldResponse {
+  dices: Face[];
+  heldIndices: number[];
+  rerollsLeft: number;
+}
+
+export interface FinishTurnResponse {
+  status: string;
+}
