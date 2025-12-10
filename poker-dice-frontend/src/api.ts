@@ -122,7 +122,7 @@ export const api = {
 
   // ==================== LOBBIES ====================
 
-  async createLobby(input: LobbyInput): Promise<string> {
+  async createLobby(input: LobbyInput): Promise<Lobby> {
     const response = await fetch(`${API_BASE_URL}/lobbies`, {
       method: "POST",
       headers: {
@@ -142,7 +142,7 @@ export const api = {
       throw new ApiError(response.status, errorMessage);
     }
 
-    return response.headers.get("Location") || "";
+    return response.json();
   },
 
   async getAllLobbies(): Promise<Lobby[]> {

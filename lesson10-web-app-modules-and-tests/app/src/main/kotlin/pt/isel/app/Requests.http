@@ -93,9 +93,9 @@ Authorization: Bearer {{tokenteste3}}
 
 
 ### Sair de um lobby
-POST http://localhost:8080/api/lobbies/6/leave
+POST http://localhost:8080/api/lobbies/7/leave
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{tokenteste2}}
 
 ### Listar jogadores de um lobby
 GET http://localhost:8080/api/lobbies/5/players
