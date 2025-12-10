@@ -62,7 +62,7 @@ function reducer(state: State, action: Action): State {
         case "joining":
             return { ...state, isJoining: true, error: null };
         case "leaving":
-            return { ...state, isLeaving: true, error: null };
+            return { ...state, isLeaving: true, error: null};
         case "match-starting":
             return { ...state, matchId: action.data.matchId, isStartingMatch: true };
         case "action-complete":
@@ -113,6 +113,7 @@ function handlePlayerLeft(state: State, action: { type: "player-left"; data: pla
     // Remove o jogador da lista
     const newPlayers = state.players.filter(p => p.id !== action.data.player.id);
 
+
     // Atualiza estado do lobby se estava FULL
     if (state.lobby?.state === "FULL") {
         const updatedLobby: Lobby = { ...state.lobby, state: "OPEN" };
@@ -162,7 +163,7 @@ export function LobbyDetails() {
             case "player-joined":
                 dispatch({ type: "player-join", data: message.data as playerJoinedData });
                 break;
-            case "player-left":;
+            case "player-left":
                 dispatch({ type: "player-left", data: message.data as playerLeftData });
                 break;
             case "match-starting":
@@ -171,6 +172,20 @@ export function LobbyDetails() {
 
         }
     }, []);
+
+    useEffect(() => {
+        if (state.matchId) {
+            navigate(`/matches/${state.matchId}`);
+        }
+
+
+        if (!state.isLoading && !state.lobby && lobbyId) {
+            navigate("/");
+            return;
+        }
+
+    }, [state.matchId, state.lobby, state.isLoading, lobbyId, navigate]);
+
 
     useLobbyListener(lobbyId ? Number(lobbyId) : undefined, handleSSEMessage);
 

@@ -273,7 +273,7 @@ export function MatchView() {
 
     dispatch({ type: "rolling" });
     try {
-      await api.sendCommand(Number(matchId), { type: "roll" });
+        await api.sendCommand(Number(matchId), { type: "roll" });
       dispatch({ type: "action-complete" });
     } catch (err) {
       if (err instanceof ApiError) {
