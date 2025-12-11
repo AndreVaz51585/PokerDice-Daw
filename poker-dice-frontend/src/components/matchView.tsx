@@ -51,7 +51,7 @@ type Action =
     | { type: "dice-rolled"; data: DiceRolledData }
     | { type: "dice-held"; data: DiceHeldData }
     | { type: "update-my-roll"; userId: number; data: { dices: Face[]; rerollsLeft: number; hand: string } }  
-    | { type: "update-my-hold"; userId: number; data: { heldIndices: number[] } } 
+    | { type: "update-my-hold"; userId: number; data: { dices: Face[]; heldIndices: number[]; rerollsLeft: number } }  
     | { type: "toggle-dice"; index: number }
     | { type: "clear-selection" }
     | { type: "rolling" }
@@ -191,7 +191,9 @@ function reducer(state: State, action: Action): State {
 
       const updatedPlayer: PlayerState = {
         ...player,
-        heldIndices: action.data.heldIndices
+        dice: action.data.dices,
+        heldIndices: action.data.heldIndices,
+        rerollsLeft: action.data.rerollsLeft
       };
 
       const newPlayers = new Map(state.players);
@@ -208,13 +210,16 @@ function reducer(state: State, action: Action): State {
 
 
     case "toggle-dice": {
-      const newSelected = new Set(state.selectedDice);
-      if (newSelected.has(action.index)) {
-        newSelected.delete(action.index);
+      const newSelectedDice = new Set(state.selectedDice);
+      if (newSelectedDice.has(action.index)) {
+        newSelectedDice.delete(action.index);
       } else {
-        newSelected.add(action.index);
+        newSelectedDice.add(action.index);
       }
-      return { ...state, selectedDice: newSelected };
+      return {
+        ...state,
+        selectedDice: newSelectedDice
+      };
     }
 
     case "clear-selection":
@@ -343,18 +348,21 @@ export function MatchView() {
   const handleHold = async () => {
     if (!matchId || !user || state.selectedDice.size === 0) return;
 
+    const indicesToHold = Array.from(state.selectedDice);
     dispatch({ type: "holding" });
       try {
       const response = await api.sendCommand(Number(matchId), {
         type: "hold",
-        indices: Array.from(state.selectedDice)
+        indices: indicesToHold
       }) as DiceHoldResponse;
       
       dispatch({ 
         type: "update-my-hold", 
         userId: user.id,
         data: {
-          heldIndices: response.heldIndices
+          dices: response.dices,
+          heldIndices: response.heldIndices,
+          rerollsLeft: response.rerollsLeft
         }
       });
     } catch (err) {

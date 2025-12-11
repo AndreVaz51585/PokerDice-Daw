@@ -71,16 +71,20 @@ class MatchController(
         return emitter
     }
 
+
+    data class CommandRequest(
+        val type: String,
+        val indices: List<Int>? = emptyList()
+    )
+
     @PostMapping("/{matchId}/commands", consumes = [MediaType.APPLICATION_JSON_VALUE])
     fun executeCommand(
         @PathVariable matchId: Int,
         authenticatedUser: AuthenticatedUser,
-        @RequestBody body: Map<String, String>
+        @RequestBody body: CommandRequest
     ): ResponseEntity<*> {
-        val rawType = sseMatchService.getRawTypeFromBody(body)
-            ?: return Problem.InvalidBodyParameters.response(HttpStatus.BAD_REQUEST)
-
-        val indices = sseMatchService.getIndicesFromBody(body)
+        val rawType = body.type.lowercase()
+        val indices = body.indices?.toSet() ?: emptySet()
         val userId = authenticatedUser.user.id
 
         val cmdResult = sseMatchService.executeComand(rawType, userId, indices)

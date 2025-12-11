@@ -191,10 +191,10 @@ export interface PlayerState {
 }
 
 // Command types for SSE
-export interface CommandInput {
-  type: "roll" | "finish-turn" | "hold";
-  indices?: number[];
-}
+export type CommandInput = 
+  | { type: "roll" }
+  | { type: "hold"; indices: number[] }
+  | { type: "finish-turn" };
 
 // Invitation types
 export interface InvitationId {

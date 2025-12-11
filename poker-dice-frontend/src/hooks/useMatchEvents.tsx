@@ -14,8 +14,7 @@ export interface RoundSummaryEvent {
     roundNumber: number;
     winners: number[] | null;
     prize: number;
-    wallets: Record<number, Wallet>; // Replace 'any' with actual Wallet type
-    playersAndCombinations: Record<number, Hand> | null; // Replace 'any' with actual Hand type
+    wallets: Record<number, Wallet>; 
 }
 
 export interface MatchSnapshotEvent {
@@ -28,7 +27,7 @@ export interface MatchSnapshotEvent {
 export interface GameEndEvent {
     winner: number;
     prize: number;
-    wallets: Record<number, Wallet>; // Replace 'any' with actual Wallet type
+    wallets: Record<number, Wallet>;
 }
 
 export interface DiceRolledData {
