@@ -20,13 +20,13 @@ sealed class MatchEvent {
     data class MatchSnapshot(
         val matchId: Int,
         val currentRoundNumber: Int,
+        val totalRounds : Int,
         val playerOrder: List<Int>,
         val currentPlayer: Int
     ): MatchEvent()
 
     data class GameEndPayload(
         val winner: Int,
-        val prize: Int,
         val wallets: Map<Int, Wallet>
     ): MatchEvent()
 

@@ -66,7 +66,7 @@ object MatchSql {
                 state = CAST(:state AS match_state),
                 current_round_no = :currentRoundNo,
                 started_at = :startedAt,
-                finished_at = :finishedAt
+                finished_at = :finishedAt,
                 max_players = :maxPlayers
             WHERE id = :id
         """

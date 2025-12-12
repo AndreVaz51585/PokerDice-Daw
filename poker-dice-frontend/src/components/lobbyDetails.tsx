@@ -150,6 +150,8 @@ export function LobbyDetails() {
     const { user } = useAuth();
     const navigate = useNavigate();
 
+    api.getLobbyById(Number(lobbyId))
+
     // Load lobby data
     useEffect(() => {
         if (!lobbyId) return;

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import {Face, Hand, Wallet} from "../types.ts";
+import {Face, Wallet} from "../types.ts";
 
 //{}
 
@@ -20,13 +20,13 @@ export interface RoundSummaryEvent {
 export interface MatchSnapshotEvent {
     matchId: number;
     currentRoundNumber: number;
+    totalRounds: number;
     playerOrder: number[];
     currentPlayer: number;
 }
 
 export interface GameEndEvent {
     winner: number;
-    prize: number;
     wallets: Record<number, Wallet>;
 }
 

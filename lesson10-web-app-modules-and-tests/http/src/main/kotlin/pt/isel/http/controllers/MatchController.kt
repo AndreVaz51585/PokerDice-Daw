@@ -38,6 +38,7 @@ class MatchController(
                 val snapshot = MatchEvent.MatchSnapshot(
                     matchId = banked.matchId,
                     currentRoundNumber = banked.game.rounds.size,
+                    totalRounds = banked.game.totalRounds,
                     playerOrder = banked.game.playerOrder,
                     currentPlayer = banked.game.playerOrder[banked.game.currentPlayerIndex],
                 )

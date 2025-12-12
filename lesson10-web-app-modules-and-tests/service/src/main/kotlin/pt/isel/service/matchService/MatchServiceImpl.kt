@@ -6,6 +6,7 @@ import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
 import pt.isel.domain.Game.money.BankedMatch
 import pt.isel.domain.Game.money.BankedMatchEngine
+import pt.isel.domain.Game.money.Wallet
 import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.domain.Game.pokerDice.GamePhase
 import pt.isel.domain.Game.pokerDice.createNewGame
@@ -31,6 +32,8 @@ class MatchServiceImpl(
     private val matchManager: MatchManager,
     private val eventPublisher: MatchEventPublisher
 ) : MatchService {
+
+
 
     override fun applyCommand(matchId: Int, cmd: Command): Either<MatchServiceError, BankedMatch> {
         val engine = matchManager.get(matchId) ?: return failure(MatchServiceError.MatchNotFound)
@@ -62,15 +65,55 @@ class MatchServiceImpl(
     ) {
         val roundEnded = prevState.game.rounds.size != afterState.game.rounds.size
         val gamePhase = afterState.game.phase
-
+        val lastRound = afterState.game.rounds.last() //
 
         if (gamePhase == GamePhase.FINISHED) {
-            val winner = afterState.wallets.maxByOrNull { it.value.currentBalance }
+
+            eventPublisher.publish(
+                matchId, MatchEvent.RoundSummary(
+                    roundNumber = lastRound.number,
+                    winners = lastRound.winners,
+                    prize = lastRound.pot,
+                    wallets = prevState.wallets,
+                    playersAndCombinations = lastRound.hands
+                )
+            )
+
+
+            val match = repoMatch.findById(matchId) ?: return
+            repoMatch.save(
+                match.copy(
+                    state = MatchState.FINISHED,
+                    finishedAt = java.time.Instant.now()
+                )
+            )
+            val lobbyPlayers = repoLobby.listPlayers(match.lobbyId)
+            for(player in lobbyPlayers) {
+
+                repoLobby.remove(lobbyId = match.lobbyId ,player.id)
+                val wallet = prevState.wallets[player.id] ?: continue
+                walletService.update(
+                    Wallet(
+                    userId = player.id,
+                    currentBalance = wallet.currentBalance
+                )
+                )
+            }
+
+            val roundWins = mutableMapOf<Int, Int>()
+            afterState.game.rounds.forEach { round ->
+                round.winners?.forEach { winnerId ->
+                    roundWins[winnerId] = (roundWins[winnerId] ?: 0) + 1
+                }
+            }
+
+            val winner = roundWins.maxByOrNull { it.value }?.key
+
+
             eventPublisher.publish(
                 matchId, MatchEvent.GameEndPayload(
-                    winner = winner?.key ?: -1,
-                    prize = winner?.value?.currentBalance ?: 0,
-                    wallets = afterState.wallets
+                    winner = winner!!,
+                    wallets = prevState.wallets
                 )
             )
             return // Não publicar mais eventos
@@ -87,7 +130,7 @@ class MatchServiceImpl(
                         roundNumber = completedRound.number,
                         winners = completedRound.winners,
                         prize = completedRound.pot,
-                        wallets = afterState.wallets,
+                        wallets = prevState.wallets,
                         playersAndCombinations = completedRound.hands
                     )
                 )
@@ -98,12 +141,31 @@ class MatchServiceImpl(
             val playersAbleToPay = afterState.wallets.count { it.value.currentBalance >= ante }
 
             if (playersAbleToPay <= 1) {
-                val winner = afterState.wallets.maxByOrNull { it.value.currentBalance }
+
+                eventPublisher.publish(
+                    matchId, MatchEvent.RoundSummary(
+                        roundNumber = lastRound.number,
+                        winners = lastRound.winners,
+                        prize = lastRound.pot,
+                        wallets = prevState.wallets,
+                        playersAndCombinations = lastRound.hands
+                    )
+                )
+
+
+                val roundWins = mutableMapOf<Int, Int>()
+                afterState.game.rounds.forEach { round ->
+                    round.winners?.forEach { winnerId ->
+                        roundWins[winnerId] = (roundWins[winnerId] ?: 0) + 1
+                    }
+                }
+
+                val winner = roundWins.maxByOrNull { it.value }?.key
+
                 eventPublisher.publish(
                     matchId, MatchEvent.GameEndPayload(
-                        winner = winner?.key ?: -1,
-                        prize = winner?.value?.currentBalance ?: 0,
-                        wallets = afterState.wallets
+                        winner = winner!!,
+                        wallets = prevState.wallets
                     )
                 )
             } else {
@@ -112,6 +174,7 @@ class MatchServiceImpl(
                     matchId, MatchEvent.MatchSnapshot(
                         matchId = matchId,
                         currentRoundNumber = afterState.game.rounds.size,
+                        totalRounds = afterState.game.totalRounds,
                         playerOrder = afterState.game.playerOrder,
                         currentPlayer = afterState.game.playerOrder[afterState.game.currentPlayerIndex]
                     )

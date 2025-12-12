@@ -123,8 +123,8 @@ class UserAuthService(
         require(email.isNotBlank()) { "Email cannot be blank" } // Replace by Either.Failure
         require(password.isNotBlank()) { "Password cannot be blank" } // Replace by Either.Failure
 
-        val user = repoUsers.findByEmail(email)
-        requireNotNull(user) // Replace by Either.Failure
+        val user =
+            repoUsers.findByEmail(email) ?: return failure(UserError.UserNotFound) // Replace by Either.Failure
 
         if (!validatePassword(password, user.passwordValidation)) {
            return failure(UserError.InvalidCredentials) // Replace by Either.Failure

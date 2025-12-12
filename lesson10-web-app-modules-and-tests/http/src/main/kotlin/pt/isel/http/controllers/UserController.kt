@@ -109,10 +109,18 @@ class UserController(
 
 
            is Failure ->  {
+               when(tokenInfo.value) {
+                UserError.UserNotFound -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
+
+                UserError.InvalidCredentials ->
                     Problem.InvalidCredentials.response(
                         HttpStatus.UNAUTHORIZED,
                     )
 
+                   else -> {
+                          Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
+                   }
+               }
             }
 
         }

@@ -29,6 +29,7 @@ type PlayerState = {
 type State = {
   matchId: number | null;
   currentRoundNumber: number;
+  totalRounds: number
   playerOrder: number[];
   currentPlayer: number | null;
   players: Map<number, PlayerState>;
@@ -40,6 +41,8 @@ type State = {
   error: string | null;
   gameEnded: boolean;
   winner: number | null;
+  lastRoundSummary: RoundSummaryEvent | null;
+  showRoundSummary: boolean;
 };
 
 // Action types
@@ -58,7 +61,8 @@ type Action =
     | { type: "holding" }
     | { type: "finishing" }
     | { type: "action-complete" }
-    | { type: "error"; error: string };
+    | { type: "error"; error: string }
+    | { type: "close-round-summary" };
 
 // Reducer
 function reducer(state: State, action: Action): State {
@@ -68,6 +72,7 @@ function reducer(state: State, action: Action): State {
         ...state,
         matchId: action.data.matchId,
         currentRoundNumber: action.data.currentRoundNumber,
+        totalRounds : action.data.totalRounds,
         playerOrder: action.data.playerOrder,
         currentPlayer: action.data.currentPlayer,
         players: new Map(
@@ -109,8 +114,16 @@ function reducer(state: State, action: Action): State {
               }
             ])
         ),
-        selectedDice: new Set()
+        selectedDice: new Set(),
+        lastRoundSummary: action.data,
+        showRoundSummary: true
       };
+
+      case "close-round-summary":
+          return {
+              ...state,
+              showRoundSummary: false
+          };
 
     case "game-end":
       return {
@@ -264,6 +277,7 @@ const initialState: State = {
   currentRoundNumber: 1,
   playerOrder: [],
   currentPlayer: null,
+  totalRounds : 0,
   players: new Map(),
   selectedDice: new Set(),
   isLoading: true,
@@ -272,7 +286,9 @@ const initialState: State = {
   isFinishing: false,
   error: null,
   gameEnded: false,
-  winner: null
+  winner: null,
+  lastRoundSummary: null,
+  showRoundSummary: false
 };
 
 // Face emoji mapping
@@ -290,6 +306,8 @@ export function MatchView() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  api.getMatchById(Number(matchId))
 
   // Handler para eventos gerais do match
   const handleMatchMessage = useCallback((message: MatchSSEMessage) => {
@@ -326,9 +344,9 @@ export function MatchView() {
     dispatch({ type: "rolling" });
     try {
       const response = await api.sendCommand(Number(matchId), { type: "roll" }) as DiceRollResponse;
-      
-      dispatch({ 
-        type: "update-my-roll", 
+
+      dispatch({
+        type: "update-my-roll",
         userId: user.id,
         data: {
           dices: response.dices,
@@ -355,9 +373,9 @@ export function MatchView() {
         type: "hold",
         indices: indicesToHold
       }) as DiceHoldResponse;
-      
-      dispatch({ 
-        type: "update-my-hold", 
+
+      dispatch({
+        type: "update-my-hold",
         userId: user.id,
         data: {
           dices: response.dices,
@@ -420,12 +438,16 @@ export function MatchView() {
         <div className="match-header">
           <h2>Partida #{state.matchId}</h2>
           <div className="match-info">
-            <span>Ronda: {state.currentRoundNumber}</span>
+            <span>Ronda: {state.currentRoundNumber} / {state.totalRounds}</span>
             <span className={isMyTurn ? "your-turn" : ""}>
             {isMyTurn ? "É a sua vez!" : `Vez do Jogador ${state.currentPlayer}`}
           </span>
           </div>
         </div>
+
+
+
+
 
         {state.error && (
             <div className="match-error-message">{state.error}</div>
