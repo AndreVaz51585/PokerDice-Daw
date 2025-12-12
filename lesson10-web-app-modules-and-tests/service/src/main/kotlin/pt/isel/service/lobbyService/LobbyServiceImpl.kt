@@ -1,5 +1,6 @@
 package pt.isel.service.lobbyService
 
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import pt.isel.domain.Game.GlobalLobby.GlobalLobbyEvent
 import pt.isel.domain.Game.Lobby.Lobby
@@ -26,6 +27,7 @@ import pt.isel.service.statisticsService.StatisticsService
 import pt.isel.service.walletService.WalletService
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
+import kotlin.run
 
 
 @Service
@@ -43,7 +45,27 @@ class LobbyServiceImpl(
     // estrutura necessária ,implementada em memória para guardar o tempo de criação do lobby e assim podermos controlar o TimeOut
     private val lobbyTimeOuts = ConcurrentHashMap<Int, Long>()
 
-    private val lobbyTimeOutMillis: Long = TimeUnit.SECONDS.toMillis(120) //TimeOut de 2 minutos
+    private val lobbyTimeOutMillis: Long = TimeUnit.SECONDS.toMillis(30) //TimeOut de 2 minutos
+
+
+    @Scheduled(fixedDelay = 5000) // executa a cada 5 segundos
+    fun checkLobbyTimeouts() {
+        val openLobbies = repoLobby.findAll().filter { it.state == LobbyState.OPEN }
+
+        for (lobby in openLobbies) {
+            val players = repoLobby.listPlayers(lobby.id)
+            val newState = updateLobbyStateIfNeeded(lobby, players.size)
+
+            if (newState == LobbyState.STARTED) {
+                trxManager.run {
+                    val matchIdResult = startMatch(lobby.id)
+                    if (matchIdResult is Success) {
+                        lobbyeventPublisher.publish(lobby.id, LobbyEvent.MatchStarting(matchIdResult.value))
+                    }
+                }
+            }
+        }
+    }
 
     override fun createLobby(
         hostId: Int,
@@ -167,7 +189,7 @@ class LobbyServiceImpl(
 
             val newState = updateLobbyStateIfNeeded(lobby, currentPlayers.size)
 
-            if (newState == LobbyState.FULL || newState == LobbyState.GAME_STARTED) {
+            if (newState == LobbyState.FULL || newState == LobbyState.STARTED) {
                 val matchIdResult = startMatch(lobbyId)
                 return@run when (matchIdResult) {
                     is Success -> {
@@ -326,8 +348,8 @@ class LobbyServiceImpl(
             }
 
             playerCount >= lobby.minPlayers && hasExpired -> {
-                repoLobby.save(lobby.copy(state = LobbyState.GAME_STARTED))
-                LobbyState.GAME_STARTED
+                repoLobby.save(lobby.copy(state = LobbyState.STARTED))
+                LobbyState.STARTED
             }// se o numero de jogadores for maior ou igual ao minimo e o tempo tiver expirado o estado passa a STARTED
 
             else -> LobbyState.OPEN // caso contrário mantem-se OPEN
