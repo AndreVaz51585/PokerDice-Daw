@@ -74,7 +74,7 @@ class MatchServiceImpl(
                     roundNumber = lastRound.number,
                     winners = lastRound.winners,
                     prize = lastRound.pot,
-                    wallets = prevState.wallets,
+                    wallets = afterState.wallets,
                     playersAndCombinations = lastRound.hands
                 )
             )
@@ -91,7 +91,7 @@ class MatchServiceImpl(
             for(player in lobbyPlayers) {
 
                 repoLobby.remove(lobbyId = match.lobbyId ,player.id)
-                val wallet = prevState.wallets[player.id] ?: continue
+                val wallet = afterState.wallets[player.id] ?: continue
                 walletService.update(
                     Wallet(
                     userId = player.id,
@@ -113,7 +113,7 @@ class MatchServiceImpl(
             eventPublisher.publish(
                 matchId, MatchEvent.GameEndPayload(
                     winner = winner!!,
-                    wallets = prevState.wallets
+                    wallets = afterState.wallets
                 )
             )
             return // Não publicar mais eventos
@@ -121,16 +121,33 @@ class MatchServiceImpl(
 
 
         if (roundEnded) {
+
+
+
             val completedRoundIndex = afterState.game.rounds.size - 2
             if (completedRoundIndex >= 0) {
                 val completedRound = afterState.game.rounds[completedRoundIndex]
+
+
+                val walletsForRound = if (completedRound.number == 1) {
+                    // PROBLEMA QUE NOS LEVA A SOLUÇÃO HARDCODED ABAIXO:
+                    // quando tentamos obter o sado do prevstate.wallets da primeira ronda validamos que o mesmo se apresenta com o ante já deduzido e sem prémios associados
+                    // caso tentassemos o afterState já teria o prémio da primeira ronda aplicado e a ante da ronda 2 deduzida o que não é o que queremos
+                    // Solução hardcoded: reverter a dedução do ante para todos os jogadores na primeira ronda.
+                    afterState.wallets.mapValues { (_, wallet) ->
+                        wallet.copy(currentBalance = wallet.currentBalance + afterState.game.ante)
+                    }
+                } else {
+                    // Rondas seguintes → usando prevState (antes de pagar nova ante)
+                    afterState.wallets.mapValues { (_,wallet) -> wallet.copy(currentBalance = wallet.currentBalance + afterState.game.ante) }
+                }
 
                 eventPublisher.publish(
                     matchId, MatchEvent.RoundSummary(
                         roundNumber = completedRound.number,
                         winners = completedRound.winners,
                         prize = completedRound.pot,
-                        wallets = prevState.wallets,
+                        wallets = walletsForRound,
                         playersAndCombinations = completedRound.hands
                     )
                 )
@@ -147,7 +164,7 @@ class MatchServiceImpl(
                         roundNumber = lastRound.number,
                         winners = lastRound.winners,
                         prize = lastRound.pot,
-                        wallets = prevState.wallets,
+                        wallets = afterState.wallets,
                         playersAndCombinations = lastRound.hands
                     )
                 )
@@ -165,7 +182,7 @@ class MatchServiceImpl(
                 eventPublisher.publish(
                     matchId, MatchEvent.GameEndPayload(
                         winner = winner!!,
-                        wallets = prevState.wallets
+                        wallets = afterState.wallets
                     )
                 )
             } else {

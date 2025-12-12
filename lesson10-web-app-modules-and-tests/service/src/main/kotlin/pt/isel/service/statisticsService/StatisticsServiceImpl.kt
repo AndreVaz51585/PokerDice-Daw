@@ -13,7 +13,6 @@ import pt.isel.service.Auxiliary.success
 @Service
 class StatisticsServiceImpl(
     private val repoUser: RepositoryUser,
-    private val repoWallet: RepositoryWallet,
     private val trxManager: TransactionManager,
 ) : StatisticsService {
     override fun createStatistics(userId: Int): Either<StatisticsServiceError, Statistics> =

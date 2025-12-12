@@ -34,7 +34,6 @@ class LobbyServiceImpl(
     private val repoUser: RepositoryUser,
     private val trxManager: TransactionManager,
     private val matchManager: MatchManager,
-    //private val userService: UserAuthService,
     private val walletService: WalletService,
     private val statisticsService: StatisticsService,
     private val lobbyeventPublisher: LobbyEventPublisher,

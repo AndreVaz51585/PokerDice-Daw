@@ -307,7 +307,6 @@ export function MatchView() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  api.getMatchById(Number(matchId))
 
   // Handler para eventos gerais do match
   const handleMatchMessage = useCallback((message: MatchSSEMessage) => {
