@@ -125,12 +125,16 @@ class MatchServiceImpl(
             val winner = roundWins.maxByOrNull { it.value }?.key
 
 
+
             eventPublisher.publish(
                 matchId, MatchEvent.GameEndPayload(
                     winner = winner!!,
                     wallets = prevState.wallets
                 )
             )
+
+            statisticsService.incrementGamesWon(winner)
+
             return // Não publicar mais eventos
         }
 
