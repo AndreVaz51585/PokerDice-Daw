@@ -330,7 +330,7 @@ class LobbyServiceImpl(
             )
 
            val started =  BankedMatchEngine.apply(banked, Command.Start(byUserId = lobby.lobbyHost))
-           val engine = BankedGameMatchEngine(matchResult.id,started)
+           val engine = BankedGameMatchEngine(matchResult.id,started, statisticsService)
             matchManager.register(engine)
             return@run success(matchResult.id)
         }

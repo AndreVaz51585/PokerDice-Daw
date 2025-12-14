@@ -21,6 +21,7 @@ import pt.isel.service.matchService.MatchEventPublisher
 import pt.isel.service.matchService.MatchManager
 import pt.isel.service.matchService.MatchService
 import pt.isel.service.matchService.MatchServiceError
+import pt.isel.service.statisticsService.StatisticsService
 import pt.isel.service.walletService.WalletService
 import kotlin.compareTo
 import kotlin.text.get
@@ -32,9 +33,9 @@ class MatchServiceImpl(
     private val walletService: WalletService,
     private val trxManager: TransactionManager,
     private val matchManager: MatchManager,
-    private val eventPublisher: MatchEventPublisher
+    private val eventPublisher: MatchEventPublisher,
+    private val statisticsService: StatisticsService
 ) : MatchService {
-
 
 
     override fun applyCommand(matchId: Int, cmd: Command): Either<MatchServiceError, BankedMatch> {
@@ -304,7 +305,7 @@ class MatchServiceImpl(
             banked
         }
 
-        val engine = BankedGameMatchEngine(match.id, finalState)
+        val engine = BankedGameMatchEngine(match.id, finalState, statisticsService = statisticsService)
         matchManager.register(engine)
 
         return success(true)

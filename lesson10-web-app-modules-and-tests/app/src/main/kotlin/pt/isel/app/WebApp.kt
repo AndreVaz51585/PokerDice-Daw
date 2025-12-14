@@ -103,14 +103,16 @@ class WebApp {
         walletService: WalletService,
         trxManager: TransactionManager,
         matchManager: MatchManager,
-        eventPublisher: MatchEventPublisher
+        eventPublisher: MatchEventPublisher,
+        statisticsService: StatisticsService
     ): MatchService = MatchServiceImpl(
         repoLobby,
         repoMatch,
         walletService,
         trxManager,
         matchManager,
-        eventPublisher
+        eventPublisher,
+        statisticsService
     )
 
 
