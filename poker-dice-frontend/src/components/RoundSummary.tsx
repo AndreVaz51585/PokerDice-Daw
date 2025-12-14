@@ -28,7 +28,7 @@ export function RoundSummaryPanel({ summary }: Props) {
           const hand = playersAndCombinations[playerId];
           const isWinner = winners.includes(playerId);
 
-          const faces = hand.faces;
+          const dices = hand.dices ? hand.dices : undefined;
 
           return (
             <div
@@ -41,9 +41,9 @@ export function RoundSummaryPanel({ summary }: Props) {
               </div>
 
               <div className="dice-row">
-                {faces && faces.length === 5 ? (
-                  faces.map((face, i) => (
-                    <span key={i}>{faceMap[face]}</span>
+                {dices && dices.length === 5 ? (
+                  dices.map((dice, i) => (
+                    <span key={i}>{faceMap[dice.value]}</span>
                   ))
                 ) : (
                   <span className="dice-empty">—</span>

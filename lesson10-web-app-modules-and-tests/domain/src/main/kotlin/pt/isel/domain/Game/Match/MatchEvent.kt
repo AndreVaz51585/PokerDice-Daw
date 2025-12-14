@@ -12,7 +12,7 @@ sealed class MatchEvent {
 
     data class RoundSummary(
         val roundNumber: Int,
-        val winners: List<Int> = emptyList(),
+        val winners: List<Int>?,
         val prize: Int,
         val wallets: Map<Int, Wallet>,
         val playersAndCombinations: Map<Int, RoundHandView> = emptyMap()

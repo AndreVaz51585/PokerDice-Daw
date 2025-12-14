@@ -82,39 +82,32 @@ object GameEngine {
                 val ps = state.players[cmd.userId] ?: error("Player missing.")
                 require(ps.dice.size == 5) { "Must roll 5 dice first." }
 
-                // Guardar a mão deste jogador no round atual, para ficar visível no RoundSummary.
-                val currentRound = state.rounds.lastOrNull() ?: error("No round.")
-                val updatedHands = currentRound.hands + (cmd.userId to Hand(ps.dice))
-                val updatedRounds = state.rounds.updateLast { it.copy(hands = updatedHands) }
-
                 val updatedPlayers = state.players + (cmd.userId to ps.copy(done = true))
                 val everyoneDone = updatedPlayers.values.all { it.done && it.dice.size == 5 }
 
                 if (!everyoneDone) {
                     // Advance to next unfinished player
                     val nextIdx = nextUndoneIndex(state.playerOrder, updatedPlayers, state.currentPlayerIndex)
-                    state.copy(players = updatedPlayers, rounds = updatedRounds, currentPlayerIndex = nextIdx)
+                    state.copy(players = updatedPlayers, currentPlayerIndex = nextIdx)
                 } else {
                     // Mark round SCORING (showdown deferred to NextRound)
-                    val scoringRounds = updatedRounds.updateLast { it.copy(state = RoundState.SCORING) }
-                    state.copy(players = updatedPlayers, rounds = scoringRounds)
+                    val updatedRounds = state.rounds.updateLast { it.copy(state = RoundState.SCORING) }
+                    state.copy(players = updatedPlayers, rounds = updatedRounds)
                 }
             }
 
             is Command.NextRound -> {
                 require(cmd.byUserId == state.hostId) { "Only host advances." }
                 require(state.phase == GamePhase.ROLLING) { "Match not active." }
+                val currentRound = state.rounds.lastOrNull() ?: error("No round.")
+                require(currentRound.state == RoundState.SCORING) { "Round not ready (need all players done)." }
 
-                val currentRound = state.rounds.last()
-                require(currentRound.state == RoundState.SCORING)
-
+                // Showdown
                 val diceMap = state.players.mapValues { it.value.dice }
                 val showdown = Showdown.resolve(diceMap)
-
-                val winners = showdown.winners
                 val pot = currentRound.pot
-                val share = if (winners.isEmpty()) 0 else pot / winners.size
-
+                val winners = showdown.winners
+                val share = if (winners.isEmpty()) 0 else pot / winners.size // remainder stays lost
                 val newBalances = state.balances.toMutableMap().apply {
                     winners.forEach { this[it] = (this[it] ?: 0) + share }
                 }
@@ -122,42 +115,51 @@ object GameEngine {
                 val closedRound = currentRound.copy(
                     state = RoundState.CLOSED,
                     winners = winners,
-                    hands = currentRound.hands
+                    hands = showdown.hands.mapValues { (_, pair) ->
+                        // pair.second é List<Face> das faces ordenadas
+                        Hand(pair.second)
+                    }
                 )
 
                 val isLast = currentRound.number >= state.totalRounds
-
                 return if (isLast) {
+                    // Finalize match
                     state.copy(
                         rounds = state.rounds.dropLast(1) + closedRound,
                         balances = newBalances,
                         phase = GamePhase.FINISHED
                     )
                 } else {
+                    // Prepare next round
+                    val nextNumber = currentRound.number + 1
+                    val nextPot = state.playerOrder.size * state.ante
                     val nextRound = Round(
-                        id = currentRound.id + 1,
-                        number = currentRound.number + 1,
-                        matchId = state.matchId,
+                        number = nextNumber,
+                        pot = nextPot,
                         state = RoundState.OPEN,
-                        anteCoins = state.ante,
-                        pot = state.playerOrder.size * state.ante,
+                        id = (currentRound.id + 1),            // id incremental simples; ajusta se necessário
+                        matchId = state.matchId,           // garante matchId coerente (Game.id -> Round.matchId)
+                        anteCoins = state.ante,                // valor do ante por ronda
                         winners = emptyList(),
                         hands = emptyMap()
                     )
 
+                    // Rotate starting player: next round starts with the next player in order
+                    val nextStartingIndex = if (state.playerOrder.isEmpty()) 0
+                    else (state.currentPlayerIndex + 1) % state.playerOrder.size
+
                     val resetPlayers = state.players.mapValues { (_, ps) ->
                         ps.copy(dice = emptyList(), held = emptySet(), rerollsLeft = 2, done = false)
                     }
-
                     state.copy(
                         players = resetPlayers,
                         rounds = state.rounds.dropLast(1) + closedRound + nextRound,
                         balances = newBalances,
-                        currentPlayerIndex = (state.currentPlayerIndex + 1) % state.playerOrder.size
+                        currentPlayerIndex = nextStartingIndex
                     )
+
                 }
             }
-
 
 
         }

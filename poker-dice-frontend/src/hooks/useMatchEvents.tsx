@@ -17,12 +17,17 @@ export type RoundSummaryEvent = {
   wallets: Record<number, Wallet>;
   playersAndCombinations: {
   [playerId: number]: {
-    faces?: Face[];
+    dices: DiceView[];
     combination: string;
   };
   };
 
 };
+
+export type DiceView = {
+  value: Face;
+};
+
 
 export interface MatchSnapshotEvent {
     matchId: number;

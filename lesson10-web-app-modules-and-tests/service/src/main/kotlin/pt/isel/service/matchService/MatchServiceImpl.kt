@@ -1,6 +1,5 @@
 import kotlinx.coroutines.runBlocking
 import org.springframework.stereotype.Service
-import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.Hand
 import pt.isel.domain.Game.Hand.Companion.getCombination
 import pt.isel.domain.Game.Match.Match
@@ -23,11 +22,8 @@ import pt.isel.service.matchService.MatchManager
 import pt.isel.service.matchService.MatchService
 import pt.isel.service.matchService.MatchServiceError
 import pt.isel.service.walletService.WalletService
-import pt.isel.domain.Game.Match.MatchEvent.RoundSummary.RoundHandView
-import pt.isel.domain.Game.Match.MatchEvent.RoundSummary.DiceView
-import pt.isel.domain.Game.Match.MatchEvent.RoundSummary
-
-import pt.isel.domain.Game.pokerDice.PlayerState
+import kotlin.compareTo
+import kotlin.text.get
 
 @Service
 class MatchServiceImpl(
@@ -38,6 +34,7 @@ class MatchServiceImpl(
     private val matchManager: MatchManager,
     private val eventPublisher: MatchEventPublisher
 ) : MatchService {
+
 
 
     override fun applyCommand(matchId: Int, cmd: Command): Either<MatchServiceError, BankedMatch> {
@@ -62,21 +59,16 @@ class MatchServiceImpl(
     }
 
 
-    private fun buildRoundHandsView(
-        roundHands: Map<Int, Hand>
-    ): Map<Int, RoundHandView> {
-
-        return roundHands.mapValues { (_, hand) ->
-            val (combination, _) = hand.getCombination()
-            RoundHandView(
-                dices = hand.faces.map { DiceView(it) },
-                combination = combination.toString()
+    private fun Map<Int, Hand>.toRoundHandView():
+            Map<Int, MatchEvent.RoundSummary.RoundHandView> =
+        mapValues { (_, hand) ->
+            MatchEvent.RoundSummary.RoundHandView(
+                dices = hand.faces.map { face ->
+                    MatchEvent.RoundSummary.DiceView(face)
+                },
+                combination = hand.getCombination().first.toString()
             )
         }
-    }
-
-
-
 
 
     private fun publishEventsBasedOnState(
@@ -91,23 +83,16 @@ class MatchServiceImpl(
 
         if (gamePhase == GamePhase.FINISHED) {
 
-            val completedRound = prevState.game.rounds.last()
-
-            val handsSnapshot: Map<Int, Hand> =
-                completedRound.hands.mapValues { (_, hand) ->
-                    Hand(hand.faces.toList())
-                }
-
             eventPublisher.publish(
-                matchId,
-                MatchEvent.RoundSummary(
-                    roundNumber = completedRound.number,
-                    winners = completedRound.winners ?: emptyList(),
-                    prize = completedRound.pot,
-                    wallets = afterState.wallets,
-                    playersAndCombinations = buildRoundHandsView(handsSnapshot)
+                matchId, MatchEvent.RoundSummary(
+                    roundNumber = lastRound.number,
+                    winners = lastRound.winners,
+                    prize = lastRound.pot,
+                    wallets = prevState.wallets,
+                    playersAndCombinations = lastRound.hands.toRoundHandView()
                 )
             )
+
 
             val match = repoMatch.findById(matchId) ?: return
             repoMatch.save(
@@ -116,177 +101,215 @@ class MatchServiceImpl(
                     finishedAt = java.time.Instant.now()
                 )
             )
+            val lobbyPlayers = repoLobby.listPlayers(match.lobbyId)
+            for(player in lobbyPlayers) {
 
-            repoLobby.listPlayers(match.lobbyId).forEach { player ->
-                repoLobby.remove(match.lobbyId, player.id)
-                afterState.wallets[player.id]?.let {
-                    walletService.update(
-                        Wallet(player.id, it.currentBalance)
+                repoLobby.remove(lobbyId = match.lobbyId ,player.id)
+                val wallet = prevState.wallets[player.id] ?: continue
+                walletService.update(
+                    Wallet(
+                        userId = player.id,
+                        currentBalance = wallet.currentBalance
                     )
+                )
+            }
+
+            val roundWins = mutableMapOf<Int, Int>()
+            afterState.game.rounds.forEach { round ->
+                round.winners?.forEach { winnerId ->
+                    roundWins[winnerId] = (roundWins[winnerId] ?: 0) + 1
                 }
             }
 
-            val winner =
-                afterState.game.rounds
-                    .flatMap { it.winners ?: emptyList() }
-                    .groupingBy { it }
-                    .eachCount()
-                    .maxByOrNull { it.value }!!.key
+            val winner = roundWins.maxByOrNull { it.value }?.key
+
 
             eventPublisher.publish(
-                matchId,
-                MatchEvent.GameEndPayload(
-                    winner = winner,
-                    wallets = afterState.wallets
+                matchId, MatchEvent.GameEndPayload(
+                    winner = winner!!,
+                    wallets = prevState.wallets
                 )
             )
+            return // Não publicar mais eventos
         }
+
 
         if (roundEnded) {
-
-            val completedRound = prevState.game.rounds.last()
-
-            // Snapshot REAL da ronda
-            val handsSnapshot: Map<Int, Hand> =
-                completedRound.hands.mapValues { (_, hand) ->
-                    Hand(hand.faces.toList())
-                }
-
-            val walletsForRound =
-                afterState.wallets.mapValues { (_, wallet) ->
-                    wallet.copy(
-                        currentBalance = wallet.currentBalance + afterState.game.ante
-                    )
-                }
-
-            eventPublisher.publish(
-                matchId,
-                MatchEvent.RoundSummary(
-                    roundNumber = completedRound.number,
-                    winners = completedRound.winners ?: emptyList(),
-                    prize = completedRound.pot,
-                    wallets = walletsForRound,
-                    playersAndCombinations = buildRoundHandsView(handsSnapshot)
-                )
-            )
-        }
-
-
-        else if (cmd is Command.FinishTurn || cmd is Command.NextRound) {
+            val completedRoundIndex = afterState.game.rounds.size - 2
+            if (completedRoundIndex >= 0) {
+                val completedRound = afterState.game.rounds[completedRoundIndex]
 
                 eventPublisher.publish(
-                    matchId, MatchEvent.TurnChange(
-                        previousPlayer = prevState.game.playerOrder[prevState.game.currentPlayerIndex],
+                    matchId, MatchEvent.RoundSummary(
+                        roundNumber = completedRound.number,
+                        winners = completedRound.winners,
+                        prize = completedRound.pot,
+                        wallets = prevState.wallets,
+                        playersAndCombinations = completedRound.hands.toRoundHandView()
+                    )
+                )
+            }
+
+
+            val ante = afterState.game.ante
+            val playersAbleToPay = afterState.wallets.count { it.value.currentBalance >= ante }
+
+            if (playersAbleToPay <= 1) {
+
+                eventPublisher.publish(
+                    matchId, MatchEvent.RoundSummary(
+                        roundNumber = lastRound.number,
+                        winners = lastRound.winners,
+                        prize = lastRound.pot,
+                        wallets = prevState.wallets,
+                        playersAndCombinations = lastRound.hands.toRoundHandView()
+                    )
+                )
+
+
+                val roundWins = mutableMapOf<Int, Int>()
+                afterState.game.rounds.forEach { round ->
+                    round.winners?.forEach { winnerId ->
+                        roundWins[winnerId] = (roundWins[winnerId] ?: 0) + 1
+                    }
+                }
+
+                val winner = roundWins.maxByOrNull { it.value }?.key
+
+                eventPublisher.publish(
+                    matchId, MatchEvent.GameEndPayload(
+                        winner = winner!!,
+                        wallets = prevState.wallets
+                    )
+                )
+            } else {
+
+                eventPublisher.publish(
+                    matchId, MatchEvent.MatchSnapshot(
+                        matchId = matchId,
+                        currentRoundNumber = afterState.game.rounds.size,
+                        totalRounds = afterState.game.totalRounds,
+                        playerOrder = afterState.game.playerOrder,
                         currentPlayer = afterState.game.playerOrder[afterState.game.currentPlayerIndex]
                     )
                 )
             }
         }
+        else if (cmd is Command.FinishTurn || cmd is Command.NextRound) {
 
-
-        override fun createMatch(lobbyId: Int, totalRounds: Int, ante: Int): Either<MatchServiceError, Match> =
-            trxManager.run {
-                if (totalRounds <= 0 || ante < 0) {
-                    return@run failure(MatchServiceError.InvalidState)
-                }
-                val lobby = repoLobby.findById(lobbyId) ?: return@run failure(MatchServiceError.LobbyNotFound)
-                val match = repoMatch.createMatch(
-                    lobbyId = lobbyId,
-                    totalRounds = totalRounds,
-                    ante = ante,
-                    maxPlayers = lobby.maxPlayers
+            eventPublisher.publish(
+                matchId, MatchEvent.TurnChange(
+                    previousPlayer = prevState.game.playerOrder[prevState.game.currentPlayerIndex],
+                    currentPlayer = afterState.game.playerOrder[afterState.game.currentPlayerIndex]
                 )
-                return@run success(match)
-            }
+            )
+        }
+    }
 
-        override fun getMatch(id: Int): Either<MatchServiceError, Match> = trxManager.run {
-            val match = repoMatch.findById(id) ?: return@run failure(MatchServiceError.MatchNotFound)
-            success(match)
+
+    override fun createMatch(lobbyId: Int, totalRounds: Int, ante: Int): Either<MatchServiceError, Match> =
+        trxManager.run {
+            if (totalRounds <= 0 || ante < 0) {
+                return@run failure(MatchServiceError.InvalidState)
+            }
+            val lobby = repoLobby.findById(lobbyId) ?: return@run failure(MatchServiceError.LobbyNotFound)
+            val match = repoMatch.createMatch(
+                lobbyId = lobbyId,
+                totalRounds = totalRounds,
+                ante = ante,
+                maxPlayers = lobby.maxPlayers
+            )
+            return@run success(match)
         }
 
-        override fun addPlayer(matchId: Int, player: MatchPlayer): Either<MatchServiceError, Boolean> = trxManager.run {
+    override fun getMatch(id: Int): Either<MatchServiceError, Match> = trxManager.run {
+        val match = repoMatch.findById(id) ?: return@run failure(MatchServiceError.MatchNotFound)
+        success(match)
+    }
+
+    override fun addPlayer(matchId: Int, player: MatchPlayer): Either<MatchServiceError, Boolean> = trxManager.run {
+        val match = repoMatch.findById(matchId) ?: return@run failure(MatchServiceError.MatchNotFound)
+        val currentPlayers = repoMatch.listPlayers(matchId)
+        if (currentPlayers.any { it.userId == player.userId }) {
+            return@run failure(MatchServiceError.PlayerAlreadyInMatch)
+        }
+        if (currentPlayers.size >= match.maxPlayers) {
+            return@run failure(MatchServiceError.MatchFull)
+        }
+        val ok =
+            repoMatch.addPlayer(matchId, player.userId, player.balanceAtStart, repoMatch.getMaxSeatNo(match.id) + 1)
+        if (!ok) return@run failure(MatchServiceError.Unknown)
+        success(true)
+    }
+
+    override fun removePlayer(matchId: Int, userId: Int): Either<MatchServiceError, Boolean> = trxManager.run {
+        repoMatch.findById(matchId) ?: return@run failure(MatchServiceError.MatchNotFound)
+        val players = repoMatch.listPlayers(matchId)
+        if (players.none { it.userId == userId }) {
+            return@run failure(MatchServiceError.PlayerNotFound)
+        }
+        val ok = repoMatch.removePlayer(matchId, userId)
+        if (!ok) return@run failure(MatchServiceError.Unknown)
+        success(true)
+    }
+
+    override fun updateState(matchId: Int, newState: MatchState): Either<MatchServiceError, Boolean> =
+        trxManager.run {
             val match = repoMatch.findById(matchId) ?: return@run failure(MatchServiceError.MatchNotFound)
-            val currentPlayers = repoMatch.listPlayers(matchId)
-            if (currentPlayers.any { it.userId == player.userId }) {
-                return@run failure(MatchServiceError.PlayerAlreadyInMatch)
+            if (match.state == MatchState.FINISHED) {
+                return@run failure(MatchServiceError.InvalidState)
             }
-            if (currentPlayers.size >= match.maxPlayers) {
-                return@run failure(MatchServiceError.MatchFull)
-            }
-            val ok =
-                repoMatch.addPlayer(matchId, player.userId, player.balanceAtStart, repoMatch.getMaxSeatNo(match.id) + 1)
+            val ok = repoMatch.updateState(matchId, newState)
             if (!ok) return@run failure(MatchServiceError.Unknown)
             success(true)
         }
 
-        override fun removePlayer(matchId: Int, userId: Int): Either<MatchServiceError, Boolean> = trxManager.run {
-            repoMatch.findById(matchId) ?: return@run failure(MatchServiceError.MatchNotFound)
-            val players = repoMatch.listPlayers(matchId)
-            if (players.none { it.userId == userId }) {
-                return@run failure(MatchServiceError.PlayerNotFound)
-            }
-            val ok = repoMatch.removePlayer(matchId, userId)
-            if (!ok) return@run failure(MatchServiceError.Unknown)
-            success(true)
+    override fun listPlayers(matchId: Int): List<MatchPlayer> = trxManager.run {
+        repoMatch.listPlayers(matchId)
+    }
+
+    override fun getBankedMatch(matchId: Int): BankedMatch? =
+        matchManager.get(matchId)?.snapshot()
+
+    override fun registerMatchEngine(engine: BankedGameMatchEngine) {
+        matchManager.register(engine)
+    }
+
+    override fun registerBankedMatchFromDb(matchId: Int): Either<MatchServiceError, Boolean> {
+        if (matchManager.get(matchId) != null) return success(true)
+
+        val match = repoMatch.findById(matchId) ?: return failure(MatchServiceError.MatchNotFound)
+        val players = repoMatch.listPlayers(matchId)
+
+        val matchPlayers = players.map { player ->
+            MatchPlayer(match.id, player.userId, player.seatNo, player.balanceAtStart)
         }
 
-        override fun updateState(matchId: Int, newState: MatchState): Either<MatchServiceError, Boolean> =
-            trxManager.run {
-                val match = repoMatch.findById(matchId) ?: return@run failure(MatchServiceError.MatchNotFound)
-                if (match.state == MatchState.FINISHED) {
-                    return@run failure(MatchServiceError.InvalidState)
-                }
-                val ok = repoMatch.updateState(matchId, newState)
-                if (!ok) return@run failure(MatchServiceError.Unknown)
-                success(true)
-            }
+        val lobby = repoLobby.findById(match.lobbyId) ?: return failure(MatchServiceError.LobbyNotFound)
+        val game = createNewGame(lobby, match, matchPlayers)
 
-        override fun listPlayers(matchId: Int): List<MatchPlayer> = trxManager.run {
-            repoMatch.listPlayers(matchId)
+        val wallets = matchPlayers.associate { p ->
+            val wallet = when (val walletResult = walletService.getWallet(p.userId)) {
+                is Success -> walletResult.value
+                is Failure -> return failure(MatchServiceError.PlayerNotFound)
+            }
+            p.userId to wallet
         }
 
-        override fun getBankedMatch(matchId: Int): BankedMatch? =
-            matchManager.get(matchId)?.snapshot()
+        val banked = BankedMatch(match.id, game, wallets, null)
 
-        override fun registerMatchEngine(engine: BankedGameMatchEngine) {
-            matchManager.register(engine)
+        val finalState = if (match.state != MatchState.RUNNING) {
+            BankedMatchEngine.apply(banked, Command.Start(byUserId = lobby.lobbyHost))
+        } else {
+            banked
         }
 
-        override fun registerBankedMatchFromDb(matchId: Int): Either<MatchServiceError, Boolean> {
-            if (matchManager.get(matchId) != null) return success(true)
+        val engine = BankedGameMatchEngine(match.id, finalState)
+        matchManager.register(engine)
 
-            val match = repoMatch.findById(matchId) ?: return failure(MatchServiceError.MatchNotFound)
-            val players = repoMatch.listPlayers(matchId)
+        return success(true)
+    }
 
-            val matchPlayers = players.map { player ->
-                MatchPlayer(match.id, player.userId, player.seatNo, player.balanceAtStart)
-            }
-
-            val lobby = repoLobby.findById(match.lobbyId) ?: return failure(MatchServiceError.LobbyNotFound)
-            val game = createNewGame(lobby, match, matchPlayers)
-
-            val wallets = matchPlayers.associate { p ->
-                val wallet = when (val walletResult = walletService.getWallet(p.userId)) {
-                    is Success -> walletResult.value
-                    is Failure -> return failure(MatchServiceError.PlayerNotFound)
-                }
-                p.userId to wallet
-            }
-
-            val banked = BankedMatch(match.id, game, wallets, null)
-
-            val finalState = if (match.state != MatchState.RUNNING) {
-                BankedMatchEngine.apply(banked, Command.Start(byUserId = lobby.lobbyHost))
-            } else {
-                banked
-            }
-
-            val engine = BankedGameMatchEngine(match.id, finalState)
-            matchManager.register(engine)
-
-            return success(true)
-        }
-
-        override fun getEventPublisher(): MatchEventPublisher = eventPublisher
+    override fun getEventPublisher(): MatchEventPublisher = eventPublisher
 
 }
