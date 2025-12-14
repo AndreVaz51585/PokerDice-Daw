@@ -14,8 +14,9 @@ import {
   DiceHeldData
 } from "../hooks/useMatchEvents";
 
-
 import "../styles/App.css";
+
+import {RoundSummaryPanel} from "./RoundSummary";
 
 // State types
 type PlayerState = {
@@ -41,8 +42,7 @@ type State = {
   error: string | null;
   gameEnded: boolean;
   winner: number | null;
-  lastRoundSummary: RoundSummaryEvent | null;
-  showRoundSummary: boolean;
+  lastRoundSummary: RoundSummaryEvent | null
 };
 
 // Action types
@@ -62,7 +62,7 @@ type Action =
     | { type: "finishing" }
     | { type: "action-complete" }
     | { type: "error"; error: string }
-    | { type: "close-round-summary" };
+
 
 // Reducer
 function reducer(state: State, action: Action): State {
@@ -99,31 +99,26 @@ function reducer(state: State, action: Action): State {
       };
 
     case "round-complete":
-      return {
-        ...state,
-        currentRoundNumber: action.data.roundNumber + 1,
-        players: new Map(
-            state.playerOrder.map(userId => [
-              userId,
-              {
-                userId,
-                dice: [],
-                heldIndices: [],
-                rerollsLeft: 3,
-                combination: null
-              }
-            ])
-        ),
-        selectedDice: new Set(),
-        lastRoundSummary: action.data,
-        showRoundSummary: true
-      };
+  return {
+    ...state,
 
-      case "close-round-summary":
-          return {
-              ...state,
-              showRoundSummary: false
-          };
+    currentRoundNumber: action.data.roundNumber + 1,
+    players: new Map(
+      state.playerOrder.map(userId => [
+        userId,
+        {
+          userId,
+          dice: [],
+          heldIndices: [],
+          rerollsLeft: 3,
+          combination: null
+        }
+      ])
+    ),
+    selectedDice: new Set(),
+    lastRoundSummary: action.data
+  };
+
 
     case "game-end":
       return {
@@ -287,8 +282,7 @@ const initialState: State = {
   error: null,
   gameEnded: false,
   winner: null,
-  lastRoundSummary: null,
-  showRoundSummary: false
+  lastRoundSummary: null
 };
 
 // Face emoji mapping
@@ -424,9 +418,9 @@ export function MatchView() {
     return (
         <div className="match-container">
           <div className="match-finished">
-            <h2> Jogo Terminado!</h2>
-            <p>Vencedor: {winnerName}</p>
-            <button onClick={() => navigate("/")}>Voltar aos Lobbies</button>
+            <h2> Game Over!</h2>
+            <p>Winner: {winnerName}</p>
+            <button onClick={() => navigate("/")}>Back to Lobbies</button>
           </div>
         </div>
     );
@@ -435,18 +429,23 @@ export function MatchView() {
   return (
       <div className="match-container">
         <div className="match-header">
-          <h2>Partida #{state.matchId}</h2>
+          <h2>Match #{state.matchId}</h2>
           <div className="match-info">
-            <span>Ronda: {state.currentRoundNumber} / {state.totalRounds}</span>
+            <span>Round: {state.currentRoundNumber} / {state.totalRounds}</span>
             <span className={isMyTurn ? "your-turn" : ""}>
-            {isMyTurn ? "É a sua vez!" : `Vez do Jogador ${state.currentPlayer}`}
+            {isMyTurn ? "It's your turn!" : `Player ${state.currentPlayer}'s turn`}
           </span>
           </div>
         </div>
 
 
-
-
+        {state.lastRoundSummary && (
+        <div className="match-round-summary-wrapper">
+          <RoundSummaryPanel 
+          summary={state.lastRoundSummary}
+          />
+        </div>
+        )}
 
         {state.error && (
             <div className="match-error-message">{state.error}</div>
@@ -455,7 +454,7 @@ export function MatchView() {
         {/* Minha mão */}
         {myPlayer && (
             <div className="match-my-hand">
-              <h3>A Sua Mão</h3>
+              <h3>Your Hand</h3>
 
               <div className="match-dice-container">
                 {myPlayer.dice.map((face, index) => (
@@ -479,15 +478,15 @@ export function MatchView() {
 
               {myPlayer.combination && (
                   <div className="match-combination">
-                    <strong>Combinação:</strong> {myPlayer.combination}
+                    <strong>Combination:</strong> {myPlayer.combination}
                   </div>
               )}
 
               <div className="match-roll-info">
-                <span>Lançamentos restantes: {myPlayer.rerollsLeft}</span>
+                <span>Rolls left: {myPlayer.rerollsLeft}</span>
               </div>
 
-              {/* Controlos */}
+              {/* Controls */}
               {isMyTurn && (
                   <div className="match-controls">
                     <button
@@ -495,7 +494,7 @@ export function MatchView() {
                         disabled={state.isRolling || myPlayer.rerollsLeft === 0}
                         className="match-roll-btn"
                     >
-                      {state.isRolling ? "A lançar..." : "Lançar Dados"}
+                      {state.isRolling ? "Rolling..." : "Roll Dices"}
                     </button>
 
                     {myPlayer.dice.length > 0 && (
@@ -505,7 +504,7 @@ export function MatchView() {
                               disabled={state.isHolding || state.selectedDice.size === 0}
                               className="match-hold-btn"
                           >
-                            {state.isHolding ? "A segurar..." : `Segurar (${state.selectedDice.size})`}
+                            {state.isHolding ? "Holding..." : `Hold (${state.selectedDice.size})`}
                           </button>
 
                           <button
@@ -513,7 +512,7 @@ export function MatchView() {
                               disabled={state.isFinishing}
                               className="match-finish-btn"
                           >
-                            {state.isFinishing ? "A terminar..." : "Terminar Jogada"}
+                            {state.isFinishing ? "Finishing..." : "Finish Turn"}
                           </button>
                         </>
                     )}
@@ -524,7 +523,7 @@ export function MatchView() {
 
         {/* Todos os jogadores */}
         <div className="match-players">
-          <h3>Jogadores</h3>
+          <h3>Players</h3>
           <div className="match-players-grid">
             {state.playerOrder.map(userId => {
               const player = state.players.get(userId);
@@ -539,7 +538,7 @@ export function MatchView() {
                       className={`match-player-card ${isCurrentTurn ? "current-turn" : ""} ${isMe ? "is-me" : ""}`}
                   >
                     <div className="match-player-header">
-                      <span>Jogador #{userId} {isMe && "(Você)"}</span>
+                      <span>Player #{userId} {isMe && "(You)"}</span>
                     </div>
 
                     {player.dice.length > 0 && !isMe && (
@@ -562,7 +561,7 @@ export function MatchView() {
                     )}
 
                     <div className="match-player-status">
-                      <span>Lançamentos: {player.rerollsLeft}</span>
+                      <span>Rolls left: {player.rerollsLeft}</span>
                     </div>
                   </div>
               );

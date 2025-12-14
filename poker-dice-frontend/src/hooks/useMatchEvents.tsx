@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import {Face, Wallet} from "../types.ts";
 
-//{}
 
 type gameActions = "match-snapshot" | "turn-change" | "round-complete" | "game-end" | "dice-rolled" | "dice-held";
 
@@ -10,12 +9,20 @@ export interface TurnChangeEvent {
   currentPlayer: number;
 }
 
-export interface RoundSummaryEvent {
-    roundNumber: number;
-    winners: number[] | null;
-    prize: number;
-    wallets: Record<number, Wallet>; 
-}
+
+export type RoundSummaryEvent = {
+  roundNumber: number;
+  winners: number[];
+  prize: number;
+  wallets: Record<number, Wallet>;
+  playersAndCombinations: {
+  [playerId: number]: {
+    faces?: Face[];
+    combination: string;
+  };
+  };
+
+};
 
 export interface MatchSnapshotEvent {
     matchId: number;

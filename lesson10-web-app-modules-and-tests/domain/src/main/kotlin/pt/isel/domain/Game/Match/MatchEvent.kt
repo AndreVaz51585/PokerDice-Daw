@@ -1,5 +1,6 @@
 package pt.isel.domain.Game.Match
 
+import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.Hand
 import pt.isel.domain.Game.money.Wallet
 
@@ -11,11 +12,22 @@ sealed class MatchEvent {
 
     data class RoundSummary(
         val roundNumber: Int,
-        val winners: List<Int>?,
+        val winners: List<Int> = emptyList(),
         val prize: Int,
         val wallets: Map<Int, Wallet>,
-        val playersAndCombinations: Map<Int, Hand>?
-    ): MatchEvent()
+        val playersAndCombinations: Map<Int, RoundHandView> = emptyMap()
+    ) : MatchEvent() {
+
+        data class RoundHandView(
+            val dices: List<DiceView>,
+            val combination: String
+        )
+
+        data class DiceView(
+            val value: Face
+
+        )
+    }
 
     data class MatchSnapshot(
         val matchId: Int,

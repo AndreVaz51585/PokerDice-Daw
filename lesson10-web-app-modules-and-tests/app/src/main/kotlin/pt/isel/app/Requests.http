@@ -1,6 +1,6 @@
 @base = http://localhost:8080
-@tokenteste1 = 2YQ29EMfgFcwzJQBDgNcufr4gSGs-XbbREE6njlVjnw=
-@tokenteste2 = yPGohF-EevGoZx6QrQ-v2T-8aPQgndjH3eyEY0c5ES0=
+@tokenteste1 = q6poOxf2PpNe_s6HJD9nwK6xUbG-PS6aaPP7HQD2Who=
+@tokenteste2 = ejxooengp4w41r-J6iTMgTRLJBKuglSDCIhJKjpJzbA=
 @tokenteste3 = HaMTfD7QDvf2VeHP_AMyrCOGqUAwbXRLhemqTikr5yQ=
 @tokenteste4 = 6pkRgUd0abxM0EPjsI4OH-UrQ7rra-lO1XbpI9D7EZ4=
 @tokenteste5 = d7UqtW1SUooC1enmqzc0JSvGPvo6tIEdALhqnIQw4d4=
@@ -40,8 +40,8 @@ POST http://localhost:8080/api/users/token
 Content-Type: application/json
 
 {
-  "email": "b@gmail.com",
-  "password": "12345"
+  "email": "teste1@gmail.com",
+  "password": "teste1"
 }
 
 ### Obter User
@@ -93,9 +93,9 @@ Authorization: Bearer {{tokentesteb}}
 
 
 ### Sair de um lobby
-POST http://localhost:8080/api/lobbies/12/leave
+POST http://localhost:8080/api/lobbies/1/leave
 Content-Type: application/json
-Authorization: Bearer {{tokentestea}}
+Authorization: Bearer {{tokenteste2}}
 
 ### Listar jogadores de um lobby
 GET http://localhost:8080/api/lobbies/5/players
@@ -104,7 +104,7 @@ GET http://localhost:8080/api/lobbies/5/players
 GET http://localhost:8080/api/lobbies/1/host
 
 ### Obter players de uma partida
-GET http://localhost:8080/api/matches/1/players
+GET http://localhost:8080/api/matches/6/players
 
 ### Listar todas as partidas
 GET http://localhost:8080/api/matches
