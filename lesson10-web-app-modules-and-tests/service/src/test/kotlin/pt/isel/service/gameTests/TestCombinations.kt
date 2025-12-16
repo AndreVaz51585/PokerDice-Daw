@@ -1,13 +1,12 @@
 package pt.isel.service.gameTests
 
-import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import pt.isel.domain.Game.Combination
 import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.Hand
+import kotlin.test.assertEquals
 
 class TestCombinations {
-
     @Test
     fun `testa calculo de Five of a Kind`() {
         val hand = Hand(listOf(Face.ACE, Face.ACE, Face.ACE, Face.ACE, Face.ACE))
@@ -48,10 +47,9 @@ class TestCombinations {
     fun `testa calculo de Straight entre duas mãos (hand1 maior)`() {
         val hand1 = Hand(listOf(Face.NINE, Face.TEN, Face.JACK, Face.QUEEN, Face.KING))
         val hand2 = Hand(listOf(Face.TEN, Face.JACK, Face.QUEEN, Face.KING, Face.ACE))
-        val result = Combination.compareHands(hand1,hand2)
+        val result = Combination.compareHands(hand1, hand2)
         assertEquals(hand2, result)
     }
-
 
     @Test
     fun `testa comparacao de maos(two-pair vs two-pair) com mesma combinacao`() {

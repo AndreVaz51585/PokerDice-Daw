@@ -7,7 +7,6 @@ import pt.isel.service.lobbyService.GlobalLobby.GlobalLobbyEventPublisher
 import pt.isel.service.lobbyService.Lobby.LobbyEventPublisher
 
 interface LobbyService {
-
     fun createLobby(
         hostId: Int,
         name: String,
@@ -20,11 +19,20 @@ interface LobbyService {
 
     fun getLobby(id: Int): Either<LobbyServiceError, Lobby>
 
-    fun listOpenLobbies(limit: Int, offset: Int): List<Lobby>
+    fun listOpenLobbies(
+        limit: Int,
+        offset: Int,
+    ): List<Lobby>
 
-    fun joinLobby(lobbyId: Int, userId: Int): Either<LobbyServiceError, Int>
+    fun joinLobby(
+        lobbyId: Int,
+        userId: Int,
+    ): Either<LobbyServiceError, Int>
 
-    fun leaveLobby(lobbyId: Int, userId: Int): Either<LobbyServiceError, Boolean>
+    fun leaveLobby(
+        lobbyId: Int,
+        userId: Int,
+    ): Either<LobbyServiceError, Boolean>
 
     fun getLobbyHost(lobby: Lobby): Either<LobbyServiceError, User>
 
@@ -35,5 +43,4 @@ interface LobbyService {
     fun getLobbyEventPublisher(): LobbyEventPublisher
 
     fun getGlobalLobbyEventPublisher(): GlobalLobbyEventPublisher
-
 }

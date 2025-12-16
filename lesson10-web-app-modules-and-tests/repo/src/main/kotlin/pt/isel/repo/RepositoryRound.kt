@@ -5,12 +5,11 @@ import pt.isel.domain.Game.Round.RoundState
 import java.time.Instant
 
 interface RepositoryRound : Repository<Round> {
-
     fun createRound(
         matchId: Int,
         number: Int,
         anteCoins: Int,
-        startedAt: Instant
+        startedAt: Instant,
     ): Round
 
     // Encontrar rounds por match
@@ -23,13 +22,22 @@ interface RepositoryRound : Repository<Round> {
     fun startRound(roundId: Long): Boolean
 
     // Finalizar um round e definir vencedor
-    fun completeRound(roundId: Long, winnerUserId: Int): Boolean
+    fun completeRound(
+        roundId: Long,
+        winnerUserId: Int,
+    ): Boolean
 
     // Atualizar o estado de um round
-    fun updateState(roundId: Long, newState: RoundState): Boolean
+    fun updateState(
+        roundId: Long,
+        newState: RoundState,
+    ): Boolean
 
     // Adicionar moedas ao pote
-    fun addToPot(roundId: Long, amount: Int): Boolean
+    fun addToPot(
+        roundId: Long,
+        amount: Int,
+    ): Boolean
 
     // Obter o pote atual
     fun getPotAmount(roundId: Long): Int
@@ -41,7 +49,10 @@ interface RepositoryRound : Repository<Round> {
     fun getRoundWithHands(roundId: Long): Round
 
     // Verificar se um jogador específico já jogou neste round
-    fun hasPlayerPlayed(roundId: Long, userId: Int): Boolean
+    fun hasPlayerPlayed(
+        roundId: Long,
+        userId: Int,
+    ): Boolean
 
     fun findWinnersByRoundId(roundId: Long): List<Int>
 }

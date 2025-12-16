@@ -12,27 +12,38 @@ interface MatchService {
     fun createMatch(
         lobbyId: Int,
         totalRounds: Int,
-        ante: Int
+        ante: Int,
     ): Either<MatchServiceError, Match>
 
     fun getMatch(id: Int): Either<MatchServiceError, Match>
 
-    fun addPlayer(matchId: Int, player: MatchPlayer): Either<MatchServiceError, Boolean>
+    fun addPlayer(
+        matchId: Int,
+        player: MatchPlayer,
+    ): Either<MatchServiceError, Boolean>
 
-    fun removePlayer(matchId: Int, userId: Int): Either<MatchServiceError, Boolean>
+    fun removePlayer(
+        matchId: Int,
+        userId: Int,
+    ): Either<MatchServiceError, Boolean>
 
-    fun updateState(matchId: Int, newState: MatchState): Either<MatchServiceError, Boolean>
+    fun updateState(
+        matchId: Int,
+        newState: MatchState,
+    ): Either<MatchServiceError, Boolean>
 
     fun listPlayers(matchId: Int): List<MatchPlayer>
 
     fun getBankedMatch(matchId: Int): BankedMatch?
 
-    fun applyCommand(matchId: Int, cmd: Command): Either<MatchServiceError, BankedMatch>
+    fun applyCommand(
+        matchId: Int,
+        cmd: Command,
+    ): Either<MatchServiceError, BankedMatch>
 
     fun registerMatchEngine(engine: BankedGameMatchEngine)
 
     fun registerBankedMatchFromDb(matchId: Int): Either<MatchServiceError, Boolean>
 
     fun getEventPublisher(): MatchEventPublisher
-
 }

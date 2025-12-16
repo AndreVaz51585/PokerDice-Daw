@@ -6,7 +6,6 @@ import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Round.Round
 import kotlin.random.Random.Default.nextInt
 
-
 /**
  * Aggregate root for a Poker Dice match.
  * - ante: fixed per-round ante each player contributes (pot = players * ante).
@@ -27,17 +26,16 @@ data class Game(
     val totalRounds: Int = 3,
     val rounds: List<Round> = emptyList(),
     val currentPlayerIndex: Int = 0,
-    val balances: Map<Int, Int> = emptyMap()
+    val balances: Map<Int, Int> = emptyMap(),
 ) {
     val currentRoundNumber: Int get() = rounds.lastOrNull()?.number ?: 0
     val everyoneDone: Boolean get() = players.values.all { it.done && it.dice.size == 5 }
 }
 
-
 fun createNewGame(
     lobby: Lobby,
     match: Match,
-    matchPlayers : List<MatchPlayer>
+    matchPlayers: List<MatchPlayer>,
 ): Game {
     // Define player order based on lobby players
     val playerOrder = matchPlayers.map { it.userId }
@@ -46,28 +44,28 @@ fun createNewGame(
     val playersMap: Map<Int, PlayerState> =
         playerOrder.associateWith { PlayerState(it) }
 
-
     // For each player , asscociate their starting balance
-    val balancesMap: Map<Int, Int> = playerOrder.associateWith { id ->
-        matchPlayers.find { it.userId == id }?.balanceAtStart ?: 0
-    }
+    val balancesMap: Map<Int, Int> =
+        playerOrder.associateWith { id ->
+            matchPlayers.find { it.userId == id }?.balanceAtStart ?: 0
+        }
 
-    val currentIndex = nextInt( playerOrder.size)
+    val currentIndex = nextInt(playerOrder.size)
 
-    val game = Game(
-        matchId = match.id,
-        hostId =lobby.lobbyHost,
-        ante =lobby.ante,
-        maxPlayers = lobby.maxPlayers,
-        playerOrder = playerOrder ,
-        players = playersMap,
-        phase = GamePhase.LOBBY,
-        totalRounds = match.totalRounds,
-        rounds = match.rounds,
-        currentPlayerIndex = currentIndex,
-        balances = balancesMap
-    )
-
+    val game =
+        Game(
+            matchId = match.id,
+            hostId = lobby.lobbyHost,
+            ante = lobby.ante,
+            maxPlayers = lobby.maxPlayers,
+            playerOrder = playerOrder,
+            players = playersMap,
+            phase = GamePhase.LOBBY,
+            totalRounds = match.totalRounds,
+            rounds = match.rounds,
+            currentPlayerIndex = currentIndex,
+            balances = balancesMap,
+        )
 
     return game
 }

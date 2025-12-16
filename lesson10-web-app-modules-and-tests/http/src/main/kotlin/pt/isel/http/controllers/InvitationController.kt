@@ -9,11 +9,9 @@ import pt.isel.service.userService.InvitationService
 
 @RestController
 class InvitationController(private val invitationService: InvitationService) {
-
     @PostMapping("/api/invitations")
     fun createInvitation(user: AuthenticatedUser): ResponseEntity<InvitationId> {
         val invitationId = invitationService.createInvitation(user.user)
         return ResponseEntity.ok(invitationId)
     }
-
 }

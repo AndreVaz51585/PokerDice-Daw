@@ -8,10 +8,9 @@ package pt.isel.repo
  * necessary repository instances in its constructor.
  */
 interface Transaction {
-
     val repoUsers: RepositoryUser
-    val repoLobbies : RepositoryLobby
-    val repoMatch : RepositoryMatch
+    val repoLobbies: RepositoryLobby
+    val repoMatch: RepositoryMatch
     val repoRound: RepositoryRound
     val repoWallet: RepositoryWallet
     val repoStatistics: RepositoryStatistics

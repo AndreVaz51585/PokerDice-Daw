@@ -1,10 +1,10 @@
 @base = http://localhost:8080
-@tokenteste1 = q6poOxf2PpNe_s6HJD9nwK6xUbG-PS6aaPP7HQD2Who=
+@tokenteste1 = T7NhAdaEpY67qY6CQx2D8sZKzznWzczwO5s50ZOnhAU=
 @tokenteste2 = ejxooengp4w41r-J6iTMgTRLJBKuglSDCIhJKjpJzbA=
 @tokenteste3 = HaMTfD7QDvf2VeHP_AMyrCOGqUAwbXRLhemqTikr5yQ=
 @tokenteste4 = 6pkRgUd0abxM0EPjsI4OH-UrQ7rra-lO1XbpI9D7EZ4=
 @tokenteste5 = d7UqtW1SUooC1enmqzc0JSvGPvo6tIEdALhqnIQw4d4=
-@tokentestea = a4k2dGHD62QKuaEg7-jF-i3x72prE_4o92mQel3M_TU=
+@tokentestea = 8KmRuuwjocRcC1GjdTYIsL3FCI2ZKD0R2r5qIRDZXC4=
 @tokentesteb = 1R0XqmOUpv_v1LvoL-WkNRykQcgFfCjpXxA8XHE_oGc=
 
 @invitatioCode = YgOCOLJXcAM
@@ -16,7 +16,7 @@ Content-Type: application/json
 {
   "name": "teste1",
   "email": "test1@gmail.com",
-  "password": "minhaSenhaSegura"
+  "password": "12345"
 }
 
 ### Código de Convite
@@ -36,12 +36,12 @@ Content-Type: application/json
 }
 
 ### Obter token de autenticação
-POST http://localhost:8080/api/users/token
+POST http://localhost:4000/api/users/token
 Content-Type: application/json
 
 {
-  "email": "teste1@gmail.com",
-  "password": "teste1"
+  "email": "test1@gmail.com",
+  "password": "12345"
 }
 
 ### Obter User
@@ -61,11 +61,16 @@ content-type: application/json
 GET {{base}}/api/lobbies/events
 Accept: text/event-stream
 
+### ficar à escuta no stream de eventos SSE (todos os lobbies)
+GET http://localhost:4000/api/lobbies/events
+Accept: text/event-stream
+
+
 
 ### Criar um lobby
-POST http://localhost:8080/api/lobbies
+POST http://localhost:4000/api/lobbies
 Content-Type: application/json
-Authorization: Bearer {{tokentestea}}
+Authorization: Bearer {{tokenteste1}}
 
 {
   "name": "teste Jogo4",
@@ -77,7 +82,7 @@ Authorization: Bearer {{tokentestea}}
 }
 
 ### Listar todos os lobbies
-GET http://localhost:8080/api/lobbies
+GET http://localhost:4000/api/lobbies
 
 ### Obter lobby por ID
 GET http://localhost:8080/api/lobbies/3
@@ -93,9 +98,9 @@ Authorization: Bearer {{tokentesteb}}
 
 
 ### Sair de um lobby
-POST http://localhost:8080/api/lobbies/1/leave
+POST http://localhost:3001/api/lobbies/1/leave
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{tokenteste1}}
 
 ### Listar jogadores de um lobby
 GET http://localhost:8080/api/lobbies/5/players

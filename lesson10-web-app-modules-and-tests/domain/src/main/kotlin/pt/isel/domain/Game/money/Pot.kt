@@ -8,9 +8,8 @@ data class Pot(
     val createdAt: Instant = Instant.now(),
     val contributions: Map<Int, Int> = emptyMap(), // userId -> total contributed
     val total: Int = 0,
-    val closed: Boolean = false
+    val closed: Boolean = false,
 ) {
-
     init {
         require(matchId > 0) { "matchId inválido" }
         require(roundNumber > 0) { "roundNumber inválido" }
@@ -22,7 +21,10 @@ data class Pot(
         }
     }
 
-    fun addContribution(userId: Int, amount: Int): Pot {
+    fun addContribution(
+        userId: Int,
+        amount: Int,
+    ): Pot {
         require(!closed) { "Pote encerrado" }
         require(userId > 0) { "userId inválido" }
         require(amount > 0) { "Contribuição deve ser positiva" }
@@ -30,7 +32,7 @@ data class Pot(
         updated[userId] = (updated[userId] ?: 0) + amount
         return copy(
             contributions = updated.toMap(),
-            total = total + amount
+            total = total + amount,
         )
     }
 

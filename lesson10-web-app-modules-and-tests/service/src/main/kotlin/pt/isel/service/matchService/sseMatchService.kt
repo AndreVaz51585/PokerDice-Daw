@@ -6,7 +6,6 @@ import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
 
-
 // Vamos definir o que é que um user deve ver dependendo dos comandos por ele executados
 // Quando a partida começa, o ideal seria que todos vissem a ordem inicial para saberem quando é que jogam , e as ações que faltam
 // Quando faz Roll , devemos mostrar o resultado do roll e respetivo valor associado a essa combinação , juntamente com com rerolls left e proximo jogador
@@ -19,11 +18,7 @@ import pt.isel.service.Auxiliary.success
 
 @Service
 class sseMatchService {
-
-    fun getRawTypeFromBody(body: Map<String, Any>): String? =
-       (body["type"] ?: body["action"])?.toString()?.lowercase()
-
-
+    fun getRawTypeFromBody(body: Map<String, Any>): String? = (body["type"] ?: body["action"])?.toString()?.lowercase()
 
     fun getIndicesFromBody(body: Map<String, Any>): Set<Int> {
         return when (val v = body["indices"]) {
@@ -33,28 +28,25 @@ class sseMatchService {
         }
     }
 
-        fun executeComand(
-            action: String,
-            userId: Int,
-            indices: Set<Int> = emptySet<Int>()
-        ): Either<MatchServiceError, Command> {
+    fun executeComand(
+        action: String,
+        userId: Int,
+        indices: Set<Int> = emptySet<Int>(),
+    ): Either<MatchServiceError, Command> {
+        if (action == "hold") {
+            if (indices.isEmpty()) return failure(MatchServiceError.CommandInvalidIndices)
 
-            if (action == "hold") {
-                if (indices.isEmpty()) return failure(MatchServiceError.CommandInvalidIndices)
+            if (indices.any { it !in 0..4 }) return failure(MatchServiceError.CommandInvalidIndices)
+        }
 
-                if (indices.any { it !in 0..4 }) return failure(MatchServiceError.CommandInvalidIndices)
-            }
-
-            val cmd: Command = when (action) {
+        val cmd: Command =
+            when (action) {
                 "roll" -> Command.Roll(userId)
                 "hold" -> Command.Hold(userId, indices)
                 "finish-turn" -> Command.FinishTurn(userId)
                 else -> return failure(MatchServiceError.CommandUnknown)
             }
 
-            return success(cmd)
-        }
-
-
+        return success(cmd)
     }
-
+}

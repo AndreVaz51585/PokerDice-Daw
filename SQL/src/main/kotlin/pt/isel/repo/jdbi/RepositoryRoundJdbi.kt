@@ -14,21 +14,24 @@ import java.time.Instant
 import java.util.*
 
 class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
-
     private class RoundMapper : (ResultSet, StatementContext) -> Round {
-        override fun invoke(rs: ResultSet, ctx: StatementContext): Round {
+        override fun invoke(
+            rs: ResultSet,
+            ctx: StatementContext,
+        ): Round {
             return Round(
                 id = rs.getLong("id"),
                 number = rs.getInt("number"),
                 matchId = rs.getInt("match_id"),
-                state = when (rs.getString("status")) {
-                    "IN_PROGRESS" -> RoundState.OPEN
-                    "COMPLETED" -> RoundState.CLOSED
-                    else -> RoundState.OPEN
-                },
+                state =
+                    when (rs.getString("status")) {
+                        "IN_PROGRESS" -> RoundState.OPEN
+                        "COMPLETED" -> RoundState.CLOSED
+                        else -> RoundState.OPEN
+                    },
                 anteCoins = rs.getInt("ante_coins"),
                 pot = rs.getInt("pot_coins"),
-                hands = emptyMap() // Mãos serão carregadas separadamente quando necessário
+                hands = emptyMap(), // Mãos serão carregadas separadamente quando necessário
             )
         }
     }
@@ -37,18 +40,18 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
         matchId: Int,
         number: Int,
         anteCoins: Int,
-        startedAt: Instant
+        startedAt: Instant,
     ): Round {
-        val generatedId = handle.createUpdate(RoundSql.INSERT_ROUND)
-            .bind("matchId", matchId)
-            .bind("number", number)
-            .bind("anteCoins", anteCoins)
-            .bind("potCoins", 0)
-            .bind("startedAt", startedAt)
-            .executeAndReturnGeneratedKeys("id")
-            .mapTo<Long>()
-            .one()
-
+        val generatedId =
+            handle.createUpdate(RoundSql.INSERT_ROUND)
+                .bind("matchId", matchId)
+                .bind("number", number)
+                .bind("anteCoins", anteCoins)
+                .bind("potCoins", 0)
+                .bind("startedAt", startedAt)
+                .executeAndReturnGeneratedKeys("id")
+                .mapTo<Long>()
+                .one()
 
         return Round(
             id = generatedId,
@@ -58,10 +61,9 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
             anteCoins = anteCoins,
             pot = 0,
             winners = null,
-            hands = emptyMap()
+            hands = emptyMap(),
         )
     }
-
 
     override fun findById(id: Int): Round? {
         return handle.createQuery(RoundSql.SELECT_ROUND_BY_ID)
@@ -71,13 +73,11 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
             .orElse(null)
     }
 
-
     override fun findAll(): List<Round> {
         return handle.createQuery(RoundSql.SELECT_ALL_ROUNDS)
             .map(RoundMapper())
             .list()
     }
-
 
     override fun save(entity: Round) {
         if (findById(entity.id.toInt()) != null) {
@@ -87,16 +87,16 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
                 .bind("matchId", entity.matchId)
                 .bind("anteCoins", entity.anteCoins)
                 .bind(
-                    "status", when (entity.state) {
+                    "status",
+                    when (entity.state) {
                         RoundState.OPEN -> "IN_PROGRESS"
                         RoundState.SCORING -> "IN_PROGRESS"
                         RoundState.CLOSED -> "COMPLETED"
-                    }
+                    },
                 )
                 .bind("potCoins", entity.pot)
                 .bind("endedAt", if (entity.state == RoundState.CLOSED) Date() else null)
                 .execute()
-
         } else {
             handle.createUpdate(RoundSql.INSERT_ROUND)
                 .bind("id", entity.id)
@@ -107,7 +107,7 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
                 .bind("startedAt", Date())
                 .execute()
         }
-        for (userId in entity.winners ?: emptyList()){
+        for (userId in entity.winners ?: emptyList()) {
             handle.createUpdate(RoundSql.UPDATE_ROUND_WINNERS)
                 .bind("roundId", entity.id)
                 .bind("userId", userId)
@@ -122,19 +122,16 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
             .list()
     }
 
-
     override fun deleteById(id: Int): Boolean {
         return handle.createUpdate(RoundSql.DELETE_ROUND)
             .bind("id", id)
             .execute() > 0
     }
 
-
     override fun clear() {
         handle.createUpdate(RoundSql.DELETE_ALL_ROUNDS)
             .execute()
     }
-
 
     override fun findByMatchId(matchId: Long): List<Round> {
         return handle.createQuery(RoundSql.SELECT_ROUNDS_BY_MATCH)
@@ -158,7 +155,10 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
             .execute() > 0
     }
 
-    override fun completeRound(roundId: Long, winnerUserId: Int): Boolean {
+    override fun completeRound(
+        roundId: Long,
+        winnerUserId: Int,
+    ): Boolean {
         return handle.createUpdate(RoundSql.COMPLETE_ROUND)
             .bind("id", roundId)
             .bind("status", "COMPLETED")
@@ -166,12 +166,16 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
             .execute() > 0
     }
 
-    override fun updateState(roundId: Long, newState: RoundState): Boolean {
-        val sqlState = when (newState) {
-            RoundState.OPEN -> "IN_PROGRESS"
-            RoundState.SCORING -> "IN_PROGRESS"
-            RoundState.CLOSED -> "COMPLETED"
-        }
+    override fun updateState(
+        roundId: Long,
+        newState: RoundState,
+    ): Boolean {
+        val sqlState =
+            when (newState) {
+                RoundState.OPEN -> "IN_PROGRESS"
+                RoundState.SCORING -> "IN_PROGRESS"
+                RoundState.CLOSED -> "COMPLETED"
+            }
 
         return handle.createUpdate(RoundSql.UPDATE_ROUND_STATE)
             .bind("id", roundId)
@@ -179,7 +183,10 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
             .execute() > 0
     }
 
-    override fun addToPot(roundId: Long, amount: Int): Boolean {
+    override fun addToPot(
+        roundId: Long,
+        amount: Int,
+    ): Boolean {
         val addPot = getPotAmount(roundId) + amount
 
         return handle.createUpdate(RoundSql.ADD_TO_POT)
@@ -193,57 +200,60 @@ class RepositoryRoundJdbi(private val handle: Handle) : RepositoryRound {
             .bind("id", roundId)
             .mapTo<Int>()
             .one()
-
     }
 
     override fun allPlayersPlayed(roundId: Long): Boolean {
-        val count = handle.createQuery(RoundSql.COUNT_PLAYERS_PLAYED)
-            .bind("id", roundId)
-            .mapTo<Int>()
-            .one()
+        val count =
+            handle.createQuery(RoundSql.COUNT_PLAYERS_PLAYED)
+                .bind("id", roundId)
+                .mapTo<Int>()
+                .one()
 
-        val totalPlayers = handle.createQuery(RoundSql.COUNT_TOTAL_PLAYERS)
-            .bind("id", roundId)
-            .mapTo<Int>()
-            .one()
+        val totalPlayers =
+            handle.createQuery(RoundSql.COUNT_TOTAL_PLAYERS)
+                .bind("id", roundId)
+                .mapTo<Int>()
+                .one()
 
         return count == totalPlayers && totalPlayers > 0
     }
 
-
     override fun getRoundWithHands(roundId: Long): Round {
+        val round =
+            handle.createQuery(RoundSql.SELECT_ROUND_BY_ID)
+                .bind("id", roundId)
+                .map(RoundMapper())
+                .findOne()
+                .orElse(null)
 
-        val round = handle.createQuery(RoundSql.SELECT_ROUND_BY_ID)
-            .bind("id", roundId)
-            .map(RoundMapper())
-            .findOne()
-            .orElse(null)
+        val hands =
+            handle.createQuery(RoundSql.SELECT_HANDS_BY_ROUND)
+                .bind("id", roundId)
+                .map { rs: ResultSet, _: StatementContext ->
+                    val userId = rs.getInt("user_id")
 
+                    // Obter as faces dos dados da consulta SQL
+                    val faces =
+                        listOf(
+                            enumValueOf<Face>(rs.getString("d1")),
+                            enumValueOf<Face>(rs.getString("d2")),
+                            enumValueOf<Face>(rs.getString("d3")),
+                        )
 
-        val hands = handle.createQuery(RoundSql.SELECT_HANDS_BY_ROUND)
-            .bind("id", roundId)
-            .map { rs: ResultSet, _: StatementContext ->
-                val userId = rs.getInt("user_id")
-
-                // Obter as faces dos dados da consulta SQL
-                val faces = listOf(
-                    enumValueOf<Face>(rs.getString("d1")),
-                    enumValueOf<Face>(rs.getString("d2")),
-                    enumValueOf<Face>(rs.getString("d3"))
-                )
-
-                // Criar o objeto Hand com as faces recuperadas
-                val hand = Hand(faces = faces)
-                Pair(userId, hand)
-            }
-            .list()
-            .toMap()
+                    // Criar o objeto Hand com as faces recuperadas
+                    val hand = Hand(faces = faces)
+                    Pair(userId, hand)
+                }
+                .list()
+                .toMap()
 
         return round.copy(hands = hands)
     }
 
-
-    override fun hasPlayerPlayed(roundId: Long, userId: Int): Boolean {
+    override fun hasPlayerPlayed(
+        roundId: Long,
+        userId: Int,
+    ): Boolean {
         return handle.createQuery(RoundSql.CHECK_PLAYER_PLAYED)
             .bind("id", roundId)
             .bind("userId", userId)

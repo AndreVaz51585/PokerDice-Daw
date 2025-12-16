@@ -6,7 +6,6 @@ import org.jdbi.v3.core.mapper.reflect.ConstructorMapper
 import org.jdbi.v3.postgres.PostgresPlugin
 import pt.isel.domain.authentication.PasswordValidationInfo
 import pt.isel.domain.token.TokenValidationInfo
-
 import pt.isel.domain.user.User
 import pt.isel.mapper.InstantMapper
 import pt.isel.mapper.PasswordValidationInfoMapper

@@ -2,7 +2,6 @@ package pt.isel.domain.Game.pokerDice
 
 import pt.isel.domain.Game.Face
 
-
 /**
  * Per player transient turn state.
  * - dice: current 5 dice (empty until first Roll).
@@ -15,5 +14,5 @@ data class PlayerState(
     val dice: List<Face> = emptyList(),
     val held: Set<Int> = emptySet(),
     val rerollsLeft: Int = 2,
-    val done: Boolean = false
+    val done: Boolean = false,
 )

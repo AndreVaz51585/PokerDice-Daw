@@ -1,0 +1,11 @@
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+
+# Copy the JAR file from the build output
+COPY lesson10-web-app-modules-and-tests/app/build/libs/*.jar app.jar
+
+
+EXPOSE 8080
+
+CMD ["java", "-jar", "app.jar"]

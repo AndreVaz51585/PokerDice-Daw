@@ -21,9 +21,8 @@ import java.util.*
  */
 class RepositoryMatchJdbi(
     private val handle: Handle,
-    private val repoLobby: RepositoryLobby
+    private val repoLobby: RepositoryLobby,
 ) : RepositoryMatch {
-
     override fun createMatch(
         lobbyId: Int,
         totalRounds: Int,
@@ -32,21 +31,21 @@ class RepositoryMatchJdbi(
         currentRoundNo: Int,
         startedAt: Instant,
         finishedAt: Instant?,
-        maxPlayers : Int
+        maxPlayers: Int,
     ): Match {
-        val matchId = handle.createUpdate(MatchSql.INSERT_MATCH)
-            .bind("lobbyId", lobbyId)
-            .bind("totalRounds", totalRounds)
-            .bind("ante", ante)
-            .bind("state", state.name) // Importante: converter o enum para string
-            .bind("currentRoundNo", currentRoundNo)
-            .bind("startedAt", startedAt)
-            .bind("finishedAt", finishedAt)
-            .bind("maxPlayers", maxPlayers)
-            .executeAndReturnGeneratedKeys("id")
-            .mapTo<Int>()
-            .one()
-
+        val matchId =
+            handle.createUpdate(MatchSql.INSERT_MATCH)
+                .bind("lobbyId", lobbyId)
+                .bind("totalRounds", totalRounds)
+                .bind("ante", ante)
+                .bind("state", state.name) // Importante: converter o enum para string
+                .bind("currentRoundNo", currentRoundNo)
+                .bind("startedAt", startedAt)
+                .bind("finishedAt", finishedAt)
+                .bind("maxPlayers", maxPlayers)
+                .executeAndReturnGeneratedKeys("id")
+                .mapTo<Int>()
+                .one()
 
         return Match(
             id = matchId,
@@ -57,34 +56,34 @@ class RepositoryMatchJdbi(
             currentRoundNo = currentRoundNo,
             startedAt = startedAt,
             finishedAt = finishedAt,
-            rounds = emptyList() ,// TODO: carregar rounds quando houver esquema
-            maxPlayers = maxPlayers
+            rounds = emptyList(), // TODO: carregar rounds quando houver esquema
+            maxPlayers = maxPlayers,
         )
     }
-
 
     // ---------------------------
     // Leitura
     // ---------------------------
     override fun findById(id: Int): Match? {
-        val partial = handle.createQuery(MatchSql.SELECT_MATCH)
-            .bind("id", id)
-            .map { rs, _ ->
-                PartialMatchRow(
-                    id = rs.getInt("id"),
-                    lobbyId = rs.getInt("lobby_id"),
-                    totalRounds = rs.getInt("total_rounds"),
-                    ante = rs.getInt("ante"),
-                    state = MatchState.valueOf(rs.getString("state")),
-                    currentRoundNo = rs.getInt("current_round_no"),
-                    startedAt = rs.getTimestamp("started_at").toInstant(),
-                    finishedAt = rs.getTimestamp("finished_at")?.toInstant(),
-                    maxPlayers = rs.getInt("max_Players")
-                )
-            }
-            .findOne()
-            .orElse(null)
-            ?: return null
+        val partial =
+            handle.createQuery(MatchSql.SELECT_MATCH)
+                .bind("id", id)
+                .map { rs, _ ->
+                    PartialMatchRow(
+                        id = rs.getInt("id"),
+                        lobbyId = rs.getInt("lobby_id"),
+                        totalRounds = rs.getInt("total_rounds"),
+                        ante = rs.getInt("ante"),
+                        state = MatchState.valueOf(rs.getString("state")),
+                        currentRoundNo = rs.getInt("current_round_no"),
+                        startedAt = rs.getTimestamp("started_at").toInstant(),
+                        finishedAt = rs.getTimestamp("finished_at")?.toInstant(),
+                        maxPlayers = rs.getInt("max_Players"),
+                    )
+                }
+                .findOne()
+                .orElse(null)
+                ?: return null
 
         return Match(
             id = partial.id,
@@ -95,15 +94,16 @@ class RepositoryMatchJdbi(
             currentRoundNo = partial.currentRoundNo,
             startedAt = partial.startedAt,
             finishedAt = partial.finishedAt,
-            rounds = emptyList() , // TODO: carregar rounds quando houver esquema
-            maxPlayers = partial.maxPlayers
+            rounds = emptyList(), // TODO: carregar rounds quando houver esquema
+            maxPlayers = partial.maxPlayers,
         )
     }
 
     override fun findAll(): List<Match> {
-        val ids = handle.createQuery(MatchSql.SELECT_MATCHES_PAGED)
-            .mapTo<Int>()
-            .list()
+        val ids =
+            handle.createQuery(MatchSql.SELECT_MATCHES_PAGED)
+                .mapTo<Int>()
+                .list()
 
         // N+1. Para volume elevado, considerar join + agregação.
         return ids.mapNotNull { findById(it) }
@@ -115,23 +115,28 @@ class RepositoryMatchJdbi(
             .mapTo(Int::class.java)
             .one() > 0
 
-
     // ---------------------------
     // Atualizações
     // ---------------------------
-    override fun updateState(id: Int, newState: MatchState, finishedAt: Instant?): Boolean =
+    override fun updateState(
+        id: Int,
+        newState: MatchState,
+        finishedAt: Instant?,
+    ): Boolean =
         handle.createUpdate(MatchSql.UPDATE_STATE)
             .bind("id", id)
             .bind("state", newState.name)
             .bind("finishedAt", finishedAt?.let { Timestamp.from(it) })
             .execute() > 0
 
-    override fun updateCurrentRound(id: Int, roundNo: Int): Boolean =
+    override fun updateCurrentRound(
+        id: Int,
+        roundNo: Int,
+    ): Boolean =
         handle.createUpdate(MatchSql.UPDATE_CURRENT_ROUND)
             .bind("id", id)
             .bind("roundNo", roundNo)
             .execute() > 0
-
 
     override fun save(entity: Match) {
         handle.createUpdate(MatchSql.UPDATE_MATCH)
@@ -145,7 +150,6 @@ class RepositoryMatchJdbi(
             .bind("finishedAt", entity.finishedAt?.let { Timestamp.from(it) })
             .bind("maxPlayers", entity.maxPlayers)
             .execute()
-
     }
 
     // ---------------------------
@@ -156,7 +160,6 @@ class RepositoryMatchJdbi(
         handle.createUpdate(MatchSql.DELETE_MATCH)
             .bind("id", id)
             .execute() > 0
-
 
     override fun clear() {
         // Se houver FK, respeitar a ordem
@@ -183,7 +186,11 @@ class RepositoryMatchJdbi(
             .list()
     }
 
-    override fun setPlayerActive(matchId: Int, userId: Int, active: Boolean): Int {
+    override fun setPlayerActive(
+        matchId: Int,
+        userId: Int,
+        active: Boolean,
+    ): Int {
         return handle.createUpdate(MatchSql.UPDATE_PLAYER_ACTIVE)
             .bind("matchId", matchId)
             .bind("userId", userId)
@@ -191,28 +198,30 @@ class RepositoryMatchJdbi(
             .execute()
     }
 
-
     override fun addPlayer(
         matchId: Int,
         userId: Int,
         seatNo: Int,
         balanceAtStart: Int,
     ): Boolean {
-        val rows = handle.createUpdate(MatchSql.INSERT_PLAYER)
-            .bind("matchId", matchId)
-            .bind("userId", userId)
-            .bind("seatNo", seatNo)
-            .bind("balanceStart", balanceAtStart)
-            .execute() > 0
+        val rows =
+            handle.createUpdate(MatchSql.INSERT_PLAYER)
+                .bind("matchId", matchId)
+                .bind("userId", userId)
+                .bind("seatNo", seatNo)
+                .bind("balanceStart", balanceAtStart)
+                .execute() > 0
         return rows
     }
 
-    override fun removePlayer(matchId: Int, userId: Int): Boolean =
+    override fun removePlayer(
+        matchId: Int,
+        userId: Int,
+    ): Boolean =
         handle.createUpdate(MatchSql.DELETE_PLAYER)
             .bind("matchId", matchId)
             .bind("userId", userId)
             .execute() > 0
-
 
     override fun getMaxSeatNo(matchId: Int): Int {
         return handle.createQuery(MatchSql.SELECT_MAX_SEAT)
@@ -220,7 +229,6 @@ class RepositoryMatchJdbi(
             .mapTo<Int>()
             .one()
     }
-
 
     // ---------------------------
     // Helpers
@@ -234,6 +242,6 @@ class RepositoryMatchJdbi(
         val currentRoundNo: Int,
         val startedAt: Instant,
         val finishedAt: Instant?,
-        val maxPlayers: Int
+        val maxPlayers: Int,
     )
 }

@@ -6,31 +6,30 @@ package pt.isel.domain.Game.money
  * - settleAndPay: closes the Pot, splits winnings, and deposits to winner wallets.
  */
 object RoundBanker {
-
     data class RoundFunds(
         val pot: Pot?,
         val wallets: Map<Int, Wallet>,
         val eligiblePlayers: List<Int>,
-        val excludedPlayers: List<Int>
+        val excludedPlayers: List<Int>,
     )
 
     data class PayoutResult(
         val closedPot: Pot,
         val payouts: Map<Int, Int>,
-        val wallets: Map<Int, Wallet>
+        val wallets: Map<Int, Wallet>,
     )
 
     fun openPot(
         ante: Ante,
         playerIds: List<Int>,
-        wallets: Map<Int, Wallet>
+        wallets: Map<Int, Wallet>,
     ): RoundFunds {
-
         // eligible players
-        val eligible = playerIds.filter { pid ->
-            val w = wallets[pid] ?: error("Missing money for user $pid")
-            w.currentBalance >= ante.amount
-        }
+        val eligible =
+            playerIds.filter { pid ->
+                val w = wallets[pid] ?: error("Missing money for user $pid")
+                w.currentBalance >= ante.amount
+            }
         val excluded = playerIds.filter { it !in eligible }
 
         // If 0 or 1 eligible players -> do NOT collect antes; return wallets unchanged
@@ -39,7 +38,7 @@ object RoundBanker {
                 pot = null, // no pot opened
                 wallets = wallets, // unchanged
                 eligiblePlayers = eligible,
-                excludedPlayers = excluded
+                excludedPlayers = excluded,
             )
         }
 
@@ -58,15 +57,14 @@ object RoundBanker {
             pot = pot,
             wallets = updatedWallets.toMap(),
             eligiblePlayers = eligible,
-            excludedPlayers = excluded
+            excludedPlayers = excluded,
         )
     }
-
 
     fun settleAndPay(
         pot: Pot,
         winnerUserIds: Set<Int>,
-        wallets: Map<Int, Wallet>
+        wallets: Map<Int, Wallet>,
     ): PayoutResult {
         val closed = pot.close()
         val splits = closed.computeWinnerSplits(winnerUserIds)
@@ -79,7 +77,7 @@ object RoundBanker {
         return PayoutResult(
             closedPot = closed,
             payouts = splits,
-            wallets = updatedWallets.toMap()
+            wallets = updatedWallets.toMap(),
         )
     }
 }

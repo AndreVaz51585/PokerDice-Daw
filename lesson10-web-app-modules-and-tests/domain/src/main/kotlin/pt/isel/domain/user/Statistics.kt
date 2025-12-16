@@ -11,5 +11,5 @@ data class Statistics(
     val threeOfAKind: Int,
     val twoPair: Int,
     val onePair: Int,
-    val bust: Int
+    val bust: Int,
 )

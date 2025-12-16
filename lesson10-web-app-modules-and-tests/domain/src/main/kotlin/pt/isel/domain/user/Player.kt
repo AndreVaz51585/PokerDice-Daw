@@ -1,6 +1,6 @@
 package pt.isel.domain.user
 
 data class Player(
-    val id : Int,
-    val nickname : String,
+    val id: Int,
+    val nickname: String,
 )

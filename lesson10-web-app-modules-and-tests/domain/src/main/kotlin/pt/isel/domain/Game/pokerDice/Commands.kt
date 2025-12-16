@@ -1,9 +1,7 @@
 package pt.isel.domain.Game.pokerDice
 
-
 /** User intents processed by GameEngine. */
 sealed interface Command {
-
     data class Join(val userId: Int) : Command
 
     data class Start(val byUserId: Int) : Command
@@ -15,5 +13,4 @@ sealed interface Command {
     data class FinishTurn(val userId: Int) : Command
 
     data class NextRound(val byUserId: Int) : Command
-
 }

@@ -3,10 +3,7 @@ package pt.isel.repo
 import pt.isel.domain.Game.Match.Match
 import pt.isel.domain.Game.Match.MatchPlayer
 import pt.isel.domain.Game.Match.MatchState
-import pt.isel.domain.Game.pokerDice.Game
-import pt.isel.domain.Game.money.Wallet
 import java.time.Instant
-import javax.swing.text.html.parser.Entity
 
 /**
  * Domain port for Match persistence.
@@ -18,7 +15,6 @@ import javax.swing.text.html.parser.Entity
  * - Implementations must (de)serialize the Game and Wallets (e.g. JSON in DB).
  */
 interface RepositoryMatch : Repository<Match> {
-
     /**
      * Returns the Match by id or null if not found.
      */
@@ -45,7 +41,7 @@ interface RepositoryMatch : Repository<Match> {
         currentRoundNo: Int = 1,
         startedAt: Instant = Instant.now(),
         finishedAt: Instant? = null,
-        maxPlayers: Int
+        maxPlayers: Int,
     ): Match
 
     /**
@@ -58,23 +54,39 @@ interface RepositoryMatch : Repository<Match> {
      * Updates the state and optionally the finishedAt timestamp.
      */
     fun updateState(
-        id: Int, newState: MatchState, finishedAt: Instant? = null
+        id: Int,
+        newState: MatchState,
+        finishedAt: Instant? = null,
     ): Boolean
 
     /**
      * Updates the current round number.
      */
-    fun updateCurrentRound(id: Int, roundNo: Int): Boolean
+    fun updateCurrentRound(
+        id: Int,
+        roundNo: Int,
+    ): Boolean
 
     // Player operations
     fun listPlayers(matchId: Int): List<MatchPlayer>
-    fun setPlayerActive(matchId: Int, userId: Int, active: Boolean): Int
+
+    fun setPlayerActive(
+        matchId: Int,
+        userId: Int,
+        active: Boolean,
+    ): Int
+
     fun addPlayer(
         matchId: Int,
         userId: Int,
         seatNo: Int,
         balanceAtStart: Int,
     ): Boolean
-    fun removePlayer(matchId: Int, userId: Int): Boolean
-    fun getMaxSeatNo(matchId: Int) : Int
+
+    fun removePlayer(
+        matchId: Int,
+        userId: Int,
+    ): Boolean
+
+    fun getMaxSeatNo(matchId: Int): Int
 }

@@ -22,7 +22,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.7.3")
 
-
     // BOM do Spring Boot fixa todas as versões (Spring, Jackson, etc.)
     implementation(platform("org.springframework.boot:spring-boot-dependencies:3.5.6"))
 

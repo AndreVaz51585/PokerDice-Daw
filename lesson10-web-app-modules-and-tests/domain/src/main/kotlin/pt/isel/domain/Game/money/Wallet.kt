@@ -1,7 +1,5 @@
 package pt.isel.domain.Game.money
 
-import java.time.Instant
-
 data class Wallet(
     val userId: Int,
     val currentBalance: Int,

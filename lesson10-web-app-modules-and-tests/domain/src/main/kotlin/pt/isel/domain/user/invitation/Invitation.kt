@@ -8,5 +8,5 @@ data class Invitation(
     val createdBy: User,
     val createdAt: Instant,
     val usedBy: User? = null,
-    val usedAt: Instant? = null
+    val usedAt: Instant? = null,
 )

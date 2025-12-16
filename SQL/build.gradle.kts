@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    //implementation(project(":lesson10-web-app-modules-and-tests"))
+    // implementation(project(":lesson10-web-app-modules-and-tests"))
     implementation(project(":lesson10-web-app-modules-and-tests:domain"))
     implementation(project(":lesson10-web-app-modules-and-tests:repo")) // se as interfaces Repository*/Transaction* estiverem aqui
     implementation(project(":lesson10-web-app-modules-and-tests:http"))
@@ -29,8 +29,8 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
     environment("DB_URL", "jdbc:postgresql://localhost:5432/db?user=dbuser&password=changeit")
-    dependsOn(":SQL:dbTestsWait")
-    finalizedBy(":SQL:dbTestsDown")
+    //   dependsOn(":SQL:dbTestsWait")
+    //  finalizedBy(":SQL:dbTestsDown")
 }
 kotlin {
     jvmToolchain(21)
@@ -55,15 +55,15 @@ val dockerExe =
         else -> "docker" // Linux and others
     }
 
-tasks.register<Exec>("dbTestsUp") {
-    commandLine(dockerExe, "compose", "-f", dockerComposePath, "up", "-d", "--build", "--force-recreate", "db-tests")
-}
+// tasks.register<Exec>("dbTestsUp") {
+//  commandLine(dockerExe, "compose", "-f", dockerComposePath, "up", "-d", "--build", "--force-recreate", "db-tests")
+// }
 
-tasks.register<Exec>("dbTestsWait") {
-    commandLine(dockerExe, "exec", "db-tests", "/app/bin/wait-for-postgres.sh", "localhost")
-    dependsOn("dbTestsUp")
-}
+// tasks.register<Exec>("dbTestsWait") {
+//  commandLine(dockerExe, "exec", "db-tests", "/app/bin/wait-for-postgres.sh", "localhost")
+// dependsOn("dbTestsUp")
+// }
 
-tasks.register<Exec>("dbTestsDown") {
-    commandLine(dockerExe, "compose", "-f", dockerComposePath, "down", "db-tests")
-}
+// tasks.register<Exec>("dbTestsDown") {
+//  commandLine(dockerExe, "compose", "-f", dockerComposePath, "down", "db-tests")
+// }

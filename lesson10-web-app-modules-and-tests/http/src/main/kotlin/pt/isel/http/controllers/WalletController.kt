@@ -2,7 +2,11 @@ package pt.isel.http.controllers
 
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RestController
 import pt.isel.domain.Game.money.AmountPayload
 import pt.isel.domain.Game.money.walletDTO.DepositSucess
 import pt.isel.domain.Game.money.walletDTO.WithdrawSucess
@@ -13,7 +17,6 @@ import pt.isel.service.Auxiliary.Success
 import pt.isel.service.walletService.WalletService
 import pt.isel.service.walletService.WalletServiceError
 
-
 @RestController
 class WalletController(
     private val walletService: WalletService,
@@ -21,16 +24,14 @@ class WalletController(
     @GetMapping("/api/wallets")
     fun listAllWallets(): ResponseEntity<Any> {
         return when (val result = walletService.getAll()) {
-
             is Success -> {
-                ResponseEntity.ok(result.value)   // value é List<Wallet>
+                ResponseEntity.ok(result.value) // value é List<Wallet>
             }
 
             else -> {
                 Problem.Unknown.response(
                     HttpStatus.BAD_REQUEST,
                 )
-
             }
         }
     }
@@ -38,71 +39,78 @@ class WalletController(
     @GetMapping("/api/wallets/{userId}")
     fun getWallet(
         user: AuthenticatedUser,
-        @PathVariable userId: Int
+        @PathVariable userId: Int,
     ): ResponseEntity<Any> {
-
-        val result = walletService.getWallet(user.user.id,)
+        val result = walletService.getWallet(user.user.id)
 
         return when (result) {
-
             is Success -> {
-                ResponseEntity.ok(result.value)   // value é a wallet do User
+                ResponseEntity.ok(result.value) // value é a wallet do User
             }
 
-            is Failure -> when (result.value) {
-                is WalletServiceError.NoPermission -> Problem.NoPermission.response(
-                    HttpStatus.BAD_REQUEST,
-                )
+            is Failure ->
+                when (result.value) {
+                    is WalletServiceError.NoPermission ->
+                        Problem.NoPermission.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
 
-                WalletServiceError.UserNotFound -> Problem.UserNotFound.response(
-                    HttpStatus.BAD_REQUEST,
-                )
+                    WalletServiceError.UserNotFound ->
+                        Problem.UserNotFound.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
 
-                WalletServiceError.WalletNotFound -> Problem.WalletNotFound.response(
-                    HttpStatus.BAD_REQUEST,
-                )
+                    WalletServiceError.WalletNotFound ->
+                        Problem.WalletNotFound.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
 
-                WalletServiceError.InvalidAmount -> Problem.InvalidAmount.response(
-                    HttpStatus.BAD_REQUEST
-                )
-            }
+                    WalletServiceError.InvalidAmount ->
+                        Problem.InvalidAmount.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
+                }
         }
     }
-
 
     @PostMapping("/api/wallets/{userId}/deposit")
     fun deposit(
         user: AuthenticatedUser,
         @PathVariable userId: Int,
-        @RequestBody payload: AmountPayload
+        @RequestBody payload: AmountPayload,
     ): ResponseEntity<Any> {
-
-
         return when (val result = walletService.deposit(user.user.id, userId, payload.amount)) {
-
-            is Success -> ResponseEntity.ok(DepositSucess(
-                deposited = payload.amount,
-                currentBalance = result.value.currentBalance,
-                message = "Deposit successful"
-            ))
-
-            is Failure -> when (result.value) {
-                is WalletServiceError.NoPermission -> Problem.NoPermission.response(
-                    HttpStatus.BAD_REQUEST,
+            is Success ->
+                ResponseEntity.ok(
+                    DepositSucess(
+                        deposited = payload.amount,
+                        currentBalance = result.value.currentBalance,
+                        message = "Deposit successful",
+                    ),
                 )
 
-                WalletServiceError.UserNotFound -> Problem.UserNotFound.response(
-                    HttpStatus.BAD_REQUEST,
-                )
+            is Failure ->
+                when (result.value) {
+                    is WalletServiceError.NoPermission ->
+                        Problem.NoPermission.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
 
-                WalletServiceError.WalletNotFound -> Problem.WalletNotFound.response(
-                    HttpStatus.BAD_REQUEST,
-                )
+                    WalletServiceError.UserNotFound ->
+                        Problem.UserNotFound.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
 
-                WalletServiceError.InvalidAmount -> Problem.InvalidAmount.response(
-                    HttpStatus.BAD_REQUEST
-                )
-            }
+                    WalletServiceError.WalletNotFound ->
+                        Problem.WalletNotFound.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
+
+                    WalletServiceError.InvalidAmount ->
+                        Problem.InvalidAmount.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
+                }
         }
     }
 
@@ -110,40 +118,40 @@ class WalletController(
     fun withdraw(
         user: AuthenticatedUser,
         @PathVariable userId: Int,
-        @RequestBody amount: AmountPayload
+        @RequestBody amount: AmountPayload,
     ): ResponseEntity<Any> {
-
         return when (val result = walletService.withdraw(user.user.id, userId, amount.amount)) {
-
-            is Success -> ResponseEntity.ok(WithdrawSucess(
-                amountWithdrawn = amount.amount,
-                currentBalance = result.value.currentBalance,
-                message = "Withdraw successful"
-            )
-            )
-
-            is Failure -> when (result.value) {
-                is WalletServiceError.NoPermission -> Problem.NoPermission.response(
-                    HttpStatus.BAD_REQUEST,
+            is Success ->
+                ResponseEntity.ok(
+                    WithdrawSucess(
+                        amountWithdrawn = amount.amount,
+                        currentBalance = result.value.currentBalance,
+                        message = "Withdraw successful",
+                    ),
                 )
 
-                WalletServiceError.UserNotFound -> Problem.UserNotFound.response(
-                    HttpStatus.BAD_REQUEST,
-                )
+            is Failure ->
+                when (result.value) {
+                    is WalletServiceError.NoPermission ->
+                        Problem.NoPermission.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
 
-                WalletServiceError.WalletNotFound -> Problem.WalletNotFound.response(
-                    HttpStatus.BAD_REQUEST,
-                )
+                    WalletServiceError.UserNotFound ->
+                        Problem.UserNotFound.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
 
-                WalletServiceError.InvalidAmount -> Problem.InvalidAmount.response(
-                    HttpStatus.BAD_REQUEST
-                )
-            }
+                    WalletServiceError.WalletNotFound ->
+                        Problem.WalletNotFound.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
+
+                    WalletServiceError.InvalidAmount ->
+                        Problem.InvalidAmount.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
+                }
         }
     }
-
 }
-
-
-
-

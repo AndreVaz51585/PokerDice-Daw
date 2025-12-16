@@ -6,9 +6,8 @@ data class Ante(
     val amount: Int,
     val matchId: Int,
     val roundNumber: Int,
-    val createdAt: Instant = Instant.now()
+    val createdAt: Instant = Instant.now(),
 ) {
-
     init {
         require(amount > 0) { "O valor do ante deve ser positivo (foi $amount)" }
         require(matchId > 0L) { "matchId inválido" }
@@ -16,7 +15,11 @@ data class Ante(
     }
 
     // Helper to collect ante from a player's wallet into the pot.
-    fun collectBet(userId: Int, pot: Pot, wallet: Wallet): Pair<Pot, Wallet> {
+    fun collectBet(
+        userId: Int,
+        pot: Pot,
+        wallet: Wallet,
+    ): Pair<Pot, Wallet> {
         require(userId > 0L) { "userId inválido" }
         require(!pot.closed) { "Pote encerrado" }
         require(pot.matchId == matchId && pot.roundNumber == roundNumber) {

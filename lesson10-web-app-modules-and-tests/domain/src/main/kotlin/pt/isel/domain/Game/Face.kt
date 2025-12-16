@@ -9,5 +9,5 @@ enum class Face(val priority: Int) {
     QUEEN(3),
     JACK(4),
     TEN(5),
-    NINE(6);
+    NINE(6),
 }

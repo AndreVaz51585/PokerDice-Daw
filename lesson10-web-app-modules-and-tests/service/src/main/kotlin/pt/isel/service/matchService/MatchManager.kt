@@ -1,10 +1,6 @@
 package pt.isel.service.matchService
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emptyFlow
 import org.springframework.stereotype.Service
-import pt.isel.domain.Game.money.BankedMatch
-import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.service.match.BankedGameMatchEngine
 import java.util.concurrent.ConcurrentHashMap
 
@@ -22,5 +18,4 @@ class MatchManager {
     }
 
     fun get(matchId: Int): BankedGameMatchEngine? = engines[matchId]
-
 }

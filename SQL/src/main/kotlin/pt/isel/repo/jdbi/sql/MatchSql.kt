@@ -9,7 +9,6 @@ object MatchSql {
             )
         """
 
-
     const val INSERT_PLAYER = """
             INSERT INTO match_player (
                 match_id, user_id, balance_start, seat_no
@@ -71,12 +70,10 @@ object MatchSql {
             WHERE id = :id
         """
 
-
     const val DELETE_MATCH = """
             DELETE FROM match
             WHERE id = :id
         """
-
 
     const val DELETE_PLAYERS_BY_MATCH = """
             DELETE FROM match_player

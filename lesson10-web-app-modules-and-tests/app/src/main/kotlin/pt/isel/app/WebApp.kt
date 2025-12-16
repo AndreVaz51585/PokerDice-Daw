@@ -20,8 +20,19 @@ import pt.isel.http.argumentResolverandInterceptor.AuthenticatedUserArgumentReso
 import pt.isel.http.argumentResolverandInterceptor.AuthenticationInterceptor
 import pt.isel.mapper.PasswordValidationInfoMapper
 import pt.isel.mapper.TokenValidationInfoMapper
-import pt.isel.repo.*
-import pt.isel.repo.jdbi.*
+import pt.isel.repo.RepositoryLobby
+import pt.isel.repo.RepositoryMatch
+import pt.isel.repo.RepositoryStatistics
+import pt.isel.repo.RepositoryUser
+import pt.isel.repo.RepositoryWallet
+import pt.isel.repo.TransactionManager
+import pt.isel.repo.jdbi.RepositoryInvitationJdbi
+import pt.isel.repo.jdbi.RepositoryLobbyJdbi
+import pt.isel.repo.jdbi.RepositoryMatchJdbi
+import pt.isel.repo.jdbi.RepositoryStatisticsJdbi
+import pt.isel.repo.jdbi.RepositoryUserJdbi
+import pt.isel.repo.jdbi.RepositoryWalletJdbi
+import pt.isel.repo.jdbi.TransactionManagerJdbi
 import pt.isel.service.matchService.MatchEventPublisher
 import pt.isel.service.matchService.MatchEventPublisherImp
 import pt.isel.service.matchService.MatchManager
@@ -30,7 +41,6 @@ import pt.isel.service.statisticsService.StatisticsService
 import pt.isel.service.walletService.WalletService
 import java.time.Clock
 import java.time.Duration
-
 
 @Configuration
 class PipelineConfigurer(
@@ -59,11 +69,12 @@ class WebApp {
     fun clock(): Clock = Clock.systemUTC()
 
     @Bean
-    fun repositoryUser(jdbi : Jdbi) : RepositoryUser = RepositoryUserJdbi(jdbi.open())
+    fun repositoryUser(jdbi: Jdbi): RepositoryUser = RepositoryUserJdbi(jdbi.open())
 
     @Bean
     fun jdbi(): Jdbi {
-        val jdbi = Jdbi.create("jdbc:postgresql://localhost:5432/db", "dbuser", "changeit")
+        val dbUrl = System.getenv("DB_URL") ?: "jdbc:postgresql://localhost:5432/db?user=dbuser&password=changeit"
+        val jdbi = Jdbi.create(dbUrl)
         jdbi.installPlugin(KotlinPlugin()) // necessário para realizar o mapeamento automático para data class
         jdbi.registerColumnMapper(PasswordValidationInfo::class.java, PasswordValidationInfoMapper())
         jdbi.registerColumnMapper(TokenValidationInfo::class.java, TokenValidationInfoMapper())
@@ -71,21 +82,21 @@ class WebApp {
     }
 
     @Bean
-    fun repositoryLobby(jdbi : Jdbi) : RepositoryLobby = RepositoryLobbyJdbi(jdbi.open())
+    fun repositoryLobby(jdbi: Jdbi): RepositoryLobby = RepositoryLobbyJdbi(jdbi.open())
 
     @Bean
-    fun repositoryWallet(jdbi : Jdbi) : RepositoryWallet = RepositoryWalletJdbi(jdbi.open())
-
+    fun repositoryWallet(jdbi: Jdbi): RepositoryWallet = RepositoryWalletJdbi(jdbi.open())
 
     @Bean
-    fun transactionManager(jdbi: Jdbi): TransactionManager =
-        TransactionManagerJdbi(jdbi)
+    fun transactionManager(jdbi: Jdbi): TransactionManager = TransactionManagerJdbi(jdbi)
 
     // kotlin
     @Bean
-    fun repositoryMatch(jdbi: Jdbi): RepositoryMatch = RepositoryMatchJdbi(
-        jdbi.open(),
-        repoLobby = RepositoryLobbyJdbi(jdbi.open()))
+    fun repositoryMatch(jdbi: Jdbi): RepositoryMatch =
+        RepositoryMatchJdbi(
+            jdbi.open(),
+            repoLobby = RepositoryLobbyJdbi(jdbi.open()),
+        )
 
     @Bean
     fun repositoryStatistics(jdbi: Jdbi): RepositoryStatistics = RepositoryStatisticsJdbi(jdbi.open())
@@ -104,17 +115,17 @@ class WebApp {
         trxManager: TransactionManager,
         matchManager: MatchManager,
         eventPublisher: MatchEventPublisher,
-        statisticsService: StatisticsService
-    ): MatchService = MatchServiceImpl(
-        repoLobby,
-        repoMatch,
-        walletService,
-        trxManager,
-        matchManager,
-        eventPublisher,
-        statisticsService
-    )
-
+        statisticsService: StatisticsService,
+    ): MatchService =
+        MatchServiceImpl(
+            repoLobby,
+            repoMatch,
+            walletService,
+            trxManager,
+            matchManager,
+            eventPublisher,
+            statisticsService,
+        )
 
     @Bean
     fun usersDomainConfig() =
@@ -126,14 +137,12 @@ class WebApp {
         )
 
     @Bean
-    fun repositoryInvitation(jdbi: Jdbi) = RepositoryInvitationJdbi(
-        jdbi.open(),
-        repoUser = RepositoryUserJdbi(jdbi.open())
-    )
-
+    fun repositoryInvitation(jdbi: Jdbi) =
+        RepositoryInvitationJdbi(
+            jdbi.open(),
+            repoUser = RepositoryUserJdbi(jdbi.open()),
+        )
 }
-
-
 
 fun main() {
     runApplication<WebApp>()

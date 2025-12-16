@@ -2,7 +2,6 @@ package pt.isel.domain.Game
 
 import pt.isel.domain.Game.Hand.Companion.getCombination
 
-
 /**
  * Poker Dice combination ranking.
  * Lower priority value => stronger hand.
@@ -15,24 +14,25 @@ enum class Combination(val priority: Int) {
     THREE_OF_A_KIND(5),
     TWO_PAIR(6),
     PAIR(7),
-    BUST(8);
-
+    BUST(8),
+    ;
 
     companion object {
         fun calculate(hand: Hand): Pair<Combination, List<Face>> {
             val faceCount = hand.faces.groupingBy { it }.eachCount()
             val sorted = hand.faces.sortedByDescending { it.priority }
 
-            val combination = when {
-                isFiveOfAKind(faceCount) -> FIVE_OF_A_KIND
-                isFourOfAKind(faceCount) -> FOUR_OF_A_KIND
-                isFullHouse(faceCount) -> FULL_HOUSE
-                isStraight(sorted) -> STRAIGHT
-                isThreeOfAKind(faceCount) -> THREE_OF_A_KIND
-                isTwoPair(faceCount) -> TWO_PAIR
-                isPair(faceCount) -> PAIR
-                else -> BUST
-            }
+            val combination =
+                when {
+                    isFiveOfAKind(faceCount) -> FIVE_OF_A_KIND
+                    isFourOfAKind(faceCount) -> FOUR_OF_A_KIND
+                    isFullHouse(faceCount) -> FULL_HOUSE
+                    isStraight(sorted) -> STRAIGHT
+                    isThreeOfAKind(faceCount) -> THREE_OF_A_KIND
+                    isTwoPair(faceCount) -> TWO_PAIR
+                    isPair(faceCount) -> PAIR
+                    else -> BUST
+                }
             return combination to sorted
         }
 
@@ -40,8 +40,7 @@ enum class Combination(val priority: Int) {
 
         private fun isFourOfAKind(faceCounts: Map<Face, Int>) = faceCounts.any { it.value == 4 }
 
-        private fun isFullHouse(faceCounts: Map<Face, Int>) =
-            faceCounts.values.contains(3) && faceCounts.values.contains(2)
+        private fun isFullHouse(faceCounts: Map<Face, Int>) = faceCounts.values.contains(3) && faceCounts.values.contains(2)
 
         private fun isStraight(sortedFaces: List<Face>): Boolean {
             val priorities = sortedFaces.map { it.priority }
@@ -54,11 +53,12 @@ enum class Combination(val priority: Int) {
 
         private fun isPair(faceCounts: Map<Face, Int>) = faceCounts.any { it.value == 2 }
 
-
         enum class HandOutcome { HAND1, HAND2, DRAW }
 
-
-        fun compareHandsOutcome(hand1: Hand, hand2: Hand): HandOutcome {
+        fun compareHandsOutcome(
+            hand1: Hand,
+            hand2: Hand,
+        ): HandOutcome {
             val (comb1, sorted1) = hand1.getCombination()
             val (comb2, sorted2) = hand2.getCombination()
             val combCompare = comb1.priority.compareTo(comb2.priority)
@@ -78,13 +78,14 @@ enum class Combination(val priority: Int) {
             return HandOutcome.DRAW
         }
 
-
-        fun compareHands(hand1: Hand, hand2: Hand): Hand =
+        fun compareHands(
+            hand1: Hand,
+            hand2: Hand,
+        ): Hand =
             when (compareHandsOutcome(hand1, hand2)) {
                 HandOutcome.HAND1 -> hand1
                 HandOutcome.HAND2 -> hand2
                 HandOutcome.DRAW -> hand1 // do not use for payouts
             }
-
     }
 }

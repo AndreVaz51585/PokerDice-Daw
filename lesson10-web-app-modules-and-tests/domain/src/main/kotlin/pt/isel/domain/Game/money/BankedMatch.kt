@@ -14,5 +14,5 @@ data class BankedMatch(
     val matchId: Int,
     val game: Game,
     val wallets: Map<Int, Wallet>,
-    val openPot: Pot? = null
+    val openPot: Pot? = null,
 )

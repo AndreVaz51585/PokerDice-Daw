@@ -32,7 +32,7 @@ class UserAuthService(
     private val repoInvitation: RepositoryInvitation,
     private val clock: Clock,
     private val walletService: WalletService,
-    private val statisticService: StatisticsService
+    private val statisticService: StatisticsService,
 ) {
     private fun validatePassword(
         password: String,
@@ -66,7 +66,6 @@ class UserAuthService(
             return failure(UserError.AlreadyUsedEmailAddress)
         }
 
-
         val isFirstUser = repoUsers.count() == 1L
 
         if (!isFirstUser) {
@@ -74,8 +73,9 @@ class UserAuthService(
                 return failure(UserError.InvitationCodeRequired)
             }
 
-            val invitation = repoInvitation.findByInvitationId(InvitationId(invitationCode))
-                ?: return failure(UserError.InvalidInvitationCode)
+            val invitation =
+                repoInvitation.findByInvitationId(InvitationId(invitationCode))
+                    ?: return failure(UserError.InvalidInvitationCode)
 
             if (invitation.usedBy != null) {
                 return failure(UserError.InvitationCodeAlreadyUsed)
@@ -87,12 +87,12 @@ class UserAuthService(
             walletService.createWallet(newUser.id)
             statisticService.createStatistics(newUser.id)
 
-
             // Mark invitation as used
-            val usedInvitation = invitation.copy(
-                usedBy = newUser,
-                usedAt = clock.instant()
-            )
+            val usedInvitation =
+                invitation.copy(
+                    usedBy = newUser,
+                    usedAt = clock.instant(),
+                )
             repoInvitation.save(usedInvitation)
             return success(newUser)
         }
@@ -107,11 +107,10 @@ class UserAuthService(
         return success(user)
     }
 
-
-    fun deleteUser(userId: Int): Either<UserError,Boolean>  {
+    fun deleteUser(userId: Int): Either<UserError, Boolean> {
         val user = repoUsers.findById(userId) ?: return failure(UserError.UserNotFound)
-       val deleted =  repoUsers.deleteById(user.id)
-        return if(deleted) success(true) else failure(UserError.ErrorDeletingUser)
+        val deleted = repoUsers.deleteById(user.id)
+        return if (deleted) success(true) else failure(UserError.ErrorDeletingUser)
     }
 
     fun getAllUsers(): List<User> = repoUsers.findAll()
@@ -119,7 +118,7 @@ class UserAuthService(
     fun createToken(
         email: String,
         password: String,
-    ): Either<UserError,TokenExternalInfo> { // TO DO: Replace by Either
+    ): Either<UserError, TokenExternalInfo> { // TO DO: Replace by Either
         require(email.isNotBlank()) { "Email cannot be blank" } // Replace by Either.Failure
         require(password.isNotBlank()) { "Password cannot be blank" } // Replace by Either.Failure
 
@@ -127,7 +126,7 @@ class UserAuthService(
             repoUsers.findByEmail(email) ?: return failure(UserError.UserNotFound) // Replace by Either.Failure
 
         if (!validatePassword(password, user.passwordValidation)) {
-           return failure(UserError.InvalidCredentials) // Replace by Either.Failure
+            return failure(UserError.InvalidCredentials) // Replace by Either.Failure
         }
         val tokenValue = generateTokenValue()
         val now = clock.instant()
@@ -139,10 +138,12 @@ class UserAuthService(
                 lastUsedAt = now,
             )
         repoUsers.createToken(newToken, config.maxTokensPerUser)
-        return success(TokenExternalInfo(
-            tokenValue,
-            getTokenExpiration(newToken),
-        ))
+        return success(
+            TokenExternalInfo(
+                tokenValue,
+                getTokenExpiration(newToken),
+            ),
+        )
     }
 
     fun revokeToken(token: String): Boolean {

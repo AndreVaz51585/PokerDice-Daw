@@ -29,7 +29,7 @@ sealed class Problem(
 
     data object InsecurePassword : Problem(URI("$PROBLEM_URI_PATH/insecure-password"))
 
-    data object UserNotFound : Problem(URI( "$PROBLEM_URI_PATH/user-not-found"))
+    data object UserNotFound : Problem(URI("$PROBLEM_URI_PATH/user-not-found"))
 
     data object LobbyNotFound : Problem(URI("$PROBLEM_URI_PATH/lobby-not-found"))
 

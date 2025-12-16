@@ -6,3 +6,6 @@
 
 # Ignore Gradle build output directory
 build
+
+# Ignore Node.js dependencies
+poker-dice-frontend/node_modules

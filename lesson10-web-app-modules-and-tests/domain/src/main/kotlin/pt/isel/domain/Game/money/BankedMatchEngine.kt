@@ -1,6 +1,5 @@
 package pt.isel.domain.Game.money
 
-
 import pt.isel.domain.Game.Round.RoundState
 import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.domain.Game.pokerDice.GameEngine
@@ -20,9 +19,10 @@ import pt.isel.domain.Game.pokerDice.GamePhase
  * - Enforces all money invariants via Wallet/Ante/Pot.
  */
 object BankedMatchEngine {
-
-
-    fun apply(state: BankedMatch, cmd: Command): BankedMatch {
+    fun apply(
+        state: BankedMatch,
+        cmd: Command,
+    ): BankedMatch {
         return when (cmd) {
             is Command.Start -> {
                 // 1) Run the game transition.
@@ -30,11 +30,12 @@ object BankedMatchEngine {
 
                 // 2) Open pot and collect antes for round 1.
                 val roundNumber = 1
-                val ante = Ante(
-                    amount = newGame.ante,
-                    matchId = state.matchId,
-                    roundNumber = roundNumber
-                )
+                val ante =
+                    Ante(
+                        amount = newGame.ante,
+                        matchId = state.matchId,
+                        roundNumber = roundNumber,
+                    )
                 val playerIds = newGame.playerOrder.map { it }
 
                 val opened = RoundBanker.openPot(ante, playerIds, state.wallets)
@@ -47,7 +48,7 @@ object BankedMatchEngine {
                     return state.copy(
                         game = newGame.copy(phase = GamePhase.FINISHED),
                         wallets = opened.wallets,
-                        openPot = null
+                        openPot = null,
                     )
                 }
 
@@ -56,19 +57,18 @@ object BankedMatchEngine {
 
                 val remainingPlayers = newGame.players.filterKeys { it in eligible }
 
-
-                val adjustedGame = newGame.copy(
-                    playerOrder = remainingPlayerOrder,
-                    players = remainingPlayers
-                )
+                val adjustedGame =
+                    newGame.copy(
+                        playerOrder = remainingPlayerOrder,
+                        players = remainingPlayers,
+                    )
 
                 state.copy(
                     game = adjustedGame,
                     wallets = opened.wallets,
-                    openPot = opened.pot
+                    openPot = opened.pot,
                 )
             }
-
 
             is Command.NextRound -> {
                 // 1) Run the showdown/advance logic in the game.
@@ -79,8 +79,11 @@ object BankedMatchEngine {
                 require(rounds.isNotEmpty()) { "No rounds found." }
 
                 val justClosedIndex =
-                    if (newGame.phase == GamePhase.FINISHED) rounds.lastIndex
-                    else rounds.lastIndex - 1
+                    if (newGame.phase == GamePhase.FINISHED) {
+                        rounds.lastIndex
+                    } else {
+                        rounds.lastIndex - 1
+                    }
                 require(justClosedIndex >= 0) { "Closed round not found." }
 
                 val closedRound = rounds[justClosedIndex]
@@ -89,35 +92,37 @@ object BankedMatchEngine {
                 // 2) Settle and pay wallets using winners and the current open pot.
                 val currentPot = state.openPot ?: error("No open pot to settle.")
                 val winnersLong = closedRound.winners?.map { it }?.toSet() ?: emptySet()
-                val payout = RoundBanker.settleAndPay(
-                    pot = currentPot,
-                    winnerUserIds = winnersLong,
-                    wallets = state.wallets
-                )
+                val payout =
+                    RoundBanker.settleAndPay(
+                        pot = currentPot,
+                        winnerUserIds = winnersLong,
+                        wallets = state.wallets,
+                    )
 
                 // 3) If match continues, open next round's pot; else finish with no open pot.
                 if (newGame.phase == GamePhase.FINISHED) {
                     state.copy(
                         game = newGame,
                         wallets = payout.wallets,
-                        openPot = null
+                        openPot = null,
                     )
                 } else {
                     val nextRound = rounds.last()
                     require(nextRound.state == RoundState.OPEN) { "Expected next round to be OPEN." }
 
-                    val ante = Ante(
-                        amount = newGame.ante,
-                        matchId = state.matchId,
-                        roundNumber = nextRound.number
-                    )
+                    val ante =
+                        Ante(
+                            amount = newGame.ante,
+                            matchId = state.matchId,
+                            roundNumber = nextRound.number,
+                        )
                     val playerIds = newGame.playerOrder.map { it }
                     val opened = RoundBanker.openPot(ante, playerIds, payout.wallets)
 
                     state.copy(
                         game = newGame,
                         wallets = opened.wallets,
-                        openPot = opened.pot
+                        openPot = opened.pot,
                     )
                 }
             }
@@ -129,7 +134,6 @@ object BankedMatchEngine {
                 val shouldAutoNext = (newGame.phase == GamePhase.ROLLING) && (newGame.everyoneDone)
 
                 if (shouldAutoNext) {
-
                     val triggerUserId = newGame.hostId
 
                     return apply(newState, Command.NextRound(triggerUserId))
@@ -138,5 +142,4 @@ object BankedMatchEngine {
             }
         }
     }
-
 }

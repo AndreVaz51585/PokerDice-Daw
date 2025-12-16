@@ -29,5 +29,4 @@ object WalletSql {
     const val CREATE_WALLET = """
         INSERT INTO wallet (user_id) VALUES (:user_id);
     """
-
 }

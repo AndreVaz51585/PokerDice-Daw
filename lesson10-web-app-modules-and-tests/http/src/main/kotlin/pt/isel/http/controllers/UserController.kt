@@ -100,29 +100,29 @@ class UserController(
     fun token(
         @RequestBody input: UserCreateTokenInputModel,
     ): ResponseEntity<*> {
-        val tokenInfo : Either<UserError, TokenExternalInfo> = userService.createToken(input.email, input.password)
+        val tokenInfo: Either<UserError, TokenExternalInfo> = userService.createToken(input.email, input.password)
 
-        return when(tokenInfo) {
-           is Success -> { ResponseEntity
+        return when (tokenInfo) {
+            is Success -> {
+                ResponseEntity
                     .status(HttpStatus.OK)
-                    .body(UserCreateTokenOutputModel(tokenInfo.value.tokenValue))}
-
-
-           is Failure ->  {
-               when(tokenInfo.value) {
-                UserError.UserNotFound -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
-
-                UserError.InvalidCredentials ->
-                    Problem.InvalidCredentials.response(
-                        HttpStatus.UNAUTHORIZED,
-                    )
-
-                   else -> {
-                          Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
-                   }
-               }
+                    .body(UserCreateTokenOutputModel(tokenInfo.value.tokenValue))
             }
 
+            is Failure -> {
+                when (tokenInfo.value) {
+                    UserError.UserNotFound -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
+
+                    UserError.InvalidCredentials ->
+                        Problem.InvalidCredentials.response(
+                            HttpStatus.UNAUTHORIZED,
+                        )
+
+                    else -> {
+                        Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
+                    }
+                }
+            }
         }
     }
 
@@ -142,15 +142,18 @@ class UserController(
     }
 
     @DeleteMapping("/api/users/{id}")
-    fun deleteUser(@PathVariable id: Int): ResponseEntity<*> {
+    fun deleteUser(
+        @PathVariable id: Int,
+    ): ResponseEntity<*> {
         val result: Either<UserError, Boolean> = userService.deleteUser(id)
-        return when(result) {
+        return when (result) {
             is Success -> ResponseEntity.status(HttpStatus.OK).build<Unit>()
-            is Failure -> when(result.value) {
-                UserError.UserNotFound -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
-                UserError.ErrorDeletingUser -> Problem.ErrorDeletingUser.response(HttpStatus.INTERNAL_SERVER_ERROR)
-                else -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
-            }
+            is Failure ->
+                when (result.value) {
+                    UserError.UserNotFound -> Problem.UserNotFound.response(HttpStatus.NOT_FOUND)
+                    UserError.ErrorDeletingUser -> Problem.ErrorDeletingUser.response(HttpStatus.INTERNAL_SERVER_ERROR)
+                    else -> Problem.Unknown.response(HttpStatus.INTERNAL_SERVER_ERROR)
+                }
         }
     }
 

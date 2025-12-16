@@ -3,7 +3,6 @@ package pt.isel.mapper
 import org.jdbi.v3.core.mapper.ColumnMapper
 import org.jdbi.v3.core.statement.StatementContext
 import pt.isel.domain.token.TokenValidationInfo
-
 import java.sql.ResultSet
 import java.sql.SQLException
 

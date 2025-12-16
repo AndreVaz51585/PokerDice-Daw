@@ -11,16 +11,17 @@ import java.util.Base64
 
 @Service
 class InvitationService(
-    private val repoInvitation: RepositoryInvitation
+    private val repoInvitation: RepositoryInvitation,
 ) {
     fun createInvitation(user: User): InvitationId {
         val code = generateCode()
 
-        val invitation = Invitation(
-            id = InvitationId(code),
-            createdBy = user,
-            createdAt = Instant.now()
-        )
+        val invitation =
+            Invitation(
+                id = InvitationId(code),
+                createdBy = user,
+                createdAt = Instant.now(),
+            )
 
         repoInvitation.create(invitation)
         return invitation.id
@@ -32,5 +33,3 @@ class InvitationService(
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
     }
 }
-
-

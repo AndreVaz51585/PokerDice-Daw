@@ -32,18 +32,23 @@ class RepositoryJdbiUserTest {
     @BeforeEach
     fun setup() {
         trxManager.run {
-         //   repoSlots.clear()
-          //  repoEvents.clear()
+            //   repoSlots.clear()
+            //  repoEvents.clear()
             repoUsers.clear()
-         //   repoParticipants.clear()
+            //   repoParticipants.clear()
         }
     }
 
     @Test
     fun `createUser and findById`() {
         trxManager.run {
-            val user = repoUsers.createUser("Alice", "alice@isel.pt", PasswordValidationInfo("hash"),
-                invitationCode = "TODO()")
+            val user =
+                repoUsers.createUser(
+                    "Alice",
+                    "alice@isel.pt",
+                    PasswordValidationInfo("hash"),
+                    invitationCode = "TODO()",
+                )
             val found = repoUsers.findById(user.id)
             assertEquals(user, found)
         }
@@ -52,8 +57,13 @@ class RepositoryJdbiUserTest {
     @Test
     fun `createUser and update its name and email and check changes`() {
         trxManager.run {
-            val user = repoUsers.createUser("Alice", "alice@isel.pt", PasswordValidationInfo("hash"),
-                invitationCode = "TODO()")
+            val user =
+                repoUsers.createUser(
+                    "Alice",
+                    "alice@isel.pt",
+                    PasswordValidationInfo("hash"),
+                    invitationCode = "TODO()",
+                )
             val found = repoUsers.findById(user.id)
             assertEquals(user, found)
             val updatedUser = user.copy(name = "Alice Updated", email = "updated@land.com")
@@ -66,8 +76,13 @@ class RepositoryJdbiUserTest {
     @Test
     fun `findByEmail returns correct user`() {
         trxManager.run {
-            val user = repoUsers.createUser("Bob", "bob@isel.pt", PasswordValidationInfo("hash2"),
-                invitationCode = "TODO()")
+            val user =
+                repoUsers.createUser(
+                    "Bob",
+                    "bob@isel.pt",
+                    PasswordValidationInfo("hash2"),
+                    invitationCode = "TODO()",
+                )
             val found = repoUsers.findByEmail("bob@isel.pt")
             assertEquals(user, found)
             assertNull(repoUsers.findByEmail("notfound@isel.pt"))
@@ -77,8 +92,13 @@ class RepositoryJdbiUserTest {
     @Test
     fun `createToken and getTokenByTokenValidationInfo`() {
         trxManager.run {
-            val user = repoUsers.createUser("Carol", "carol@isel.pt", PasswordValidationInfo("hash3"),
-                invitationCode = "TODO()")
+            val user =
+                repoUsers.createUser(
+                    "Carol",
+                    "carol@isel.pt",
+                    PasswordValidationInfo("hash3"),
+                    invitationCode = "TODO()",
+                )
             val tokenValidationInfo = TokenValidationInfo("token123")
             val now = Instant.now().truncatedTo(SECONDS)
             val token = Token(tokenValidationInfo, user.id, now, now)
@@ -93,8 +113,13 @@ class RepositoryJdbiUserTest {
     @Test
     fun `createToken removes oldest when maxTokens exceeded`() {
         trxManager.run {
-            val user = repoUsers.createUser("Dave", "dave@isel.pt", PasswordValidationInfo("hash4"),
-                invitationCode = "TODO()")
+            val user =
+                repoUsers.createUser(
+                    "Dave",
+                    "dave@isel.pt",
+                    PasswordValidationInfo("hash4"),
+                    invitationCode = "TODO()",
+                )
             val init = Instant.now().minusSeconds(60)
             val t1 = Token(TokenValidationInfo("t1"), user.id, init, Instant.now().minusSeconds(10))
             val t2 = Token(TokenValidationInfo("t2"), user.id, init, Instant.now().minusSeconds(5))
@@ -112,8 +137,13 @@ class RepositoryJdbiUserTest {
     @Test
     fun `updateTokenLastUsed replaces token`() {
         trxManager.run {
-            val user = repoUsers.createUser("Eve", "eve@isel.pt", PasswordValidationInfo("hash5"),
-                invitationCode = "TODO()")
+            val user =
+                repoUsers.createUser(
+                    "Eve",
+                    "eve@isel.pt",
+                    PasswordValidationInfo("hash5"),
+                    invitationCode = "TODO()",
+                )
             val info = TokenValidationInfo("tokenEve")
             val init = Instant.now().truncatedTo(SECONDS).minusSeconds(200)
             val tokenOld = Token(info, user.id, init, init.plusSeconds(100))
@@ -129,8 +159,13 @@ class RepositoryJdbiUserTest {
     @Test
     fun `removeTokenByValidationInfo removes token`() {
         trxManager.run {
-            val user = repoUsers.createUser("Frank", "frank@isel.pt", PasswordValidationInfo("hash6"),
-                invitationCode = "TODO()")
+            val user =
+                repoUsers.createUser(
+                    "Frank",
+                    "frank@isel.pt",
+                    PasswordValidationInfo("hash6"),
+                    invitationCode = "TODO()",
+                )
             val info = TokenValidationInfo("tokenFrank")
             val token = Token(info, user.id, Instant.now(), Instant.now())
             repoUsers.createToken(token, maxTokens = 2)

@@ -2,17 +2,21 @@ package pt.isel.service.gameTests
 
 import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.Round.RoundState
-import pt.isel.domain.Game.pokerDice.*
+import pt.isel.domain.Game.pokerDice.Command
+import pt.isel.domain.Game.pokerDice.Game
+import pt.isel.domain.Game.pokerDice.GameEngine
+import pt.isel.domain.Game.pokerDice.GamePhase
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class GameEngineTest {
+    private fun fixedFaces(vararg f: Face) =
+        object {
+            val seq = f.toList()
+            var i = 0
 
-    private fun fixedFaces(vararg f: Face) = object {
-        val seq = f.toList()
-        var i = 0
-        fun roll(): Face = seq[i++ % seq.size]
-    }
+            fun roll(): Face = seq[i++ % seq.size]
+        }
 
     @Test
     fun join_and_start() {

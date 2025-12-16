@@ -14,9 +14,8 @@ interface RepositoryUser : Repository<User> {
         name: String,
         email: String,
         passwordValidation: PasswordValidationInfo,
-        invitationCode: String?
+        invitationCode: String?,
     ): User
-
 
     fun findByEmail(email: String): User?
 

@@ -83,5 +83,4 @@ object StatisticsSql {
         SET bust = bust + 1
         WHERE user_id = :userId;
     """
-
 }

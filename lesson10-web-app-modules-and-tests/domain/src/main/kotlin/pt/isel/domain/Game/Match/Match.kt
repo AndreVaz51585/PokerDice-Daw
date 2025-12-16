@@ -1,6 +1,5 @@
 package pt.isel.domain.Game.Match
 
-
 import pt.isel.domain.Game.Round.Round
 import java.time.Instant
 
@@ -14,8 +13,8 @@ data class Match(
     val finishedAt: Instant? = null,
     val currentRoundNo: Int = 1,
     val rounds: List<Round> = emptyList(),
-    val maxPlayers: Int
-    ){
+    val maxPlayers: Int,
+) {
     init {
         require(totalRounds >= 1) { "totalRounds tem de ser ≥ 1." }
         require(ante >= 0) { "ante não pode ser negativo." }

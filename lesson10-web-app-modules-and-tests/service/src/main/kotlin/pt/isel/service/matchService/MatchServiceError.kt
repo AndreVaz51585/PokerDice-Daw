@@ -12,7 +12,7 @@ sealed class MatchServiceError {
 
     data object MatchFull : MatchServiceError()
 
-    data object Unknown: MatchServiceError()
+    data object Unknown : MatchServiceError()
 
     data object ErrorCreatingMatch : MatchServiceError()
 

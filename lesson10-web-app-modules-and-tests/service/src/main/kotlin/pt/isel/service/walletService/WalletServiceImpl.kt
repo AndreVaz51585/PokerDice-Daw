@@ -8,16 +8,13 @@ import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.failure
 import pt.isel.service.Auxiliary.success
 
-
 @Service
-class WalletServiceImpl (
+class WalletServiceImpl(
     private val repoUser: RepositoryUser,
     private val trxManager: TransactionManager,
-): WalletService {
-
+) : WalletService {
     override fun createWallet(userId: Int): Either<WalletServiceError, Wallet> =
         trxManager.run {
-
             if (repoUser.findById(userId) == null) {
                 return@run failure(WalletServiceError.UserNotFound)
             }
@@ -29,20 +26,20 @@ class WalletServiceImpl (
 
     override fun getWallet(userId: Int): Either<WalletServiceError, Wallet> =
         trxManager.run {
-
-
             val wallet = repoWallet.findById(userId) ?: return@run failure(WalletServiceError.WalletNotFound)
             success(wallet)
         }
 
-    override fun getAmount(userId: Int,pathId: Int): Either<WalletServiceError, Int> =
+    override fun getAmount(
+        userId: Int,
+        pathId: Int,
+    ): Either<WalletServiceError, Int> =
         trxManager.run {
-
             if (userId != pathId) {
                 return@run failure(WalletServiceError.NoPermission)
             }
 
-            val amount = repoWallet.getBalance(userId)?: return@run failure(WalletServiceError.WalletNotFound)
+            val amount = repoWallet.getBalance(userId) ?: return@run failure(WalletServiceError.WalletNotFound)
             success(amount)
         }
 
@@ -58,15 +55,19 @@ class WalletServiceImpl (
             success(all)
         }
 
-    override fun deposit(userId: Int, pathId : Int, amount: Int): Either<WalletServiceError, Wallet> =
+    override fun deposit(
+        userId: Int,
+        pathId: Int,
+        amount: Int,
+    ): Either<WalletServiceError, Wallet> =
         trxManager.run {
-
             if (userId != pathId) {
                 return@run failure(WalletServiceError.NoPermission)
             }
 
-            val wallet = repoWallet.findById(userId)
-                ?: return@run failure(WalletServiceError.WalletNotFound)
+            val wallet =
+                repoWallet.findById(userId)
+                    ?: return@run failure(WalletServiceError.WalletNotFound)
 
             try {
                 wallet.deposit(amount)
@@ -80,21 +81,26 @@ class WalletServiceImpl (
             success(updated)
         }
 
-    override fun withdraw(userId: Int, pathId: Int, amount: Int): Either<WalletServiceError, Wallet> =
+    override fun withdraw(
+        userId: Int,
+        pathId: Int,
+        amount: Int,
+    ): Either<WalletServiceError, Wallet> =
         trxManager.run {
-
             if (userId != pathId) {
                 return@run failure(WalletServiceError.NoPermission)
             }
 
-            val user = repoUser.findById(userId)
-                ?: return@run failure(WalletServiceError.UserNotFound)
+            val user =
+                repoUser.findById(userId)
+                    ?: return@run failure(WalletServiceError.UserNotFound)
             if (user.id != userId) {
                 return@run failure(WalletServiceError.UserNotFound)
             }
 
-            val wallet = repoWallet.findById(userId)
-                ?: return@run failure(WalletServiceError.WalletNotFound)
+            val wallet =
+                repoWallet.findById(userId)
+                    ?: return@run failure(WalletServiceError.WalletNotFound)
 
             try {
                 wallet.withdraw(amount)
@@ -107,5 +113,4 @@ class WalletServiceImpl (
 
             success(updated)
         }
-
 }

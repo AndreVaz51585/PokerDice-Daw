@@ -1,6 +1,5 @@
 package pt.isel.domain.Game.Lobby
 
-import pt.isel.domain.user.User
 import java.util.*
 
 data class Lobby(
@@ -21,4 +20,3 @@ data class Lobby(
         require(ante >= 0) { "ante não pode ser negativo." }
     }
 }
-

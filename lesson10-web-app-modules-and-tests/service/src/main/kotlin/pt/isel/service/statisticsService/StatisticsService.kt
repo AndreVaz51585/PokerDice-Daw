@@ -10,9 +10,9 @@ interface StatisticsService {
 
     fun getAll(): Either<StatisticsServiceError, List<Statistics>>
 
-    fun incrementGamesPlayed (userId: Int): Either<StatisticsServiceError, Unit>
+    fun incrementGamesPlayed(userId: Int): Either<StatisticsServiceError, Unit>
 
-    fun incrementGamesWon (userId: Int): Either<StatisticsServiceError, Unit>
+    fun incrementGamesWon(userId: Int): Either<StatisticsServiceError, Unit>
 
     fun incrementFiveOfAKind(userId: Int): Either<StatisticsServiceError, Unit>
 

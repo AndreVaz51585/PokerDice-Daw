@@ -1,11 +1,12 @@
 package pt.isel.service.gameTests
 
+import pt.isel.domain.Game.money.Ante
+import pt.isel.domain.Game.money.Pot
+import pt.isel.domain.Game.money.Wallet
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
-import pt.isel.domain.Game.money.*
 
 class MoneyModelsTest {
-
     @Test
     fun ante_validation() {
         assertFailsWith<IllegalArgumentException> { Ante(0, matchId = 1, roundNumber = 1) }

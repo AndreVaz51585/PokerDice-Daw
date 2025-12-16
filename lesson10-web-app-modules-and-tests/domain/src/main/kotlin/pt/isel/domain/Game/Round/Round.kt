@@ -19,7 +19,9 @@ data class Round(
     val anteCoins: Int,
     val pot: Int = 0,
     val winners: List<Int>? = emptyList(),
-    val hands: Map<Int, Hand> = emptyMap()
+    val hands: Map<Int, Hand> = emptyMap(),
 ) {
-    init { require(number >= 1) { "number de round tem de ser ≥ 1." } }
+    init {
+        require(number >= 1) { "number de round tem de ser ≥ 1." }
+    }
 }

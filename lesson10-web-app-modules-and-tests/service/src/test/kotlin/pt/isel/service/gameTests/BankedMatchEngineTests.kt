@@ -1,44 +1,45 @@
 package pt.isel.service.gameTests
 
+import org.junit.jupiter.api.Test
+import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.money.BankedMatch
 import pt.isel.domain.Game.money.BankedMatchEngine
 import pt.isel.domain.Game.money.Wallet
-import org.junit.jupiter.api.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotNull
-import kotlin.test.assertNull
-import pt.isel.domain.Game.Face
 import pt.isel.domain.Game.pokerDice.Command
 import pt.isel.domain.Game.pokerDice.Game
 import pt.isel.domain.Game.pokerDice.GamePhase
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class BankedMatchEngineTests {
-
     private val roll = { Face.NINE }
 
     private fun newMatch(
         ante: Int = 10,
         totalRounds: Int = 3,
-        wallets: Map<Int, Wallet>? = null
+        wallets: Map<Int, Wallet>? = null,
     ): BankedMatch {
-        val game = Game(
-            matchId = 1,
-            hostId = 10,
-            ante = ante,
-            maxPlayers = 4,
-            totalRounds = totalRounds
-        )
-        val defaultWallets: Map<Int, Wallet> = mapOf(
-            1 to Wallet(userId = 1, currentBalance = 100),
-            2 to Wallet(userId = 2, currentBalance = 100)
-        )
+        val game =
+            Game(
+                matchId = 1,
+                hostId = 10,
+                ante = ante,
+                maxPlayers = 4,
+                totalRounds = totalRounds,
+            )
+        val defaultWallets: Map<Int, Wallet> =
+            mapOf(
+                1 to Wallet(userId = 1, currentBalance = 100),
+                2 to Wallet(userId = 2, currentBalance = 100),
+            )
 
         return BankedMatch(
             matchId = 1,
             game = game,
-            wallets = wallets?: defaultWallets,
-            openPot = null
+            wallets = wallets ?: defaultWallets,
+            openPot = null,
         )
     }
 
@@ -124,14 +125,14 @@ class BankedMatchEngineTests {
         assertEquals(100, finished.wallets[2]!!.currentBalance)
     }
 
-
     @Test
     fun `Start finishes match and does not open pot when only one player can pay ante`() {
         // player 2 has insufficient balance
-        val wallets = mapOf(
-            1 to Wallet(userId = 1, currentBalance = 100),
-            2 to Wallet(userId = 2, currentBalance = 0)
-        )
+        val wallets =
+            mapOf(
+                1 to Wallet(userId = 1, currentBalance = 100),
+                2 to Wallet(userId = 2, currentBalance = 0),
+            )
         val initial = joinTwoPlayers(newMatch(ante = 10, wallets = wallets))
         val started = BankedMatchEngine.apply(initial, Command.Start(byUserId = 10))
 
@@ -146,11 +147,12 @@ class BankedMatchEngineTests {
     @Test
     fun `Start excludes players who cannot pay when at least two remain eligible`() {
         // three players: player3 cannot pay
-        val wallets = mapOf(
-            1 to Wallet(userId = 1, currentBalance = 100),
-            2 to Wallet(userId = 2, currentBalance = 100),
-            3 to Wallet(userId = 3, currentBalance = 0)
-        )
+        val wallets =
+            mapOf(
+                1 to Wallet(userId = 1, currentBalance = 100),
+                2 to Wallet(userId = 2, currentBalance = 100),
+                3 to Wallet(userId = 3, currentBalance = 0),
+            )
         val initial = joinThreePlayers(newMatch(ante = 10, wallets = wallets))
         val started = BankedMatchEngine.apply(initial, Command.Start(byUserId = 10))
 
@@ -166,4 +168,3 @@ class BankedMatchEngineTests {
         assertEquals(0, started.wallets[3]!!.currentBalance)
     }
 }
-

@@ -3,7 +3,6 @@ package pt.isel.service.statisticsService
 import org.springframework.stereotype.Service
 import pt.isel.domain.user.Statistics
 import pt.isel.repo.RepositoryUser
-import pt.isel.repo.RepositoryWallet
 import pt.isel.repo.TransactionManager
 import pt.isel.service.Auxiliary.Either
 import pt.isel.service.Auxiliary.Success
@@ -27,7 +26,6 @@ class StatisticsServiceImpl(
 
     override fun getStatistics(userId: Int): Either<StatisticsServiceError, Statistics> =
         trxManager.run {
-
             val stats = repoStatistics.findById(userId) ?: return@run failure(StatisticsServiceError.StatisticsNotFound)
 
             return@run Success(stats)
@@ -41,7 +39,6 @@ class StatisticsServiceImpl(
 
     override fun incrementGamesPlayed(userId: Int): Either<StatisticsServiceError, Unit> =
         trxManager.run {
-
             val stats = repoStatistics.findById(userId) ?: return@run failure(StatisticsServiceError.StatisticsNotFound)
 
             val new = repoStatistics.incrementGamesPlayed(userId)
@@ -51,7 +48,6 @@ class StatisticsServiceImpl(
 
     override fun incrementGamesWon(userId: Int): Either<StatisticsServiceError, Unit> =
         trxManager.run {
-
             val stats = repoStatistics.findById(userId) ?: return@run failure(StatisticsServiceError.StatisticsNotFound)
 
             val new = repoStatistics.incrementGamesWon(userId)
@@ -61,7 +57,6 @@ class StatisticsServiceImpl(
 
     override fun incrementFiveOfAKind(userId: Int): Either<StatisticsServiceError, Unit> =
         trxManager.run {
-
             val stats = repoStatistics.findById(userId) ?: return@run failure(StatisticsServiceError.StatisticsNotFound)
 
             val new = repoStatistics.incrementFiveOfAKind(userId)
@@ -69,10 +64,8 @@ class StatisticsServiceImpl(
             success(new)
         }
 
-
     override fun incrementFourOfAKind(userId: Int): Either<StatisticsServiceError, Unit> =
         trxManager.run {
-
             val stats = repoStatistics.findById(userId) ?: return@run failure(StatisticsServiceError.StatisticsNotFound)
 
             val new = repoStatistics.incrementFourOfAKind(userId)
@@ -82,7 +75,6 @@ class StatisticsServiceImpl(
 
     override fun incrementFullHouse(userId: Int): Either<StatisticsServiceError, Unit> =
         trxManager.run {
-
             val stats = repoStatistics.findById(userId) ?: return@run failure(StatisticsServiceError.StatisticsNotFound)
 
             val new = repoStatistics.incrementFullHouse(userId)
@@ -92,7 +84,6 @@ class StatisticsServiceImpl(
 
     override fun incrementStraight(userId: Int): Either<StatisticsServiceError, Unit> =
         trxManager.run {
-
             val stats = repoStatistics.findById(userId) ?: return@run failure(StatisticsServiceError.StatisticsNotFound)
 
             val new = repoStatistics.incrementStraight(userId)
@@ -102,7 +93,6 @@ class StatisticsServiceImpl(
 
     override fun incrementThreeOfAKind(userId: Int): Either<StatisticsServiceError, Unit> =
         trxManager.run {
-
             val stats = repoStatistics.findById(userId) ?: return@run failure(StatisticsServiceError.StatisticsNotFound)
 
             val new = repoStatistics.incrementThreeOfAKind(userId)
@@ -112,7 +102,6 @@ class StatisticsServiceImpl(
 
     override fun incrementTwoPair(userId: Int): Either<StatisticsServiceError, Unit> =
         trxManager.run {
-
             val stats = repoStatistics.findById(userId) ?: return@run failure(StatisticsServiceError.StatisticsNotFound)
 
             val new = repoStatistics.incrementTwoPair(userId)
@@ -120,9 +109,8 @@ class StatisticsServiceImpl(
             success(new)
         }
 
-    override fun incrementOnePair(userId: Int, ): Either<StatisticsServiceError, Unit> =
+    override fun incrementOnePair(userId: Int): Either<StatisticsServiceError, Unit> =
         trxManager.run {
-
             val stats = repoStatistics.findById(userId) ?: return@run failure(StatisticsServiceError.StatisticsNotFound)
 
             val new = repoStatistics.incrementOnePair(userId)
@@ -132,14 +120,13 @@ class StatisticsServiceImpl(
 
     override fun incrementBust(userId: Int): Either<StatisticsServiceError, Unit> =
         trxManager.run {
-
             val stats = repoStatistics.findById(userId) ?: return@run failure(StatisticsServiceError.StatisticsNotFound)
 
             val new = repoStatistics.incrementBust(userId)
 
             success(new)
         }
-    //TODO: To Refactor
+    // TODO: To Refactor
     /*fun <T> increment (userId: Int, pathId : Int, operacao: (Int) -> T): Either<StatisticsServiceError, Unit> =
         trxManager.run {
             if (userId != pathId){
