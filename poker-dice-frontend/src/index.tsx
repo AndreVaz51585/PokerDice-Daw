@@ -1,6 +1,7 @@
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router";
 import { AuthProvider } from "./AuthContext";
+import { MatchProvider } from "./MatchContext";
 import { Layout } from "./components/layout";
 import { Login } from "./components/login";
 
@@ -89,6 +90,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById("container")!).render(
   <AuthProvider>
-    <RouterProvider router={router} />
+      <MatchProvider>
+        <RouterProvider router={router} />
+      </MatchProvider>
   </AuthProvider>
 );

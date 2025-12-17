@@ -8,4 +8,6 @@ sealed class WalletServiceError {
     data object NoPermission : WalletServiceError()
 
     data object InvalidAmount : WalletServiceError()
+
+    data object UserInActiveLobby : WalletServiceError()
 }

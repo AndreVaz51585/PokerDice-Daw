@@ -2,6 +2,8 @@ package pt.isel.service.walletService
 
 import org.springframework.stereotype.Service
 import pt.isel.domain.Game.money.Wallet
+import pt.isel.repo.RepositoryLobby
+import pt.isel.repo.RepositoryMatch
 import pt.isel.repo.RepositoryUser
 import pt.isel.repo.TransactionManager
 import pt.isel.service.Auxiliary.Either
@@ -12,7 +14,14 @@ import pt.isel.service.Auxiliary.success
 class WalletServiceImpl(
     private val repoUser: RepositoryUser,
     private val trxManager: TransactionManager,
+    private val repoLobby : RepositoryLobby
 ) : WalletService {
+
+    private fun isUSerInAnyActiveLobby(userId: Int): Boolean {
+        return repoLobby.isPlayerInLobby(userId)
+    }
+
+
     override fun createWallet(userId: Int): Either<WalletServiceError, Wallet> =
         trxManager.run {
             if (repoUser.findById(userId) == null) {
@@ -65,6 +74,10 @@ class WalletServiceImpl(
                 return@run failure(WalletServiceError.NoPermission)
             }
 
+            if( isUSerInAnyActiveLobby(userId)){
+                return@run failure(WalletServiceError.UserInActiveLobby)
+            }
+
             val wallet =
                 repoWallet.findById(userId)
                     ?: return@run failure(WalletServiceError.WalletNotFound)
@@ -96,6 +109,10 @@ class WalletServiceImpl(
                     ?: return@run failure(WalletServiceError.UserNotFound)
             if (user.id != userId) {
                 return@run failure(WalletServiceError.UserNotFound)
+            }
+
+            if( isUSerInAnyActiveLobby(userId)){
+                return@run failure(WalletServiceError.UserInActiveLobby)
             }
 
             val wallet =

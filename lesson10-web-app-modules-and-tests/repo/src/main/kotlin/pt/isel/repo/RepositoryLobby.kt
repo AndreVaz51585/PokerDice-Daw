@@ -21,6 +21,10 @@ interface RepositoryLobby : Repository<Lobby> {
         offset: Int,
     ): List<Lobby>
 
+    fun isPlayerInLobby(
+        playerId: Int,
+    ): Boolean
+
     fun addPlayerToLobby(
         lobbyId: Int,
         playerId: Int,

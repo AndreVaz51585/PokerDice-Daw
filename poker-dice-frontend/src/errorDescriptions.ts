@@ -44,6 +44,7 @@ export const errorDescriptions: Record<string, string> = {
   "wallet-not-found": "Carteira não encontrada.",
   "no-permission": "Não tem permissão para esta ação.",
   "invalid-amount": "Montante inválido.",
+  "user-active": "O utilizador está ativo num lobby ou partida logo não pode alterar o seu saldo.",
 
   // Statistics errors
   "statistics-not-found": "Estatísticas não encontradas.",

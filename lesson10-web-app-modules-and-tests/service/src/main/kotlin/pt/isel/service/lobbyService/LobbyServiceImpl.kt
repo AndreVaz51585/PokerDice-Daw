@@ -224,6 +224,13 @@ class LobbyServiceImpl(
                 lobby.lobbyHost == userId && lobby.state == LobbyState.OPEN // se o user a sair for o host e o lobby estiver OPEN então os jogadores são removidos e o lobby apagado
 
             if (isHost) {
+
+                lobbyeventPublisher.publish(
+                    lobbyId,
+                    LobbyEvent.HostLeft(message ="Host has left the lobby. The lobby will be closed.")
+                )
+
+
                 // Remover todos os jogadores do lobby
                 for (player in players) {
                     repoLobby.remove(lobbyId, player.id)

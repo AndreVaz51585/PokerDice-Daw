@@ -1,7 +1,7 @@
 import {useEffect, useRef} from "react";
 import { Player} from "../types.ts";
 
-type LobbyUpdateAction = "player-joined" | "player-left"| "match-starting" ; // para já definir apenas estes dois posteriormente quem for tratar do matchStarted deverá decidir qual o tratamento
+type LobbyUpdateAction = "player-joined" | "player-left"| "match-starting"|"host-left" ; // para já definir apenas estes dois posteriormente quem for tratar do matchStarted deverá decidir qual o tratamento
 
 
 export interface playerJoinedData {
@@ -19,11 +19,14 @@ export interface matchStartingData {
     matchId: number;
 }
 
+export interface hostLeft {
+    message: string;
+}
 
 
 export interface LobbySSEMessage {
     action: LobbyUpdateAction;
-    data: playerJoinedData | playerLeftData | matchStartingData;
+    data: playerJoinedData | playerLeftData | matchStartingData | hostLeft;
 }
 
 export function useLobbyListener(
@@ -63,6 +66,18 @@ export function useLobbyListener(
                 });
             } catch (error) {
                 console.error("Parse error (player-left):", error);
+            }
+        });
+
+        eventSource.addEventListener("host-left", (event) => {
+            try {
+                const data = JSON.parse(event.data) as hostLeft;
+                onMessageRef.current({
+                    action: "host-left",
+                    data
+                });
+            } catch (error) {
+                console.error("Parse error (host-left):", error);
             }
         });
 

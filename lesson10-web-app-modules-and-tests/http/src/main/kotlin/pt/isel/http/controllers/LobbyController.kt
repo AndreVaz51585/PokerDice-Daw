@@ -222,6 +222,18 @@ class LobbyController(
                                     ),
                             )
                         }
+                        is LobbyEvent.HostLeft -> {
+                            emitter.send(
+                                SseEmitter.event()
+                                    .name("host-left")
+                                    .data(
+                                        LobbyEvent.HostLeft(
+                                            message = event.message,
+                                        ),
+                                    ),
+                            )
+                        }
+
                         is LobbyEvent.MatchStarting -> {
                             emitter.send(
                                 SseEmitter.event()

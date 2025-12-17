@@ -1,4 +1,4 @@
-import { useCallback, useReducer } from "react";
+import {useCallback, useEffect, useReducer} from "react";
 import { useParams, useNavigate } from "react-router";
 import { api, ApiError } from "../api";
 import { DiceHoldResponse, DiceRollResponse, Face } from "../types";
@@ -17,6 +17,7 @@ import {
 import "../styles/App.css";
 
 import {RoundSummaryPanel} from "./RoundSummary";
+import {useMatch} from "../MatchContext.tsx";
 
 // State types
 type PlayerState = {
@@ -50,7 +51,7 @@ type Action =
     | { type: "set-snapshot"; data: MatchSnapshotEvent }
     | { type: "turn-change"; data: TurnChangeEvent }
     | { type: "round-complete"; data: RoundSummaryEvent }
-    | { type: "game-end"; data: GameEndEvent }
+    | { type: "game-end"; data: GameEndEvent, gameEnded: boolean }
     | { type: "dice-rolled"; data: DiceRolledData }
     | { type: "dice-held"; data: DiceHeldData }
     | { type: "update-my-roll"; userId: number; data: { dices: Face[]; rerollsLeft: number; hand: string } }  
@@ -298,8 +299,24 @@ const faceEmoji: Record<Face, string> = {
 export function MatchView() {
   const { matchId } = useParams<{ matchId: string }>();
   const [state, dispatch] = useReducer(reducer, initialState);
+  const { setCurrentMatch, clearCurrentMatch } = useMatch();
   const { user } = useAuth();
   const navigate = useNavigate();
+
+
+    useEffect(() => {
+        if (matchId) {
+            console.log("✅ setCurrentMatch chamado com:", matchId);
+            setCurrentMatch(matchId);
+        }
+    }, [matchId, setCurrentMatch]);
+
+
+    useEffect(() => {
+        if (state.gameEnded) {
+            clearCurrentMatch();
+        }
+    }, [state.gameEnded, clearCurrentMatch]);
 
 
   // Handler para eventos gerais do match
@@ -315,7 +332,7 @@ export function MatchView() {
         dispatch({ type: "round-complete", data: message.data as RoundSummaryEvent });
         break;
       case "game-end":
-        dispatch({ type: "game-end", data: message.data as GameEndEvent });
+        dispatch({ type: "game-end", data: message.data as GameEndEvent , gameEnded : true});
         break;
       case "dice-rolled":
         dispatch({ type: "dice-rolled", data: message.data as DiceRolledData });

@@ -11,7 +11,11 @@ sealed class LobbyEvent {
 
     data class LobbySnapshot(val lobby: Lobby, val players: List<Player>) : LobbyEvent()
 
+    data class HostLeft(val message : String) : LobbyEvent()
+
     data class TimeoutUpdate(val remainingSeconds: Int) : LobbyEvent()
 
     object LobbyClosed : LobbyEvent()
+
+
 }

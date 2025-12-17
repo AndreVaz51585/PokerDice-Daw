@@ -173,6 +173,18 @@ class RepositoryLobbyJdbi(
             .mapTo<Lobby>()
             .list()
 
+    override fun isPlayerInLobby(playerId: Int): Boolean {
+        val lobbies = findAll()
+        if (lobbies.isEmpty()) return false
+        for (lobby in lobbies) {
+            val players = listPlayers(lobby.id)
+            if (players.any { it.id == playerId }) {
+                return true
+            }
+        }
+        return false
+    }
+
     override fun addPlayerToLobby(
         lobbyId: Int,
         playerId: Int,

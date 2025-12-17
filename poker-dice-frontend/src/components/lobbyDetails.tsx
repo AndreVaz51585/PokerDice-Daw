@@ -8,7 +8,7 @@ import {
     playerJoinedData,
     playerLeftData,
     LobbySSEMessage,
-    matchStartingData
+    matchStartingData,
 } from "../hooks/useLobbyEvents.tsx";
 import "../styles/App.css";
 
@@ -187,12 +187,15 @@ export function LobbyDetails() {
             case "player-left":
                 dispatch({ type: "player-left", data: message.data as playerLeftData });
                 break;
+            case "host-left":
+                navigate("/");
+                break;
             case "match-starting":
                 dispatch({ type: "match-starting", data: message.data as matchStartingData });
                 break;
 
         }
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         if (state.matchId) {

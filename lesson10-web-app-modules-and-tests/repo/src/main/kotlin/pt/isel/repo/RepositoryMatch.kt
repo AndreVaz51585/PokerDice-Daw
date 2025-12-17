@@ -70,6 +70,7 @@ interface RepositoryMatch : Repository<Match> {
     // Player operations
     fun listPlayers(matchId: Int): List<MatchPlayer>
 
+
     fun setPlayerActive(
         matchId: Int,
         userId: Int,

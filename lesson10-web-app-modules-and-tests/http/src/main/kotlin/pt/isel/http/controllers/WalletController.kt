@@ -55,6 +55,11 @@ class WalletController(
                             HttpStatus.BAD_REQUEST,
                         )
 
+                    WalletServiceError.UserInActiveLobby->
+                        Problem.UserInActiveLobby.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
+
                     WalletServiceError.UserNotFound ->
                         Problem.UserNotFound.response(
                             HttpStatus.BAD_REQUEST,
@@ -96,6 +101,11 @@ class WalletController(
                             HttpStatus.BAD_REQUEST,
                         )
 
+                    WalletServiceError.UserInActiveLobby->
+                        Problem.UserInActiveLobby.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
+
                     WalletServiceError.UserNotFound ->
                         Problem.UserNotFound.response(
                             HttpStatus.BAD_REQUEST,
@@ -134,6 +144,11 @@ class WalletController(
                 when (result.value) {
                     is WalletServiceError.NoPermission ->
                         Problem.NoPermission.response(
+                            HttpStatus.BAD_REQUEST,
+                        )
+
+                    WalletServiceError.UserInActiveLobby->
+                        Problem.UserInActiveLobby.response(
                             HttpStatus.BAD_REQUEST,
                         )
 

@@ -86,4 +86,6 @@ sealed class Problem(
     data object InvalidAmount : Problem(URI("$PROBLEM_URI_PATH/invalid-amount"))
 
     data object UserAlreadyInAnotherLobby : Problem(URI("$PROBLEM_URI_PATH/user-already-in-another-lobby"))
+
+    data object UserInActiveLobby: Problem(URI("$PROBLEM_URI_PATH/user-in-active-lobby"))
 }
