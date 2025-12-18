@@ -1,5 +1,6 @@
 package pt.isel.http.argumentResolverandInterceptor
 
+import jakarta.servlet.http.HttpServletRequest
 import org.springframework.stereotype.Component
 import pt.isel.domain.user.AuthenticatedUser
 import pt.isel.service.userService.UserAuthService
@@ -27,7 +28,20 @@ class RequestTokenProcessor(
         }
     }
 
+    fun processAuthorizationCookie(request: HttpServletRequest): AuthenticatedUser? {
+        val cookies = request.cookies ?: return null
+        val tokenCookie = cookies.find { it.name == COOKIE_NAME } ?: return null
+
+        return usersService.getUserByToken(tokenCookie.value)?.let {
+            AuthenticatedUser(it, tokenCookie.value)
+        }
+    }
+
+
+
     companion object {
         const val SCHEME = "bearer"
+        const val COOKIE_NAME = "auth-token"
+        const val COOKIE_MAX_AGE = 3600
     }
 }

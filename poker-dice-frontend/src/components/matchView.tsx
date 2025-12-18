@@ -555,7 +555,7 @@ export function MatchView() {
                       className={`match-player-card ${isCurrentTurn ? "current-turn" : ""} ${isMe ? "is-me" : ""}`}
                   >
                     <div className="match-player-header">
-                      <span>Player #{userId} {isMe && "(You)"}</span>
+                      <span>Player #{isMe} {isMe && "(You)"}</span>
                     </div>
 
                     {player.dice.length > 0 && !isMe && (

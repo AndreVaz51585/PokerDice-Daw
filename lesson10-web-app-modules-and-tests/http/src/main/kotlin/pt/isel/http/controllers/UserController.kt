@@ -1,5 +1,7 @@
 package pt.isel.http.controllers
 
+import jakarta.servlet.http.Cookie
+import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 import pt.isel.domain.token.TokenExternalInfo
 import pt.isel.domain.user.AuthenticatedUser
 import pt.isel.domain.user.User
+import pt.isel.http.argumentResolverandInterceptor.RequestTokenProcessor
 import pt.isel.http.model.problem.Problem
 import pt.isel.http.model.user.UserCreateTokenInputModel
 import pt.isel.http.model.user.UserCreateTokenOutputModel
@@ -99,11 +102,26 @@ class UserController(
     @PostMapping("/api/users/token")
     fun token(
         @RequestBody input: UserCreateTokenInputModel,
+        response: HttpServletResponse
     ): ResponseEntity<*> {
         val tokenInfo: Either<UserError, TokenExternalInfo> = userService.createToken(input.email, input.password)
 
         return when (tokenInfo) {
             is Success -> {
+
+                val cookie = Cookie(RequestTokenProcessor.COOKIE_NAME, tokenInfo.value.tokenValue).apply {
+                    isHttpOnly = true
+                    secure = false // true apenas em produção com HTTPS
+                    path = "/"
+                    maxAge = RequestTokenProcessor.COOKIE_MAX_AGE
+                    setAttribute("SameSite", "Strict")
+
+
+                }
+
+                response.addCookie(cookie)
+
+
                 ResponseEntity
                     .status(HttpStatus.OK)
                     .body(UserCreateTokenOutputModel(tokenInfo.value.tokenValue))
@@ -137,8 +155,19 @@ class UserController(
 
      */
     @PostMapping("api/logout")
-    fun logout(user: AuthenticatedUser) {
+    fun logout(
+        user: AuthenticatedUser,
+        response: HttpServletResponse
+        ) {
         userService.revokeToken(user.token)
+
+        val cookie = Cookie(RequestTokenProcessor.COOKIE_NAME, "").apply {
+            maxAge = 0
+            path = "/"
+        }
+
+        response.addCookie(cookie)
+
     }
 
     @DeleteMapping("/api/users/{id}")

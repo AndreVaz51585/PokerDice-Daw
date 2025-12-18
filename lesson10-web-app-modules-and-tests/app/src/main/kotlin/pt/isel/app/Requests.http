@@ -1,5 +1,5 @@
 @base = http://localhost:8080
-@tokenteste1 = XQcWIccQJVEOdcZUg_KgpSRF6YfIZW6knDLpw1-geU0=
+@tokenteste1 = CvyjnOWNIDpJe8FMKTpZwMh8Hu7QuMWpc5XC4Qeev5Q=
 @tokenteste2 = 5fDxjftK40dq0XAokr8m-fHm9YV_l4bhgpv0goOLjFs=
 @tokenteste3 = HaMTfD7QDvf2VeHP_AMyrCOGqUAwbXRLhemqTikr5yQ=
 @tokenteste4 = 6pkRgUd0abxM0EPjsI4OH-UrQ7rra-lO1XbpI9D7EZ4=
@@ -32,7 +32,7 @@ Content-Type: application/json
   "name": "teste3",
   "email": "teste3@gmail.com",
   "password": "12345",
-  "invitationCode": "I-oeJyOM4Uw"
+  "invitationCode": "Fz1hddzXsMg"
 }
 
 ### Obter token de autenticação

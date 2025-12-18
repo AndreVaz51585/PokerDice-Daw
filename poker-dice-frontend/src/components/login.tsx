@@ -70,11 +70,11 @@ export function Login() {
     dispatch({ type: "post" });
 
     try {
-      const response = await api.createToken({
+       await api.createToken({
         email: state.email,
         password: state.password,
       });
-      await login(response.token);
+       login();
       dispatch({ type: "success" });
       navigate("/");
     } catch (err) {

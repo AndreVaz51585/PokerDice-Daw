@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { api, ApiError, getAuthHeaders } from "../api";
+/*import { useState } from "react";
+import { api, ApiError} from "../api";
 import "../styles/App.css";
 
 export function InvitationCard() {
@@ -92,6 +92,85 @@ export function InvitationCard() {
       )}
     </div>
   );
+}
+
+export default InvitationCard;
+
+ */
+
+import { useState } from "react";
+import { api, ApiError } from "../api";
+import "../styles/App.css";
+
+export function InvitationCard() {
+    const [isCreating, setIsCreating] = useState(false);
+    const [invitationId, setInvitationId] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleCreate = async () => {
+        setIsCreating(true);
+        setError(null);
+        setInvitationId(null);
+
+        try {
+            const res = await api.createInvitation();
+
+            if (res && res.id) {
+                setInvitationId(String(res.id));
+            } else {
+                setError("Resposta inesperada do servidor ao criar o convite.");
+            }
+        } catch (err) {
+            if (err instanceof ApiError) {
+                setError(`${err.message} (status ${err.status})`);
+            } else {
+                setError("Erro ao criar invitation");
+            }
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
+    return (
+        <div className="user-profile-field invitation-inline">
+            <div className="invitation-row">
+                <button
+                    type="button"
+                    className="btn small"
+                    onClick={handleCreate}
+                    disabled={isCreating}
+                    aria-label="Generate invitation code"
+                    title="Generate invitation code"
+                >
+                    {isCreating ? "Creating..." : "Invitation Code"}
+                </button>
+
+                {invitationId && (
+                    <>
+                        <input
+                            type="text"
+                            readOnly
+                            value={invitationId}
+                            aria-label="Invitation code"
+                            className="invitation-code-input"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => navigator.clipboard.writeText(invitationId)}
+                            className="btn small"
+                            aria-label="Copy code"
+                        >
+                            Copy
+                        </button>
+                    </>
+                )}
+            </div>
+
+            {!invitationId && error && (
+                <div className="user-profile-error">{error}</div>
+            )}
+        </div>
+    );
 }
 
 export default InvitationCard;

@@ -25,10 +25,6 @@ class ApiError extends Error {
   }
 }
 
-export function getAuthHeaders(): HeadersInit {
-  const token = localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 export async function fetchApi<T>(
   endpoint: string,
@@ -36,6 +32,7 @@ export async function fetchApi<T>(
 ): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
+      credentials : 'include',
     headers: {
       "Content-Type": "application/json",
       ...options.headers,
@@ -100,13 +97,11 @@ export const api = {
   async logout(): Promise<void> {
     return fetchApi<void>("/logout", {
       method: "POST",
-      headers: getAuthHeaders(),
     });
   },
 
   async getMe(): Promise<User> {
     return fetchApi<User>("/me", {
-      headers: getAuthHeaders(),
     });
   },
 
@@ -122,28 +117,12 @@ export const api = {
 
   // ==================== LOBBIES ====================
 
-  async createLobby(input: LobbyInput): Promise<Lobby> {
-    const response = await fetch(`${API_BASE_URL}/lobbies`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...getAuthHeaders(),
-      },
-      body: JSON.stringify(input),
-    });
-
-    if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ title: "Unknown error" }));
-      const errorMessage = error.title
-        ? getErrorDescription(error.title)
-        : response.statusText;
-      throw new ApiError(response.status, errorMessage);
-    }
-
-    return response.json();
-  },
+    async createLobby(input: LobbyInput): Promise<Lobby> {
+        return fetchApi<Lobby>("/lobbies", {
+            method: "POST",
+            body: JSON.stringify(input),
+        });
+    },
 
   async getAllLobbies(): Promise<Lobby[]> {
     return fetchApi<Lobby[]>("/lobbies");
@@ -156,14 +135,12 @@ export const api = {
   async joinLobby(lobbyId: number): Promise<{ matchId?: number }> {
     return fetchApi<{ matchId?: number }>(`/lobbies/${lobbyId}/join`, {
       method: "POST",
-      headers: getAuthHeaders(),
     });
   },
 
   async leaveLobby(lobbyId: number): Promise<void> {
     return fetchApi<void>(`/lobbies/${lobbyId}/leave`, {
       method: "POST",
-      headers: getAuthHeaders(),
     });
   },
 
@@ -205,7 +182,6 @@ export const api = {
   ): Promise<DiceRollResponse | DiceHoldResponse | FinishTurnResponse> {
     return fetchApi(`/matches/${matchId}/commands`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify(command),
     });
   },
@@ -218,7 +194,6 @@ export const api = {
 
   async getWallet(userId: number): Promise<Wallet> {
     return fetchApi<Wallet>(`/wallets/${userId}`, {
-      headers: getAuthHeaders(),
     });
   },
 
@@ -226,7 +201,6 @@ export const api = {
     const payload: AmountPayload = { amount };
     return fetchApi<DepositSucess>(`/wallets/${userId}/deposit`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     });
   },
@@ -235,7 +209,6 @@ export const api = {
     const payload: AmountPayload = { amount };
     return fetchApi<WithdrawSucess>(`/wallets/${userId}/withdraw`, {
       method: "POST",
-      headers: getAuthHeaders(),
       body: JSON.stringify(payload),
     });
   },
@@ -255,7 +228,6 @@ export const api = {
   async createInvitation(): Promise<InvitationId> {
     return fetchApi<InvitationId>("/invitations", {
       method: "POST",
-      headers: getAuthHeaders(),
     });
   },
 };
