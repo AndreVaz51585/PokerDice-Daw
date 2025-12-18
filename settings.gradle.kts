@@ -26,10 +26,10 @@ include("lesson09-spring-and-auth")
 */
 
 // nested modules under `lesson10-web-app-modules-and-tests`
-include("lesson10-web-app-modules-and-tests:app")
-include("lesson10-web-app-modules-and-tests:domain")
-include("lesson10-web-app-modules-and-tests:http")
-include("lesson10-web-app-modules-and-tests:service")
-include("lesson10-web-app-modules-and-tests:repo")
-include("lesson10-web-app-modules-and-tests:SQL")
-include(":SQL")
+include("poker-dice-backend:app")
+include("poker-dice-backend:domain")
+include("poker-dice-backend:http")
+include("poker-dice-backend:service")
+include("poker-dice-backend:repo")
+include("poker-dice-backend:SQL")
+
