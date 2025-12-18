@@ -1,6 +1,6 @@
 @base = http://localhost:8080
-@tokenteste1 = T7NhAdaEpY67qY6CQx2D8sZKzznWzczwO5s50ZOnhAU=
-@tokenteste2 = ejxooengp4w41r-J6iTMgTRLJBKuglSDCIhJKjpJzbA=
+@tokenteste1 = XQcWIccQJVEOdcZUg_KgpSRF6YfIZW6knDLpw1-geU0=
+@tokenteste2 = 5fDxjftK40dq0XAokr8m-fHm9YV_l4bhgpv0goOLjFs=
 @tokenteste3 = HaMTfD7QDvf2VeHP_AMyrCOGqUAwbXRLhemqTikr5yQ=
 @tokenteste4 = 6pkRgUd0abxM0EPjsI4OH-UrQ7rra-lO1XbpI9D7EZ4=
 @tokenteste5 = d7UqtW1SUooC1enmqzc0JSvGPvo6tIEdALhqnIQw4d4=
@@ -29,10 +29,10 @@ POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
-  "name": "teste20",
-  "email": "test20@gmail.com",
-  "password": "minhaSenhaSegura",
-  "invitationCode": "VsfHDIyX1fY"
+  "name": "teste3",
+  "email": "teste3@gmail.com",
+  "password": "12345",
+  "invitationCode": "I-oeJyOM4Uw"
 }
 
 ### Obter token de autenticação
@@ -40,8 +40,8 @@ POST http://localhost:4000/api/users/token
 Content-Type: application/json
 
 {
-  "email": "test1@gmail.com",
-  "password": "12345"
+  "email": "teste1@gmail.com",
+  "password": "teste1"
 }
 
 ### Obter User
@@ -100,7 +100,7 @@ Authorization: Bearer {{tokentesteb}}
 ### Sair de um lobby
 POST http://localhost:3001/api/lobbies/1/leave
 Content-Type: application/json
-Authorization: Bearer {{tokenteste1}}
+Authorization: Bearer {{tokenteste2}}
 
 ### Listar jogadores de um lobby
 GET http://localhost:8080/api/lobbies/5/players

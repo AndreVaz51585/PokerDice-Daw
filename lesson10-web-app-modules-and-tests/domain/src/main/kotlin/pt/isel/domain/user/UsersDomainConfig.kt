@@ -3,10 +3,10 @@ package pt.isel.domain.user
 import java.time.Duration
 
 data class UsersDomainConfig(
-    val tokenSizeInBytes: Int,
-    val tokenTtl: Duration,
-    val tokenRollingTtl: Duration,
-    val maxTokensPerUser: Int,
+    val tokenSizeInBytes: Int,  // 32 bytes (256 bits)
+    val tokenTtl: Duration,     // 24 horas
+    val tokenRollingTtl: Duration,  // 1 horas
+    val maxTokensPerUser: Int,  // 3 tokens simultâneos
 ) {
     init {
         require(tokenSizeInBytes > 0)

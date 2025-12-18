@@ -287,7 +287,7 @@ class LobbyServiceImpl(
                     ante = lobby.ante,
                     maxPlayers = lobby.maxPlayers,
                 ) // retorna a match ou MatchServiceError
-            statisticsService.incrementGamesPlayed(lobby.lobbyHost)
+
 
             // 2) Transfere jogadores do Lobby para a Match e constrói MatchPlayer com balanceAtStart
             val matchPlayers = mutableListOf<MatchPlayer>()
