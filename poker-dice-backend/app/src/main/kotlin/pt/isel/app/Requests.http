@@ -1,0 +1,368 @@
+@base = http://localhost:8080
+@tokenteste1 = CvyjnOWNIDpJe8FMKTpZwMh8Hu7QuMWpc5XC4Qeev5Q=
+@tokenteste2 = 5fDxjftK40dq0XAokr8m-fHm9YV_l4bhgpv0goOLjFs=
+@tokenteste3 = HaMTfD7QDvf2VeHP_AMyrCOGqUAwbXRLhemqTikr5yQ=
+@tokenteste4 = 6pkRgUd0abxM0EPjsI4OH-UrQ7rra-lO1XbpI9D7EZ4=
+@tokenteste5 = d7UqtW1SUooC1enmqzc0JSvGPvo6tIEdALhqnIQw4d4=
+@tokentestea = 8KmRuuwjocRcC1GjdTYIsL3FCI2ZKD0R2r5qIRDZXC4=
+@tokentesteb = 1R0XqmOUpv_v1LvoL-WkNRykQcgFfCjpXxA8XHE_oGc=
+
+@invitatioCode = YgOCOLJXcAM
+
+### Registar um novo utilizador sem código de convite
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "name": "teste1",
+  "email": "test1@gmail.com",
+  "password": "12345"
+}
+
+### Código de Convite
+POST http://localhost:8080/api/invitations
+Content-Type: application/json
+Authorization: Bearer {{tokenteste1}}
+
+### Registar um novo utilizador com código de convite
+POST http://localhost:8080/api/users
+Content-Type: application/json
+
+{
+  "name": "teste3",
+  "email": "teste3@gmail.com",
+  "password": "12345",
+  "invitationCode": "Fz1hddzXsMg"
+}
+
+### Obter token de autenticação
+POST http://localhost:4000/api/users/token
+Content-Type: application/json
+
+{
+  "email": "teste1@gmail.com",
+  "password": "teste1"
+}
+
+### Obter User
+GET http://localhost:8080/api/me
+content-type: application/json
+Authorization: bearer {{tokenteste5}}
+
+### Apagar User
+DELETE http://localhost:8080/api/users/2
+content-type: application/json
+
+### Listar todos os users
+GET http://localhost:8080/api/users
+content-type: application/json
+
+### ficar à escuta no stream de eventos SSE (todos os lobbies)
+GET {{base}}/api/lobbies/events
+Accept: text/event-stream
+
+### ficar à escuta no stream de eventos SSE (todos os lobbies)
+GET http://localhost:4000/api/lobbies/events
+Accept: text/event-stream
+
+
+
+### Criar um lobby
+POST http://localhost:4000/api/lobbies
+Content-Type: application/json
+Authorization: Bearer {{tokenteste1}}
+
+{
+  "name": "teste Jogo4",
+  "description": "Descrição do lobby",
+  "minPlayers": 2,
+  "maxPlayers": 2,
+  "rounds": 3,
+  "ante": 5
+}
+
+### Listar todos os lobbies
+GET http://localhost:4000/api/lobbies
+
+### Obter lobby por ID
+GET http://localhost:8080/api/lobbies/3
+
+###  Abrir ligação SSE (mantém stream)
+GET {{base}}/api/lobbies/6/events
+Accept: text/event-stream
+
+### Juntar-se a um lobby
+POST http://localhost:8080/api/lobbies/6/join
+Content-Type: application/json
+Authorization: Bearer {{tokentesteb}}
+
+
+### Sair de um lobby
+POST http://localhost:3001/api/lobbies/1/leave
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+### Listar jogadores de um lobby
+GET http://localhost:8080/api/lobbies/5/players
+
+### Obter host do lobby
+GET http://localhost:8080/api/lobbies/1/host
+
+### Obter players de uma partida
+GET http://localhost:8080/api/matches/6/players
+
+### Listar todas as partidas
+GET http://localhost:8080/api/matches
+
+### Obter detalhes de uma partida
+GET http://localhost:8080/api/matches/5
+
+### 7) Abrir ligação SSE (mantém stream)
+GET {{base}}/api/matches/5/events
+Accept: text/event-stream
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/5/commands
+Content-Type: application/json
+Authorization: Bearer {{tokentestea}}
+
+{
+  "type": "roll"
+}
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/5/commands
+Content-Type: application/json
+Authorization: Bearer {{tokentestea}}
+
+{
+  "type": "finish-turn"
+}
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/5/commands
+Content-Type: application/json
+Authorization: Bearer {{tokentesteb}}
+
+{
+  "type": "roll"
+}
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/5/commands
+Content-Type: application/json
+Authorization: Bearer {{tokentesteb}}
+
+{
+  "type": "finish-turn"
+}
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/4/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste3}}
+
+{
+  "action": "roll"
+}
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/4/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste3}}
+
+{
+  "action": "finish-turn"
+}
+
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/4/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste4}}
+
+{
+  "action": "roll"
+}
+
+### 8) Enviar um comando para a partida
+POST {{base}}/api/matches/4/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste4}}
+
+{
+  "action": "finish-turn"
+}
+
+
+### 9) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/1/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste5}}
+
+{
+  "action": "finish-turn"
+}
+### 8) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/3/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste5}}
+
+{
+  "action": "roll"
+}
+
+### 9) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/sse/1/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste1}}
+
+{
+  "action": "finish-turn"
+}
+
+
+### 8) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/sse/3/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+{
+  "action": "roll"
+}
+
+### 9) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/sse/3/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+{
+  "action": "finish-turn"
+}
+
+### 8) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/sse/3/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste3}}
+
+{
+  "action": "roll"
+}
+
+### 9) Enviar um comando para a partida (gera evento)
+POST {{base}}/api/matches/3/commands
+Content-Type: application/json
+Authorization: Bearer {{tokenteste5}}
+
+{
+  "action": "roll"
+}
+
+### 9) (Opcional) Forçar envio de snapshot inicial / registar engine
+### Use apenas se existir um endpoint administrativo para registar um BankedMatch
+POST {{base}}/api/internal/matches/1/register-banked
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "matchId": 1,
+  "round": 0,
+  "players": [],
+  "pot": 0,
+  "state": "NOT_STARTED"
+}
+
+### Jogador 1 joga os dados
+POST http://localhost:8080/api/matches/sse/8/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+{
+  "action": "roll"
+}
+
+### Jogador 1 segura alguns dados (substitua [1,3] pelos dados que deseja segurar)
+POST http://localhost:8080/api/matches/sse/8/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste1}}
+
+{
+  "action": "Hold",
+  "indices": [1, 3]
+}
+
+### Jogador 1 rola novamente
+POST http://localhost:8080/api/matches/sse/3/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste1}}
+
+{
+  "action": "Roll",
+  "playerId": 1
+}
+
+### Jogador 1 finaliza sua jogada
+POST http://localhost:8080/api/matches/sse/8/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste1}}
+
+{
+  "action": "finish-turn"
+}
+
+### Jogador 2 joga os dados
+POST http://localhost:8080/api/matches/sse/4/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+{
+  "action": "Roll"
+}
+
+### Jogador 2 finaliza sua jogada
+POST http://localhost:8080/api/matches/sse/{matchId}/events
+Content-Type: application/json
+Authorization: Bearer {{tokenteste2}}
+
+{
+  "action": "Done"
+
+}
+
+### Obter detalhes de uma partida
+GET {{base}}/api/matches/sse/2
+
+### Wallets
+GET {{base}}/api/wallets
+
+### Deposit
+POST {{base}}/api/wallets/4/deposit
+Content-Type: application/json
+Authorization: Bearer {{tokenteste4}}
+
+{
+  "amount": 20
+
+}
+
+### Withdraw
+POST {{base}}/api/wallets/2/withdraw
+Content-Type: application/json
+Authorization: Bearer {{tokenteste5}}
+
+{
+  "amount": 10
+
+}
+
+### Statistics
+GET {{base}}/api/statistics
+
+### Get Statistics
+GET {{base}}/api/statistics/3
+
+### Inc games played
+GET {{base}}/api/statistics/1/inc_games_played
+
+### Inc
+GET {{base}}/api/statistics/1/inc_games_won

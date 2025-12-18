@@ -1,0 +1,11 @@
+FROM nginx
+
+# Copy nginx configuration
+COPY poker-dice-backend/SQL/nginx.conf /etc/nginx/nginx.conf
+
+# Copy frontend bundle to nginx web root
+COPY ./poker-dice-frontend/dist /usr/share/nginx/html
+
+EXPOSE 4000
+
+CMD ["nginx", "-g", "daemon off;"]
