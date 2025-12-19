@@ -31,8 +31,8 @@ data class HeartbeatConfig(
  */
 fun setupHeartbeat(
     emitter: SseEmitter,
-    initialDelaySeconds: Long = 10,
-    intervalSeconds: Long = 10,
+    initialDelaySeconds: Long = 5,
+    intervalSeconds: Long = 5,
 ): HeartbeatConfig {
     val executor = newSingleThreadScheduledExecutor()
 

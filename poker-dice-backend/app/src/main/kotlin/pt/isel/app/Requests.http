@@ -4,8 +4,8 @@
 @tokenteste3 = HaMTfD7QDvf2VeHP_AMyrCOGqUAwbXRLhemqTikr5yQ=
 @tokenteste4 = 6pkRgUd0abxM0EPjsI4OH-UrQ7rra-lO1XbpI9D7EZ4=
 @tokenteste5 = d7UqtW1SUooC1enmqzc0JSvGPvo6tIEdALhqnIQw4d4=
-@tokentestea = 8KmRuuwjocRcC1GjdTYIsL3FCI2ZKD0R2r5qIRDZXC4=
-@tokentesteb = 1R0XqmOUpv_v1LvoL-WkNRykQcgFfCjpXxA8XHE_oGc=
+@tokentestea = dAGCz_fNTUKHaP4r_ax3DEVtCUq0yPHzPiVeuvbwmPI=
+@tokentesteb = VjVGC84ns6PgBs4fco67CQOoMbpFKGFo5usWI_T0yJU=
 
 @invitatioCode = YgOCOLJXcAM
 
@@ -40,8 +40,8 @@ POST http://localhost:4000/api/users/token
 Content-Type: application/json
 
 {
-  "email": "teste1@gmail.com",
-  "password": "teste1"
+  "email": "a@gmail.com",
+  "password": "12345"
 }
 
 ### Obter User
@@ -98,9 +98,9 @@ Authorization: Bearer {{tokentesteb}}
 
 
 ### Sair de um lobby
-POST http://localhost:3001/api/lobbies/1/leave
+POST http://localhost:3001/api/lobbies/15/leave
 Content-Type: application/json
-Authorization: Bearer {{tokenteste2}}
+Authorization: Bearer {{tokentesteb}}
 
 ### Listar jogadores de um lobby
 GET http://localhost:8080/api/lobbies/5/players

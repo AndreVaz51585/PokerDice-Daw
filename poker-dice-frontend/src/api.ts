@@ -20,216 +20,244 @@ import { getErrorDescription } from "./errorDescriptions";
 const API_BASE_URL = "/api";
 
 class ApiError extends Error {
-  constructor(public status: number, message: string) {
-    super(message);
-  }
+    constructor(public status: number, message: string) {
+        super(message);
+    }
 }
 
+export function getAuthHeaders(): HeadersInit {
+    const token = localStorage.getItem("token");
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export async function fetchApi<T>(
-  endpoint: string,
-  options: RequestInit = {}
+    endpoint: string,
+    options: RequestInit = {}
 ): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-      credentials : 'include',
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    const error = await response
-      .json()
-      .catch(() => ({ title: "Unknown error" }));
-    const errorMessage = error.title
-      ? getErrorDescription(error.title)
-      : response.statusText;
-    throw new ApiError(response.status, errorMessage);
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
-  }
-
-  // Check if response has content
-  const contentType = response.headers.get("content-type");
-  if (contentType && contentType.includes("application/json")) {
-    return response.json();
-  }
-
-  return undefined as T;
-}
-
-export const api = {
-  // ==================== USERS ====================
-
-  async createUser(input: UserInput): Promise<string> {
-    const response = await fetch(`${API_BASE_URL}/users`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(input),
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...options.headers,
+        },
     });
 
     if (!response.ok) {
-      const error = await response
-        .json()
-        .catch(() => ({ title: "Unknown error" }));
-      const errorMessage = error.title
-        ? getErrorDescription(error.title)
-        : response.statusText;
-      throw new ApiError(response.status, errorMessage);
+        const error = await response
+            .json()
+            .catch(() => ({ title: "Unknown error" }));
+        const errorMessage = error.title
+            ? getErrorDescription(error.title)
+            : response.statusText;
+        throw new ApiError(response.status, errorMessage);
     }
 
-    return response.headers.get("Location") || "";
-  },
+    if (response.status === 204) {
+        return undefined as T;
+    }
 
-  async createToken(
-    input: UserCreateTokenInputModel
-  ): Promise<UserCreateTokenOutputModel> {
-    return fetchApi<UserCreateTokenOutputModel>("/users/token", {
-      method: "POST",
-      body: JSON.stringify(input),
-    });
-  },
+    // Check if response has content
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+        return response.json();
+    }
 
-  async logout(): Promise<void> {
-    return fetchApi<void>("/logout", {
-      method: "POST",
-    });
-  },
+    return undefined as T;
+}
 
-  async getMe(): Promise<User> {
-    return fetchApi<User>("/me", {
-    });
-  },
+export const api = {
+    // ==================== USERS ====================
 
-  async getAllUsers(): Promise<User[]> {
-    return fetchApi<User[]>("/users");
-  },
+    async createUser(input: UserInput): Promise<string> {
+        const response = await fetch(`${API_BASE_URL}/users`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(input),
+        });
 
-  async deleteUser(userId: number): Promise<void> {
-    return fetchApi<void>(`/users/${userId}`, {
-      method: "DELETE",
-    });
-  },
+        if (!response.ok) {
+            const error = await response
+                .json()
+                .catch(() => ({ title: "Unknown error" }));
+            const errorMessage = error.title
+                ? getErrorDescription(error.title)
+                : response.statusText;
+            throw new ApiError(response.status, errorMessage);
+        }
 
-  // ==================== LOBBIES ====================
+        return response.headers.get("Location") || "";
+    },
 
-    async createLobby(input: LobbyInput): Promise<Lobby> {
-        return fetchApi<Lobby>("/lobbies", {
+    async createToken(
+        input: UserCreateTokenInputModel
+    ): Promise<UserCreateTokenOutputModel> {
+        return fetchApi<UserCreateTokenOutputModel>("/users/token", {
             method: "POST",
             body: JSON.stringify(input),
         });
     },
 
-  async getAllLobbies(): Promise<Lobby[]> {
-    return fetchApi<Lobby[]>("/lobbies");
-  },
+    async logout(): Promise<void> {
+        return fetchApi<void>("/logout", {
+            method: "POST",
+            headers: getAuthHeaders(),
+        });
+    },
 
-  async getLobbyById(lobbyId: number): Promise<Lobby> {
-    return fetchApi<Lobby>(`/lobbies/${lobbyId}`);
-  },
+    async getMe(): Promise<User> {
+        return fetchApi<User>("/me", {
+            headers: getAuthHeaders(),
+        });
+    },
 
-  async joinLobby(lobbyId: number): Promise<{ matchId?: number }> {
-    return fetchApi<{ matchId?: number }>(`/lobbies/${lobbyId}/join`, {
-      method: "POST",
-    });
-  },
+    async getAllUsers(): Promise<User[]> {
+        return fetchApi<User[]>("/users");
+    },
 
-  async leaveLobby(lobbyId: number): Promise<void> {
-    return fetchApi<void>(`/lobbies/${lobbyId}/leave`, {
-      method: "POST",
-    });
-  },
+    async deleteUser(userId: number): Promise<void> {
+        return fetchApi<void>(`/users/${userId}`, {
+            method: "DELETE",
+        });
+    },
 
-  async getLobbyPlayers(lobbyId: number): Promise<Player[]> {
-    return fetchApi<Player[]>(`/lobbies/${lobbyId}/players`);
-  },
+    // ==================== LOBBIES ====================
 
-  async getLobbyHost(lobbyId: number): Promise<User> {
-    return fetchApi<User>(`/lobbies/${lobbyId}/host`);
-  },
+    async createLobby(input: LobbyInput): Promise<Lobby> {
+        const response = await fetch(`${API_BASE_URL}/lobbies`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...getAuthHeaders(),
+            },
+            body: JSON.stringify(input),
+        });
 
-  // ==================== MATCHES ====================
+        if (!response.ok) {
+            const error = await response
+                .json()
+                .catch(() => ({ title: "Unknown error" }));
+            const errorMessage = error.title
+                ? getErrorDescription(error.title)
+                : response.statusText;
+            throw new ApiError(response.status, errorMessage);
+        }
 
-  async getMatchById(matchId: number): Promise<Match> {
-    return fetchApi<Match>(`/matches/${matchId}`);
-  },
+        return response.json();
+    },
 
-  async getMatchPlayers(matchId: number): Promise<User[]> {
-    return fetchApi<User[]>(`/matches/${matchId}/players`);
-  },
+    async getAllLobbies(): Promise<Lobby[]> {
+        return fetchApi<Lobby[]>("/lobbies");
+    },
 
-  async startMatch(matchId: number): Promise<void> {
-    return fetchApi<void>(`/matches/${matchId}/start`, {
-      method: "POST",
-    });
-  },
+    async getLobbyById(lobbyId: number): Promise<Lobby> {
+        return fetchApi<Lobby>(`/lobbies/${lobbyId}`);
+    },
 
-  async endMatch(matchId: number): Promise<void> {
-    return fetchApi<void>(`/matches/${matchId}/end`, {
-      method: "POST",
-    });
-  },
+    async joinLobby(lobbyId: number): Promise<{ matchId?: number }> {
+        return fetchApi<{ matchId?: number }>(`/lobbies/${lobbyId}/join`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+        });
+    },
 
-  // ==================== SSE MATCH COMMANDS ====================
+    async leaveLobby(lobbyId: number): Promise<void> {
+        return fetchApi<void>(`/lobbies/${lobbyId}/leave`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+        });
+    },
 
-  async sendCommand(
-    matchId: number,
-    command: CommandInput
-  ): Promise<DiceRollResponse | DiceHoldResponse | FinishTurnResponse> {
-    return fetchApi(`/matches/${matchId}/commands`, {
-      method: "POST",
-      body: JSON.stringify(command),
-    });
-  },
+    async getLobbyPlayers(lobbyId: number): Promise<Player[]> {
+        return fetchApi<Player[]>(`/lobbies/${lobbyId}/players`);
+    },
 
-  // ==================== WALLETS ====================
+    async getLobbyHost(lobbyId: number): Promise<User> {
+        return fetchApi<User>(`/lobbies/${lobbyId}/host`);
+    },
 
-  async getAllWallets(): Promise<Wallet[]> {
-    return fetchApi<Wallet[]>("/wallets");
-  },
+    // ==================== MATCHES ====================
 
-  async getWallet(userId: number): Promise<Wallet> {
-    return fetchApi<Wallet>(`/wallets/${userId}`, {
-    });
-  },
+    async getMatchById(matchId: number): Promise<Match> {
+        return fetchApi<Match>(`/matches/${matchId}`);
+    },
 
-  async deposit(userId: number, amount: number): Promise<DepositSucess> {
-    const payload: AmountPayload = { amount };
-    return fetchApi<DepositSucess>(`/wallets/${userId}/deposit`, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-  },
+    async getMatchPlayers(matchId: number): Promise<User[]> {
+        return fetchApi<User[]>(`/matches/${matchId}/players`);
+    },
 
-  async withdraw(userId: number, amount: number): Promise<WithdrawSucess> {
-    const payload: AmountPayload = { amount };
-    return fetchApi<WithdrawSucess>(`/wallets/${userId}/withdraw`, {
-      method: "POST",
-      body: JSON.stringify(payload),
-    });
-  },
+    async startMatch(matchId: number): Promise<void> {
+        return fetchApi<void>(`/matches/${matchId}/start`, {
+            method: "POST",
+        });
+    },
 
-  // ==================== STATISTICS ====================
+    async endMatch(matchId: number): Promise<void> {
+        return fetchApi<void>(`/matches/${matchId}/end`, {
+            method: "POST",
+        });
+    },
 
-  async getAllStatistics(): Promise<Statistics[]> {
-    return fetchApi<Statistics[]>("/statistics");
-  },
+    // ==================== SSE MATCH COMMANDS ====================
 
-  async getStatistics(userId: number): Promise<Statistics> {
-    return fetchApi<Statistics>(`/statistics/${userId}`);
-  },
+    async sendCommand(
+        matchId: number,
+        command: CommandInput
+    ): Promise<DiceRollResponse | DiceHoldResponse | FinishTurnResponse> {
+        return fetchApi(`/matches/${matchId}/commands`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(command),
+        });
+    },
 
-  // ==================== INVITATIONS ====================
+    // ==================== WALLETS ====================
 
-  async createInvitation(): Promise<InvitationId> {
-    return fetchApi<InvitationId>("/invitations", {
-      method: "POST",
-    });
-  },
+    async getAllWallets(): Promise<Wallet[]> {
+        return fetchApi<Wallet[]>("/wallets");
+    },
+
+    async getWallet(userId: number): Promise<Wallet> {
+        return fetchApi<Wallet>(`/wallets/${userId}`, {
+            headers: getAuthHeaders(),
+        });
+    },
+
+    async deposit(userId: number, amount: number): Promise<DepositSucess> {
+        const payload: AmountPayload = { amount };
+        return fetchApi<DepositSucess>(`/wallets/${userId}/deposit`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload),
+        });
+    },
+
+    async withdraw(userId: number, amount: number): Promise<WithdrawSucess> {
+        const payload: AmountPayload = { amount };
+        return fetchApi<WithdrawSucess>(`/wallets/${userId}/withdraw`, {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify(payload),
+        });
+    },
+
+    // ==================== STATISTICS ====================
+
+    async getAllStatistics(): Promise<Statistics[]> {
+        return fetchApi<Statistics[]>("/statistics");
+    },
+
+    async getStatistics(userId: number): Promise<Statistics> {
+        return fetchApi<Statistics>(`/statistics/${userId}`);
+    },
+
+    // ==================== INVITATIONS ====================
+
+    async createInvitation(): Promise<InvitationId> {
+        return fetchApi<InvitationId>("/invitations", {
+            method: "POST",
+            headers: getAuthHeaders(),
+        });
+    },
 };
 
 export { ApiError };
